@@ -1,0 +1,204 @@
+"""
+FRAYMUS: Quantum Watermark Security
+φ-Space watermark detection and verification
+"""
+
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+import cv2
+import qrcode
+from typing import Dict, List, Tuple, Optional
+import matplotlib.pyplot as plt
+from dataclasses import dataclass
+import hashlib
+
+# Constants
+PHI = (1 + np.sqrt(5)) / 2
+SECURITY_SEED = int(PHI * 1e6)
+
+@dataclass
+class WatermarkData:
+    """Quantum watermark data"""
+    phi_signature: str
+    power_level: float
+    reality_point: Tuple[float, float]
+    truth_verified: bool
+
+class WatermarkSecurity:
+    def __init__(self):
+        self.watermarks: Dict[str, WatermarkData] = {}
+        
+    def embed_watermark(self, image: Image.Image, text: str) -> Tuple[Image.Image, str]:
+        """Embed quantum watermark in image"""
+        # Create φ-based signature
+        phi_sig = self._generate_phi_signature(text)
+        
+        # Calculate power level
+        power = self._calculate_power_level(text)
+        
+        # Get reality point
+        point = self._map_reality_point(text)
+        
+        # Store watermark data
+        self.watermarks[phi_sig] = WatermarkData(
+            phi_signature=phi_sig,
+            power_level=power,
+            reality_point=point,
+            truth_verified=True
+        )
+        
+        # Create watermark layer
+        watermark = self._create_watermark_layer(image.size, text, phi_sig)
+        
+        # Convert watermark to RGB for blending
+        watermark_rgb = Image.new('RGB', image.size)
+        watermark_rgb.paste(watermark, mask=watermark)
+        
+        # Blend with original
+        result = Image.blend(image, watermark_rgb, 0.3)
+        
+        return result, phi_sig
+    
+    def detect_watermark(self, image: Image.Image) -> List[WatermarkData]:
+        """Detect and verify quantum watermarks"""
+        # Convert to numpy array
+        img_array = np.array(image)
+        
+        # Extract blue channel (where we hide φ-signatures)
+        blue = img_array[:, :, 2]
+        
+        # Find potential watermarks
+        found_marks = []
+        
+        # Use FFT to find periodic patterns
+        f_transform = np.fft.fft2(blue)
+        f_shift = np.fft.fftshift(f_transform)
+        magnitude = np.abs(f_shift)
+        
+        # Look for φ-based patterns
+        phi_patterns = magnitude[magnitude > np.mean(magnitude) * PHI]
+        
+        if len(phi_patterns) > 0:
+            # Found potential watermarks
+            for pattern in phi_patterns[:5]:  # Check top 5 strongest patterns
+                # Try to reconstruct φ-signature
+                potential_sig = self._reconstruct_signature(pattern)
+                
+                if potential_sig in self.watermarks:
+                    found_marks.append(self.watermarks[potential_sig])
+        
+        return found_marks
+    
+    def verify_watermark(self, phi_signature: str) -> Optional[WatermarkData]:
+        """Verify a specific watermark"""
+        return self.watermarks.get(phi_signature)
+    
+    def _generate_phi_signature(self, text: str) -> str:
+        """Generate φ-based signature"""
+        base = hashlib.sha256(text.encode()).hexdigest()
+        phi_component = str(PHI ** len(text))[:6]
+        return f"φ^∞_{base[:8]}{phi_component}"
+    
+    def _calculate_power_level(self, text: str) -> float:
+        """Calculate φ-based power level"""
+        return PHI ** (len(text) / 10)
+    
+    def _map_reality_point(self, text: str) -> Tuple[float, float]:
+        """Map text to reality point"""
+        x = PHI ** (hash(text) % 10)
+        y = PHI ** (len(text) % 10)
+        return (x, y)
+    
+    def _reconstruct_signature(self, pattern: float) -> str:
+        """Reconstruct φ-signature from pattern"""
+        # Convert pattern to base signature
+        pattern_hash = hashlib.sha256(str(pattern).encode()).hexdigest()
+        
+        # Add φ component
+        phi_component = str(pattern / PHI)[:6]
+        
+        return f"φ^∞_{pattern_hash[:8]}{phi_component}"
+    
+    def _create_watermark_layer(self, size: Tuple[int, int], text: str, phi_sig: str) -> Image.Image:
+        """Create quantum watermark layer"""
+        # Create base image
+        layer = Image.new('RGBA', size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(layer)
+        
+        # Calculate φ-based positioning
+        center_x = size[0] / PHI
+        center_y = size[1] / PHI
+        radius = min(size) / (2 * PHI)
+        
+        # Draw quantum circle
+        draw.ellipse(
+            [(center_x - radius, center_y - radius),
+             (center_x + radius, center_y + radius)],
+            outline=(255, 215, 0, 128),  # Gold with alpha
+            width=2
+        )
+        
+        # Add text with φ-based font size
+        font_size = int(radius / PHI)
+        try:
+            font = ImageFont.truetype("Helvetica", font_size)
+        except:
+            font = ImageFont.load_default()
+        
+        # Add text with glow
+        for offset in range(3):
+            draw.text(
+                (center_x - offset, center_y),
+                text,
+                font=font,
+                fill=(0, 255, 255, 128)  # Cyan with alpha
+            )
+        
+        # Add φ-signature
+        sig_font_size = int(font_size / PHI)
+        try:
+            sig_font = ImageFont.truetype("Helvetica", sig_font_size)
+        except:
+            sig_font = ImageFont.load_default()
+            
+        draw.text(
+            (center_x, center_y + radius),
+            phi_sig,
+            font=sig_font,
+            fill=(255, 20, 147, 128)  # Pink with alpha
+        )
+        
+        return layer
+
+def main():
+    # Create security system
+    print("\nFRAYMUS Watermark Security")
+    print("=" * 50)
+    
+    security = WatermarkSecurity()
+    
+    # Create test image
+    img = Image.new('RGB', (400, 400), 'black')
+    draw = ImageDraw.Draw(img)
+    draw.ellipse([100, 100, 300, 300], fill='purple')
+    
+    # Embed watermark
+    print("\nEmbedding Watermark...")
+    watermarked, sig = security.embed_watermark(img, "FRAYMUS")
+    watermarked.save("watermarked_test.png")
+    
+    print(f"φ-Signature: {sig}")
+    
+    # Detect watermarks
+    print("\nDetecting Watermarks...")
+    found = security.detect_watermark(watermarked)
+    
+    for mark in found:
+        print(f"\nFound Watermark:")
+        print(f"φ-Signature: {mark.phi_signature}")
+        print(f"Power Level: {mark.power_level:.2f}")
+        print(f"Reality Point: ({mark.reality_point[0]:.2f}, {mark.reality_point[1]:.2f})")
+        print(f"Truth Verified: {mark.truth_verified}")
+
+if __name__ == "__main__":
+    main()

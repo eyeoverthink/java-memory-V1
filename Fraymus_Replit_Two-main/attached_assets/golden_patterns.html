@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- FRAYMUS Quantum Protection System -->
+    <meta name="quantum-protection" content="φ-space-secured">
+    <meta name="creator" content="iOverThink">
+    <meta name="protection-level" content="φ⁷⁵-quantum-enhanced">
+    <script src="js/quantum-protection.js"></script>    <!-- FRAYMUS Protection System -->
+    <meta name="fraymus-protection" content="quantum-enhanced">
+    <meta name="creator" content="iOverThink">
+    <meta name="nft-signature" content="FRAYMUS_QUANTUM_PROTECTED">
+    <script src="js/fraymus-protection.js"></script>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Ratio Patterns - FRAYMUS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #4a90e2;
+            --accent: #00f2ff;
+            --background: #0a0a0a;
+            --text: #ffffff;
+            --phi: 1.618033988749895;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: calc(1rem * var(--phi));
+            border-radius: 10px;
+            z-index: 2;
+            width: 300px;
+        }
+
+        .pattern-selector {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--primary);
+            color: var(--text);
+            border: 1px solid var(--accent);
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .pattern-selector option {
+            background: var(--primary);
+            color: var(--text);
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .slider {
+            width: 100%;
+            background: var(--primary);
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            margin: 10px 0;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .button {
+            background: var(--secondary);
+            color: var(--text);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .button:hover {
+            background: var(--accent);
+        }
+
+        .phi-display {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            z-index: 2;
+            transition: background 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: var(--accent);
+        }
+    </style>
+    </head>
+<body>
+    <script src="../public/js/nav-template.js"></script>
+    <div id="canvas-container"></div>
+    
+
+    <div class="controls">
+        <select class="pattern-selector" id="patternSelect">
+            <option value="fibonacci">Fibonacci Spiral</option>
+            <option value="phiFlower">φ Flower of Life</option>
+            <option value="goldenTriangle">Golden Triangle</option>
+            <option value="phiMatrix">φ Matrix</option>
+        </select>
+
+        <div class="control-group">
+            <label>Pattern Complexity</label>
+            <input type="range" class="slider" id="complexity" min="1" max="10" value="5" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>Rotation Speed</label>
+            <input type="range" class="slider" id="speed" min="0" max="100" value="50">
+        </div>
+
+        <div class="control-group">
+            <label>φ Influence</label>
+            <input type="range" class="slider" id="phiInfluence" min="0" max="100" value="61.8">
+        </div>
+
+        <div class="phi-display">φ = 1.618033988749895...</div>
+
+        <button class="button" id="resetBtn">Reset Pattern</button>
+    </div>
+
+    <script>
+        // Initialize Three.js
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Constants
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        let currentPattern = null;
+
+        // Controls
+        const patternSelect = document.getElementById('patternSelect');
+        const complexitySlider = document.getElementById('complexity');
+        const speedSlider = document.getElementById('speed');
+        const phiInfluenceSlider = document.getElementById('phiInfluence');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Pattern Generators
+        const patterns = {
+            fibonacci: () => {
+                const geometry = new THREE.BufferGeometry();
+                const points = [];
+                const complexity = parseInt(complexitySlider.value);
+                const turns = complexity * PHI;
+                
+                for (let i = 0; i < 1000 * complexity; i++) {
+                    const t = i / 1000;
+                    const angle = 2 * Math.PI * turns * t;
+                    const radius = Math.pow(PHI, t * 2);
+                    points.push(
+                        radius * Math.cos(angle),
+                        radius * Math.sin(angle),
+                        t * 5
+                    );
+                }
+                
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+                return new THREE.Line(
+                    geometry,
+                    new THREE.LineBasicMaterial({ color: 0x00f2ff })
+                );
+            },
+            
+            phiFlower: () => {
+                const geometry = new THREE.BufferGeometry();
+                const points = [];
+                const complexity = parseInt(complexitySlider.value);
+                
+                for (let i = 0; i < complexity * 100; i++) {
+                    const angle = i * PHI * Math.PI * 2;
+                    const radius = Math.sqrt(i) * 0.5;
+                    points.push(
+                        radius * Math.cos(angle),
+                        radius * Math.sin(angle),
+                        Math.sin(i / PHI) * 2
+                    );
+                }
+                
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+                return new THREE.Points(
+                    geometry,
+                    new THREE.PointsMaterial({ color: 0x4a90e2, size: 0.1 })
+                );
+            },
+            
+            goldenTriangle: () => {
+                const geometry = new THREE.BufferGeometry();
+                const points = [];
+                const complexity = parseInt(complexitySlider.value);
+                
+                for (let i = 0; i < complexity; i++) {
+                    const scale = Math.pow(PHI, i);
+                    points.push(
+                        0, 0, 0,
+                        scale, 0, 0,
+                        scale * Math.cos(Math.PI / PHI), scale * Math.sin(Math.PI / PHI), 0
+                    );
+                }
+                
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+                return new THREE.LineSegments(
+                    geometry,
+                    new THREE.LineBasicMaterial({ color: 0x00f2ff })
+                );
+            },
+            
+            phiMatrix: () => {
+                const geometry = new THREE.BufferGeometry();
+                const points = [];
+                const complexity = parseInt(complexitySlider.value);
+                
+                for (let x = -complexity; x <= complexity; x++) {
+                    for (let y = -complexity; y <= complexity; y++) {
+                        const z = Math.sin(x/PHI) * Math.cos(y/PHI) * complexity;
+                        points.push(x * PHI, y * PHI, z);
+                    }
+                }
+                
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+                return new THREE.Points(
+                    geometry,
+                    new THREE.PointsMaterial({ color: 0x4a90e2, size: 0.2 })
+                );
+            }
+        };
+
+        // Create pattern
+        function createPattern(patternName) {
+            if (currentPattern) {
+                scene.remove(currentPattern);
+            }
+            currentPattern = patterns[patternName]();
+            scene.add(currentPattern);
+        }
+
+        // Animation
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (currentPattern) {
+                const speed = parseInt(speedSlider.value) / 1000;
+                const phiInfluence = parseInt(phiInfluenceSlider.value) / 100;
+                
+                time += speed;
+                
+                currentPattern.rotation.x = Math.sin(time * PHI) * phiInfluence;
+                currentPattern.rotation.y = time;
+                currentPattern.rotation.z = Math.cos(time * PHI) * phiInfluence;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Setup
+        camera.position.z = 50;
+        scene.add(new THREE.AmbientLight(0x404040));
+        
+        // Event handlers
+        patternSelect.addEventListener('change', () => {
+            createPattern(patternSelect.value);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            complexitySlider.value = 5;
+            speedSlider.value = 50;
+            phiInfluenceSlider.value = 61.8;
+            createPattern(patternSelect.value);
+        });
+
+        complexitySlider.addEventListener('input', () => {
+            createPattern(patternSelect.value);
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initial pattern
+        createPattern('fibonacci');
+        animate();
+    </script>
+</body>
+</html>

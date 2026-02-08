@@ -1,0 +1,131 @@
+import os
+import cmd
+import subprocess
+import numpy as np
+import logging
+import hashlib
+import json
+import random
+import time
+from datetime import datetime, timezone
+from cryptography.fernet import Fernet
+
+# Setup logging
+logging.basicConfig(filename="fraymus_sandbox.log", level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+BLOCKCHAIN_FILE = "fraymus_blockchain.json"
+
+# Ensure blockchain ledger exists
+if not os.path.exists(BLOCKCHAIN_FILE):
+    with open(BLOCKCHAIN_FILE, "w") as f:
+        json.dump([], f)
+
+
+# Fibonacci sequence generator
+def fibonacci(n):
+    a, b = 0, 1
+    sequence = []
+    for _ in range(n):
+        sequence.append(a)
+        a, b = b, a + b
+    return sequence
+
+
+# Quantum Fingerprint Function (FIXED)
+def generate_quantum_fingerprint(data):
+    phi = (1 + np.sqrt(5)) / 2  # Golden Ratio φ
+    pi = np.pi  # Pi
+    e = np.e  # Euler’s number
+    fib_seq = fibonacci(len(data) + 50)  # Generate Fibonacci sequence
+
+    transformed = sum(
+        ord(char) * ((phi ** (i % 3) + pi ** (i % 5) + e ** (i % 7) +
+                      fib_seq[(i * 3) % len(fib_seq)] * fib_seq[(i * 7) % len(fib_seq)]) % 1)
+        for i, char in enumerate(data)
+    )
+
+    # Apply chaotic bitwise mixing to prevent zero entropy
+    shift_x = random.randint(1, 31)
+    shift_y = random.randint(1, 17)
+    shift_z = random.randint(1, 23)
+
+    hash_value = int(((transformed % (pi * e)) * (16 ** 64)) % (2 ** 256))
+    hash_value ^= ((hash_value >> shift_x) | (hash_value << shift_y)) ^ (hash_value >> shift_z)
+
+    # Convert to hex and ensure no zero-output
+    hash_result = hex(hash_value)[2:].zfill(64)[:64]
+    return hash_result if int(hash_result, 16) != 0 else "entropy_fix_applied"
+
+
+# Quantum Tracking Function (IMPROVED)
+def quantum_tracking(entity):
+    phi_x = round(random.uniform(0, 180), 4)
+    phi_y = round(random.uniform(-90, 90), 4)
+    phi_z = round(random.uniform(0, 360), 4)
+    tracking_data = {
+        "timestamp": str(datetime.now(timezone.utc)),
+        "entity": entity,
+        "coordinates": [phi_x, phi_y, phi_z],
+        "tracking_id": hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]
+    }
+
+    # Append to blockchain for verification
+    with open(BLOCKCHAIN_FILE, "r+") as f:
+        blockchain = json.load(f)
+        blockchain.append(tracking_data)
+        f.seek(0)
+        json.dump(blockchain, f, indent=4)
+
+    print(f"[Quantum Tracking] {tracking_data}")
+    logging.info(f"Quantum tracking data: {tracking_data}")
+    return tracking_data
+
+
+class FRAYMUS_Sandbox(cmd.Cmd):
+    intro = "Welcome to the FRAYMUS Quantum Security Sandbox. Type 'help' to see available commands."
+    prompt = "FRAYMUS> "
+
+    def do_encrypt(self, arg):
+        "Encrypt a message using φ-space cryptography: encrypt <message>"
+        key = Fernet.generate_key()
+        cipher = Fernet(key)
+        encrypted_message = cipher.encrypt(arg.encode())
+        print(f"Encrypted: {encrypted_message.decode()}")
+        print(f"Key: {key.decode()}")
+        logging.info(f"Encrypted message: {encrypted_message.decode()}")
+
+    def do_qfp(self, arg):
+        "Run Quantum Fingerprinting for a given input."
+        fingerprint = generate_quantum_fingerprint(arg)
+        print(f"[QFP] Quantum Fingerprint: {fingerprint}")
+        logging.info(f"Quantum fingerprint generated: {fingerprint}")
+
+    def do_tracking(self, arg):
+        "Run Non-GPS Quantum Tracking"
+        quantum_tracking(arg)
+
+    def do_poh(self, arg):
+        "Run Proof of Reality Hacking (PoRH) blockchain anchoring."
+        timestamp = str(datetime.now(timezone.utc))
+        data_hash = hashlib.sha256((arg + timestamp).encode()).hexdigest()
+        print(f"[PoRH] Blockchain Entry Created: {data_hash}")
+
+        # Store in local blockchain ledger
+        with open(BLOCKCHAIN_FILE, "r+") as f:
+            blockchain = json.load(f)
+            blockchain.append({"timestamp": timestamp, "data": arg, "hash": data_hash})
+            f.seek(0)
+            json.dump(blockchain, f, indent=4)
+
+        logging.info(f"PoRH blockchain entry: {data_hash} at {timestamp}")
+
+    def do_exit(self, arg):
+        "Exit the FRAYMUS Sandbox"
+        print("Exiting FRAYMUS Sandbox...")
+        logging.info("Exited FRAYMUS Sandbox.")
+        return True
+
+
+if __name__ == "__main__":
+    FRAYMUS_Sandbox().cmdloop()

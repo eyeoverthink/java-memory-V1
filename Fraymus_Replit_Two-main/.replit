@@ -1,0 +1,37 @@
+entrypoint="index.html"
+hidden=[".config"]
+modules = ["web:v2-20230623-0b7a606"]
+
+[nix]
+channel = "stable-23_11"
+
+[deployment]
+publicDir = "/"
+deploymentTarget = "static"
+
+[workflows]
+runButton = "Run Static"
+
+[[workflows.workflow]]
+name = "Run Server"
+author = 39633203
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python server.py"
+
+[[workflows.workflow]]
+name = "Run"
+author = 39633203
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python server.py"
+
+[[workflows.workflow]]
+name = "Run Static"
+author = 39633203
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m http.server 3000 --bind 0.0.0.0"

@@ -1,0 +1,69 @@
+import React, { useEffect, useState } from "react";
+import { BrowserProvider, Contract } from "ethers"; // ✅ Corrected Ethers.js v6 import
+import FraymusNFT from "../abis/FraymusNFT.json";
+
+const CONTRACT_ADDRESS = "0x53E289412b84529130b4A816DCF5a6088FBb6dee"; // Replace with deployed address
+
+const NFTGallery = () => {
+  const [nfts, setNfts] = useState([]);
+  const [account, setAccount] = useState(null);
+
+  useEffect(() => {
+    const loadBlockchainData = async () => {
+      if (window.ethereum) {
+        try {
+          const provider = new BrowserProvider(window.ethereum); // ✅ Ethers.js v6 fix
+          const signer = await provider.getSigner();
+          const contract = new Contract(CONTRACT_ADDRESS, FraymusNFT.abi, signer);
+
+          // Get connected account
+          const userAccount = await signer.getAddress();
+          setAccount(userAccount);
+
+          // Fetch NFTs owned by the account
+          const nftCount = await contract.balanceOf(userAccount);
+          let nftList = [];
+
+          for (let i = 0; i < nftCount; i++) {
+            try {
+              const tokenId = await contract.tokenOfOwnerByIndex(userAccount, i); // ✅ Corrected fetching method
+              const tokenURI = await contract.tokenURI(tokenId);
+              nftList.push({ id: tokenId.toString(), uri: tokenURI });
+            } catch (error) {
+              console.error(`Error fetching token ${i}:`, error);
+            }
+          }
+
+          setNfts(nftList);
+        } catch (error) {
+          console.error("Error fetching NFTs:", error);
+        }
+      } else {
+        alert("Please install MetaMask!");
+      }
+    };
+
+    loadBlockchainData();
+  }, []);
+
+  return (
+    <div>
+      <h2>NFT Gallery</h2>
+      <p>Connected Account: {account}</p>
+      <div>
+        {nfts.length > 0 ? (
+          nfts.map((nft) => (
+            <div key={nft.id}>
+              <p>NFT ID: {nft.id}</p>
+              <img src={nft.uri} alt={`NFT ${nft.id}`} width="200px" />
+            </div>
+          ))
+        ) : (
+          <p>No NFTs found.</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default NFTGallery;

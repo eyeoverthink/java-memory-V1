@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FRAYMUS Crypto Battle</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/nav-template.js"></script>
+
+    <script src="https://cdn.ethers.org/lib/ethers-5.7.umd.min.js" type="application/javascript"></script>
+    <script>
+        window.ethereum = window.ethereum || {};
+        window.ethers = ethers;
+    </script>
+
+</head>
+<body>
+    <div class="crypto-battle">
+        <div class="battle-header">
+            <h1>Crypto Battle Arena</h1>
+            <div class="score">
+                <div>Player: <span id="player-score">0</span></div>
+                <div>FRAYMUS: <span id="fraymus-score">0</span></div>
+            </div>
+        </div>
+
+        <div class="battle-arena">
+            <div class="attack-section">
+                <h3>Reality Cards</h3>
+                <div class="card-tabs">
+                    <div class="card-tab active" data-set="reality">Reality</div>
+                    <div class="card-tab" data-set="quantum">Quantum</div>
+                    <div class="card-tab" data-set="defense">Defense</div>
+                </div>
+                <div class="card-hand" id="card-hand">
+                    <div class="card-set active" data-set="reality">
+                        <div class="reality-card" data-card="φ-SPACE">φ-SPACE</div>
+                        <div class="reality-card" data-card="QUANTUM-LOCK">QUANTUM-LOCK</div>
+                        <div class="reality-card" data-card="REALITY-MAP">REALITY-MAP</div>
+                    </div>
+                    <div class="card-set" data-set="quantum">
+                        <div class="reality-card" data-card="QUANTUM-SHIFT">QUANTUM-SHIFT</div>
+                        <div class="reality-card" data-card="ENTANGLE">ENTANGLE</div>
+                        <div class="reality-card" data-card="SUPERPOSITION">SUPERPOSITION</div>
+                    </div>
+                    <div class="card-set" data-set="defense">
+                        <div class="reality-card" data-card="SHIELD">SHIELD</div>
+                        <div class="reality-card" data-card="REFLECT">REFLECT</div>
+                        <div class="reality-card" data-card="ABSORB">ABSORB</div>
+                    </div>
+                </div>
+                <h3>Choose Attack Type</h3>
+                <select id="attack-type" class="crypto-select">
+                    <option value="SQL Injection">SQL Injection</option>
+                    <option value="Buffer Overflow">Buffer Overflow</option>
+                    <option value="Quantum Spoofing">Quantum Spoofing</option>
+                    <option value="AI Social Engineering">AI Social Engineering</option>
+                </select>
+                <div id="defense-result" class="result-display"></div>
+            </div>
+
+            <div class="metrics-section">
+                <h3>Battle Metrics</h3>
+                <div class="genesis-controls">
+                    <button id="push-genesis" class="battle-button">Push to Genesis</button>
+                    <button id="read-genesis" class="battle-button">Read from Genesis</button>
+                </div>
+                <div id="genesis-status" class="genesis-status"></div>
+                <button id="start-battle" class="battle-button">Start Battle</button>
+                <div class="warrior-preview">
+                    <h4>Active Warrior</h4>
+                    <div class="warrior-card">
+                        <img id="warrior-image" src="" alt="Warrior">
+                        <div class="warrior-stats">
+                            <div class="stat-row">
+                                <span>Name:</span>
+                                <span id="warrior-name">Select Warrior</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Power:</span>
+                                <span id="warrior-power">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Agility:</span>
+                                <span id="warrior-agility">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Intelligence:</span>
+                                <span id="warrior-intelligence">0</span>
+                            </div>
+                            <div class="warrior-abilities" id="warrior-abilities">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div>Shield Level</div>
+                        <div id="shield-level">100%</div>
+                    </div>
+                    <div class="stat">
+                        <div>Quantum Level</div>
+                        <div id="quantum-level">φ1·0</div>
+                    </div>
+                    <div class="stat">
+                        <div>Reality Level</div>
+                        <div id="reality-level">1.0φ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="battlefield-container" class="battlefield-view"></div>
+        <div id="battle-log" class="log-display"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/quantum-effects.js"></script>
+    <script src="js/crypto-battle.js"></script>
+    <script src="js/battlefield.js"></script>
+    <script src="js/quantum-tracking.js"></script>
+    <script src="js/ai-warfare.js"></script>
+    <script src="js/intelligence-monitor.js"></script>
+    <script>
+        const intelligenceMonitor = new IntelligenceMonitor();
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize AI Warfare System
+            const aiWarfare = new AIWarfareSystem();
+            const cryptoBattle = new CryptoBattle();
+
+            // Connect to battle system
+            document.getElementById('start-battle').addEventListener('click', async () => {
+                cryptoBattle.startBattle();
+                const scanResult = await aiWarfare.scanTarget('battlefield');
+                console.log('Battlefield scan:', scanResult);
+            });
+        });
+    </script>
+</body>
+</html>

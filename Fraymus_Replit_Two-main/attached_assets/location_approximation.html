@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- FRAYMUS Quantum Protection System -->
+    <meta name="quantum-protection" content="φ-space-secured">
+    <meta name="creator" content="iOverThink">
+    <meta name="protection-level" content="φ⁷⁵-quantum-enhanced">
+    <script src="js/quantum-protection.js"></script>    <!-- FRAYMUS Protection System -->
+    <meta name="fraymus-protection" content="quantum-enhanced">
+    <meta name="creator" content="iOverThink">
+    <meta name="nft-signature" content="FRAYMUS_QUANTUM_PROTECTED">
+    <script src="js/fraymus-protection.js"></script>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Approximation Simulation - FRAYMUS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #4a90e2;
+            --accent: #00f2ff;
+            --background: #0a0a0a;
+            --text: #ffffff;
+            --phi: 1.618033988749895;
+            --success: #00ff00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: calc(1rem * var(--phi));
+            border-radius: 10px;
+            z-index: 2;
+            width: 300px;
+        }
+
+        .controls h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .value-display {
+            color: var(--text);
+            font-family: monospace;
+        }
+
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: var(--secondary);
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 5px;
+            z-index: 2;
+        }
+
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: 1rem;
+            border-radius: 5px;
+            z-index: 2;
+        }
+    </style>
+    </head>
+<body>
+    <script src="../public/js/nav-template.js"></script>
+    <div id="canvas-container"></div>
+    
+
+    <div class="controls">
+        <h2>Simulation Controls</h2>
+        
+        <div class="control-group">
+            <label for="signalStrength">Signal Strength</label>
+            <input type="range" id="signalStrength" min="0" max="100" value="75">
+            <div class="value-display">75%</div>
+        </div>
+
+        <div class="control-group">
+            <label for="noiseLevel">Environmental Noise</label>
+            <input type="range" id="noiseLevel" min="0" max="100" value="25">
+            <div class="value-display">25%</div>
+        </div>
+
+        <div class="control-group">
+            <label for="nodeCount">Reference Nodes</label>
+            <input type="range" id="nodeCount" min="3" max="12" value="6">
+            <div class="value-display">6 nodes</div>
+        </div>
+    </div>
+
+    <div id="status">
+        Estimated Position: <span id="position">calculating...</span><br>
+        Accuracy: <span id="accuracy">calculating...</span>
+    </div>
+
+    <script>
+        // Three.js setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Constants
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        const GRID_SIZE = 20;
+        const MAX_HEIGHT = 5;
+
+        // Classes
+        class ReferenceNode {
+            constructor(position) {
+                const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x4a90e2,
+                    emissive: 0x1a1a1a
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.copy(position);
+                
+                // Signal visualization
+                const signalGeometry = new THREE.SphereGeometry(2, 32, 32);
+                const signalMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x4a90e2,
+                    transparent: true,
+                    opacity: 0.2
+                });
+                this.signalMesh = new THREE.Mesh(signalGeometry, signalMaterial);
+                this.signalMesh.position.copy(position);
+                
+                scene.add(this.mesh);
+                scene.add(this.signalMesh);
+            }
+
+            update(time) {
+                const scale = 1 + Math.sin(time * 2) * 0.1;
+                this.signalMesh.scale.set(scale, scale, scale);
+            }
+        }
+
+        class TargetObject {
+            constructor() {
+                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x00f2ff,
+                    emissive: 0x1a1a1a
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.updatePosition();
+                scene.add(this.mesh);
+            }
+
+            updatePosition() {
+                const time = Date.now() * 0.001;
+                this.mesh.position.x = Math.sin(time * 0.5) * 5;
+                this.mesh.position.z = Math.cos(time * 0.5) * 5;
+                this.mesh.position.y = 0.25;
+            }
+        }
+
+        // Setup scene
+        const grid = new THREE.GridHelper(GRID_SIZE, 20, 0x404040, 0x404040);
+        scene.add(grid);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+
+        // Initialize objects
+        let referenceNodes = [];
+        let targetObject = new TargetObject();
+
+        function createReferenceNodes(count) {
+            // Clear existing nodes
+            referenceNodes.forEach(node => {
+                scene.remove(node.mesh);
+                scene.remove(node.signalMesh);
+            });
+            referenceNodes = [];
+
+            // Create new nodes in a circular pattern
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                const radius = 8;
+                const position = new THREE.Vector3(
+                    Math.cos(angle) * radius,
+                    0,
+                    Math.sin(angle) * radius
+                );
+                referenceNodes.push(new ReferenceNode(position));
+            }
+        }
+
+        function calculateApproximatePosition() {
+            const signalStrength = document.getElementById('signalStrength').value / 100;
+            const noiseLevel = document.getElementById('noiseLevel').value / 100;
+            
+            // Get actual position
+            const actualPos = targetObject.mesh.position;
+            
+            // Calculate weighted average based on distance to reference nodes
+            let weightedX = 0;
+            let weightedZ = 0;
+            let totalWeight = 0;
+
+            referenceNodes.forEach(node => {
+                const distance = node.mesh.position.distanceTo(actualPos);
+                const weight = 1 / (distance * distance);
+                
+                // Add noise based on distance and noise level
+                const noise = (Math.random() - 0.5) * noiseLevel * distance;
+                
+                weightedX += (node.mesh.position.x + noise) * weight;
+                weightedZ += (node.mesh.position.z + noise) * weight;
+                totalWeight += weight;
+            });
+
+            const estimatedX = weightedX / totalWeight;
+            const estimatedZ = weightedZ / totalWeight;
+
+            // Calculate accuracy
+            const estimatedPos = new THREE.Vector3(estimatedX, 0, estimatedZ);
+            const accuracy = 100 * (1 - Math.min(estimatedPos.distanceTo(actualPos) / 10, 1));
+
+            // Update status display
+            document.getElementById('position').textContent = 
+                `X: ${estimatedX.toFixed(2)}, Z: ${estimatedZ.toFixed(2)}`;
+            document.getElementById('accuracy').textContent = 
+                `${accuracy.toFixed(1)}%`;
+
+            return estimatedPos;
+        }
+
+        // Event listeners
+        document.getElementById('nodeCount').addEventListener('input', (e) => {
+            createReferenceNodes(parseInt(e.target.value));
+            e.target.nextElementSibling.textContent = `${e.target.value} nodes`;
+        });
+
+        document.getElementById('signalStrength').addEventListener('input', (e) => {
+            e.target.nextElementSibling.textContent = `${e.target.value}%`;
+        });
+
+        document.getElementById('noiseLevel').addEventListener('input', (e) => {
+            e.target.nextElementSibling.textContent = `${e.target.value}%`;
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001;
+            
+            // Update objects
+            targetObject.updatePosition();
+            referenceNodes.forEach(node => node.update(time));
+            
+            // Calculate and visualize position approximation
+            calculateApproximatePosition();
+            
+            renderer.render(scene, camera);
+        }
+
+        // Initialize
+        camera.position.set(0, 15, 15);
+        camera.lookAt(0, 0, 0);
+        createReferenceNodes(6);
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

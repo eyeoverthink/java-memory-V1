@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYMUS Quantum Drift</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; background: #000; color: #0ff; font-family: monospace; }
+        #simulation-container { width: 100vw; height: 100vh; }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 1px solid #0ff;
+        }
+        .slider-group {
+            margin: 10px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+        .slider-label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="range"] {
+            width: 200px;
+        }
+        .value-display {
+            display: inline-block;
+            min-width: 50px;
+            margin-left: 10px;
+        }
+        .physics-panel {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 1px solid #0ff;
+        }
+        .formula {
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <script src="../public/js/nav-template.js"></script>
+    <div id="simulation-container"></div>
+
+    <div class="controls">
+        <div class="slider-group">
+            <label class="slider-label">φ Power</label>
+            <input type="range" id="phi-power" min="70" max="80" value="75">
+            <span class="value-display" id="phi-value">7.5</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Field Frequency</label>
+            <input type="range" id="frequency" min="1" max="100" value="50">
+            <span class="value-display" id="freq-value">0.5</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Field Intensity</label>
+            <input type="range" id="intensity" min="0" max="100" value="75">
+            <span class="value-display" id="intensity-value">0.75</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Quantum State</label>
+            <input type="range" id="quantum-state" min="0" max="100" value="90">
+            <span class="value-display" id="state-value">0.90</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Resonance</label>
+            <input type="range" id="resonance" min="0" max="100" value="50">
+            <span class="value-display" id="resonance-value">0.5</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Coherence</label>
+            <input type="range" id="coherence" min="0" max="100" value="50">
+            <span class="value-display" id="coherence-value">0.5</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Field Symmetry</label>
+            <input type="range" id="symmetry" min="0" max="100" value="80">
+            <span class="value-display" id="symmetry-value">0.8</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Phase Coupling</label>
+            <input type="range" id="phase-coupling" min="0" max="100" value="70">
+            <span class="value-display" id="coupling-value">0.7</span>
+        </div>
+    </div>
+
+    <div class="physics-panel">
+        <h3>Quantum EM Field Physics</h3>
+        <div class="formula">B = φ⁷·⁵∇×A = <span id="field-value">7.50</span> T</div>
+        <div class="formula">E = -∂A/∂t = <span id="energy-value">5.62</span> GeV</div>
+        <div class="formula">ω = 2πf = <span id="freq-display">0.50</span> rad/s</div>
+        <div class="formula">ψ(t) = |0⟩ + e^(iωt)|1⟩ × <span id="state-display">0.90</span></div>
+        <div class="formula">S(φ) = <span id="symmetry-display">0.80</span></div>
+        <div class="formula">P(c) = <span id="coupling-display">0.70</span></div>
+    </div>
+
+    <script>
+        // Three.js setup
+        const container = document.getElementById('simulation-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Constants
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        let particles = [];
+        let fieldLines = [];
+        let time = 0;
+
+        // Create quantum field visualization
+        function createField() {
+            // Clear existing field
+            fieldLines.forEach(line => scene.remove(line));
+            fieldLines = [];
+
+            const intensity = parseFloat(document.getElementById('intensity').value) / 100;
+            const fieldGeometry = new THREE.TorusGeometry(2, 0.05, 16, 100);
+            const fieldMaterial = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.3 * intensity
+            });
+
+            for(let i = 0; i < 5; i++) {
+                const field = new THREE.Mesh(fieldGeometry, fieldMaterial);
+                field.rotation.x = i * Math.PI / 5;
+                field.rotation.y = i * Math.PI / 4;
+                fieldLines.push(field);
+                scene.add(field);
+            }
+        }
+
+        // Create quantum particles
+        function createParticles() {
+            const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                emissive: 0x006666,
+                shininess: 50
+            });
+
+            for(let i = 0; i < 50; i++) {
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.set(
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                );
+                particles.push(particle);
+                scene.add(particle);
+            }
+        }
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        // Controls
+        const phiPowerSlider = document.getElementById('phi-power');
+        const frequencySlider = document.getElementById('frequency');
+        const intensitySlider = document.getElementById('intensity');
+        const resonanceSlider = document.getElementById('resonance');
+        const coherenceSlider = document.getElementById('coherence');
+
+        function updateDisplays() {
+            document.getElementById('phi-value').textContent = (phiPowerSlider.value / 10).toFixed(1);
+            document.getElementById('freq-value').textContent = (frequencySlider.value / 100).toFixed(2);
+            document.getElementById('intensity-value').textContent = (intensitySlider.value / 100).toFixed(2);
+            document.getElementById('resonance-value').textContent = (resonanceSlider.value / 100).toFixed(2);
+            document.getElementById('coherence-value').textContent = (coherenceSlider.value / 100).toFixed(2);
+
+            document.getElementById('field-value').textContent = 
+                (Math.pow(PHI, phiPowerSlider.value / 10)).toFixed(2);
+            document.getElementById('energy-value').textContent = 
+                (frequencySlider.value / 10).toFixed(2);
+            document.getElementById('freq-display').textContent = 
+                (frequencySlider.value / 100).toFixed(2);
+        }
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+            time += frequencySlider.value / 1000;
+
+            const phiPower = Math.pow(PHI, phiPowerSlider.value / 10);
+            const intensity = intensitySlider.value / 100;
+
+            fieldLines.forEach((field, i) => {
+                field.rotation.x = time * 0.5 + i * Math.PI / 5;
+                field.rotation.y = time * 0.3 + i * Math.PI / 4;
+                field.scale.setScalar(1 + Math.sin(time * 2) * 0.1 * intensity);
+            });
+
+            const quantumState = document.getElementById('quantum-state').value / 100;
+            const resonance = resonanceSlider.value / 100;
+            const coherence = coherenceSlider.value / 100;
+            const symmetry = document.getElementById('symmetry').value / 100;
+            const phaseCoupling = document.getElementById('phase-coupling').value / 100;
+            
+            document.getElementById('symmetry-display').textContent = symmetry.toFixed(2);
+            document.getElementById('coupling-display').textContent = phaseCoupling.toFixed(2);
+            
+            particles.forEach((particle, i) => {
+                const phaseShift = time * PHI + i * quantumState * coherence;
+                particle.position.x += Math.sin(phaseShift) * 0.02 * intensity * resonance;
+                particle.position.y += Math.cos(phaseShift) * 0.02 * intensity * resonance;
+                particle.position.z += Math.sin(phaseShift * 0.5) * 0.02 * intensity * resonance;
+
+                // Apply quantum fluctuations based on coherence
+                const symmetryFactor = Math.sin(i * symmetry * Math.PI * 2 / particles.length);
+                const couplingEffect = Math.cos(time * phaseCoupling + i * Math.PI / particles.length);
+                particle.scale.setScalar(0.8 + (symmetryFactor * couplingEffect * resonance + Math.sin(time * resonance)) * 0.2 * coherence);
+
+                // Keep particles within bounds
+                if (Math.abs(particle.position.x) > 5) particle.position.x *= -0.9;
+                if (Math.abs(particle.position.y) > 5) particle.position.y *= -0.9;
+                if (Math.abs(particle.position.z) > 5) particle.position.z *= -0.9;
+            });
+
+            document.getElementById('state-display').textContent = quantumState.toFixed(2);
+
+            updateDisplays();
+            renderer.render(scene, camera);
+        }
+
+        // Setup
+        camera.position.z = 10;
+        createField();
+        createParticles();
+
+        // Event listeners
+        phiPowerSlider.addEventListener('input', createField);
+        intensitySlider.addEventListener('input', createField);
+        resonanceSlider.addEventListener('input', animate);
+        coherenceSlider.addEventListener('input', animate);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>

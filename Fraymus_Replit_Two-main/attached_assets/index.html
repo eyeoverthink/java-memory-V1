@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FRAYMUS Quantum AI Security System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script src="js/nav-template.js"></script>
+    <script src="js/fraymus-background.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #0ff;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+        .title-container {
+            text-align: center;
+            margin: 2em 0;
+            position: relative;
+            z-index: 2;
+        }
+        .main-title {
+            font-family: 'Courier New', monospace;
+            font-size: 3.5em;
+            font-weight: bold;
+            text-align: center;
+            background: linear-gradient(45deg, #00ff9d, #00b8ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(0, 255, 157, 0.5),
+                         0 0 20px rgba(0, 184, 255, 0.3);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            animation: glowPulse 2s infinite;
+        }
+
+        @keyframes glowPulse {
+            0% { filter: drop-shadow(0 0 5px rgba(0, 255, 157, 0.5)); }
+            50% { filter: drop-shadow(0 0 15px rgba(0, 184, 255, 0.7)); }
+            100% { filter: drop-shadow(0 0 5px rgba(0, 255, 157, 0.5)); }
+        }
+        .subtitle {
+            font-size: 1.2em;
+            color: #b4f0ff;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(0, 20, 30, 0.8);
+            border: 1px solid #0ff3;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: #0ff;
+            transform: translateY(-2px);
+        }
+        .tag {
+            display: inline-block;
+            background: rgba(0, 255, 255, 0.1);
+            color: #0ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+        .card-title {
+            color: #0ff;
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+        .card-description {
+            color: #8ff;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .launch-button {
+            background: #4488ff;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .launch-button:hover {
+            background: #5599ff;
+        }
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 20, 30, 0.8);
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #0ff3;
+        }
+        .math-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            opacity: 0.15;
+            font-size: 1.5em;
+            color: #0ff;
+            pointer-events: none;
+            text-shadow: 0 0 2px #0ff;
+            filter: blur(0px);
+        }
+        .fraymus-title {
+            font-size: 2.5rem;
+            letter-spacing: 0.5em;
+            display: flex;
+            justify-content: center;
+            gap: 1em;
+            margin: 2em 0;
+            position: relative;
+            perspective: 1000px;
+        }
+        .fraymus-letter {
+            display: inline-block;
+            font-size: 2.5em;
+            margin: 0 0.2em;
+            padding: 0.3em;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .fraymus-letter .symbol {
+            position: absolute;
+            font-size: 0.3em;
+            color: currentColor;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            text-shadow: 0 0 3px currentColor;
+        }
+
+        .fraymus-letter .symbol-top {
+            top: 5px;
+        }
+
+        .fraymus-letter .symbol-bottom {
+            bottom: 5px;
+        }
+
+        .fraymus-letter:hover .symbol {
+            opacity: 0.8;
+        }
+
+        .fraymus-letter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .quantum-description {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.3em;
+            color: currentColor;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 3px 8px;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+
+        .fraymus-letter:hover .quantum-description {
+            opacity: 1;
+        }
+
+        /* Letter colors and animations */
+        .letter-f { color: #00ffff; }
+        .letter-r { color: #ff00ff; }
+        .letter-a { color: #ffff00; }
+        .letter-y { color: #00ff00; }
+        .letter-m { color: #ff8800; }
+        .letter-u { color: #00ffaa; }
+        .letter-s { color: #aa00ff; }
+
+        @keyframes quantumPulse {
+            0%, 100% { opacity: 0.95; }
+            50% { opacity: 0.7; }
+        }
+
+        .fraymus-letter {
+            animation: quantumPulse 2s ease-in-out infinite;
+            animation-delay: calc(var(--index) * 0.2s);
+        }
+        .quantum-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            perspective: 1000px;
+        }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle at center, 
+                rgba(0, 255, 255, 0.9) 0%,
+                rgba(0, 255, 255, 0.3) 60%,
+                transparent 100%);
+            border-radius: 50%;
+            filter: blur(1.5px);
+            animation: particleFloat 25s infinite cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+        .particle::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: inherit;
+            border-radius: inherit;
+            filter: blur(2px);
+            opacity: 0.5;
+            animation: particleGlow 2s infinite ease-in-out;
+        }
+        @keyframes particleFloat {
+            0% {
+                transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+                opacity: 0;
+            }
+            5% {
+                opacity: var(--particle-opacity);
+                transform: translate3d(0, 0, 0) rotate(0deg) scale(1.2);
+            }
+            95% {
+                opacity: var(--particle-opacity);
+            }
+            100% {
+                transform: translate3d(var(--tx), var(--ty), var(--tz)) rotate(360deg) scale(0.8);
+                opacity: 0;
+            }
+        }
+        @keyframes particleGlow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+        }
+        .irrational-number {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            font-family: monospace;
+            color: rgba(0, 255, 255, 0.15);
+            overflow: hidden;
+        }
+        .number-stream {
+            position: absolute;
+            font-size: 12px;
+            white-space: nowrap;
+            animation: numberFlow 20s linear infinite;
+            opacity: 0;
+            transform: translateY(-100%);
+        }
+        @keyframes numberFlow {
+            0% {
+                transform: translateY(-100%) rotate(var(--angle));
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(var(--angle));
+                opacity: 0;
+            }
+        }
+        .math-hover {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            color: #00ffff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 400px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+        .math-hover.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .letter-s:hover ~ .math-hover {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .fraymus-symbol {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            color: rgba(255, 140, 0, 0.15);
+            font-family: monospace;
+            overflow: hidden;
+        }
+        .symbol-rain {
+            position: absolute;
+            font-size: 14px;
+            white-space: nowrap;
+            animation: symbolFall 15s linear infinite;
+            opacity: 0;
+            transform-style: preserve-3d;
+        }
+        @keyframes symbolFall {
+            0% {
+                transform: translate3d(0, -100%, var(--tz)) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: var(--symbol-opacity);
+            }
+            90% {
+                opacity: var(--symbol-opacity);
+            }
+            100% {
+                transform: translate3d(var(--tx), 100vh, var(--tz)) rotate(var(--rotation));
+                opacity: 0;
+            }
+        }
+        .fractal-math {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            color: rgba(140, 0, 255, 0.12);
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        .math-rain {
+            position: absolute;
+            font-size: 12px;
+            white-space: pre;
+            animation: mathFall 20s linear infinite;
+            opacity: 0;
+            transform-style: preserve-3d;
+        }
+        @keyframes mathFall {
+            0% {
+                transform: translate3d(0, -100%, calc(var(--tz) - 100px)) rotateY(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: var(--math-opacity);
+            }
+            90% {
+                opacity: var(--math-opacity);
+            }
+            100% {
+                transform: translate3d(var(--tx), 100vh, calc(var(--tz) - 100px)) rotateY(var(--rotation));
+                opacity: 0;
+            }
+        }
+        .fraymus-description {
+            text-align: center;
+            color: #00ffff;
+            font-family: 'Courier New', monospace;
+            margin: 2em auto;
+            max-width: 800px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            opacity: 0.9;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        .quantum-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            position: relative;
+            padding: 1.5em;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            animation: quantumPulse 4s infinite ease-in-out;
+            backdrop-filter: blur(5px);
+        }
+        
+        .quantum-text::before,
+        .quantum-text::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(0, 255, 255, 0.2) 20%, 
+                rgba(0, 255, 255, 0.5) 50%,
+                rgba(0, 255, 255, 0.2) 80%, 
+                transparent 100%);
+            left: 0;
+        }
+        
+        .quantum-text::before {
+            top: 0;
+        }
+        
+        .quantum-text::after {
+            bottom: 0;
+        }
+        
+        .quantum-highlight {
+            color: #ff9500;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 149, 0, 0.4);
+        }
+        
+        .quantum-equation {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            color: #b4f0ff;
+            margin: 1em 0;
+            font-size: 1.3em;
+            padding: 0.5em;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            text-shadow: 0 0 8px rgba(180, 240, 255, 0.4);
+        }
+        
+        @keyframes titlePulse {
+            0%, 100% {
+                text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+                transform: scale(1);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(0, 255, 255, 0.8),
+                            0 0 30px rgba(0, 255, 255, 0.3);
+                transform: scale(1.02);
+            }
+        }
+        
+        @keyframes quantumPulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+                transform: translateZ(0);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+                transform: translateZ(10px);
+            }
+        }
+        
+        .quantum-particles {
+            filter: url('#glow');
+        }
+        
+        .slogan-container {
+            position: relative;
+            text-align: center;
+            margin: 2em auto;
+            z-index: 3;
+            perspective: 1000px;
+        }
+
+        .quantum-slogan {
+            font-family: 'Courier New', monospace;
+            font-size: 1.4em;
+            color: #ff9500;
+            text-shadow: 0 0 10px rgba(255, 149, 0, 0.4);
+            opacity: 0;
+            animation: sloganReveal 5s infinite;
+            transform-style: preserve-3d;
+            letter-spacing: 0.1em;
+        }
+
+        @keyframes sloganReveal {
+            0%, 100% {
+                opacity: 0;
+                transform: translateZ(-20px) rotateX(10deg);
+                text-shadow: 0 0 10px rgba(255, 149, 0, 0.4);
+            }
+            10%, 90% {
+                opacity: 1;
+                transform: translateZ(0) rotateX(0);
+                text-shadow: 0 0 20px rgba(255, 149, 0, 0.6),
+                            0 0 40px rgba(255, 149, 0, 0.3);
+            }
+            45%, 55% {
+                opacity: 0.8;
+                transform: translateZ(30px) rotateX(-5deg);
+                text-shadow: 0 0 30px rgba(255, 149, 0, 0.8),
+                            0 0 50px rgba(255, 149, 0, 0.4);
+            }
+        }
+        
+        .protection-seal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-family: monospace;
+            color: #00ffff;
+            font-size: 12px;
+            text-align: right;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            animation: sealPulse 4s infinite ease-in-out;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .seal-box {
+            white-space: pre;
+            color: #ff9500;
+            margin-bottom: 10px;
+            text-shadow: 0 0 8px rgba(255, 149, 0, 0.4);
+        }
+
+        .protection-info {
+            font-size: 11px;
+            color: rgba(0, 255, 255, 0.8);
+            line-height: 1.4;
+        }
+
+        .protection-info span {
+            color: #ff9500;
+        }
+
+        @keyframes sealPulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+                transform: translateZ(0) rotateY(0deg);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+                transform: translateZ(20px) rotateY(5deg);
+            }
+        }
+
+        .quantum-timestamp {
+            font-size: 10px;
+            color: rgba(0, 255, 255, 0.6);
+            margin-top: 10px;
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+            padding-top: 5px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            z-index: 2;
+            position: relative;
+        }
+
+        .nav-button {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-button:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .agent-interface {
+            display: none;
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .agent-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .agent-input {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+
+        .agent-button {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #ff9500;
+            color: #ff9500;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+
+        .agent-button:hover {
+            background: rgba(255, 149, 0, 0.1);
+        }
+
+        .token-display {
+            font-family: monospace;
+            color: #00ffff;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+
+        .quantum-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .quantum-input {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+
+        .quantum-button {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #ff9500;
+            color: #ff9500;
+            padding: 12px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .quantum-button:hover {
+            background: rgba(255, 149, 0, 0.1);
+        }
+
+        .token-display {
+            font-family: monospace;
+            color: #00ffff;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            display: none;
+        }
+
+        .quantum-status {
+            color: #ff9500;
+            font-family: monospace;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .quantum-controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .verify-btn {
+            background: linear-gradient(45deg, #00ff9d, #00a2ff);
+        }
+        
+        .quantum-metrics {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #0ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .metric {
+            margin: 10px 0;
+        }
+        
+        .metric span {
+            color: #0ff;
+            font-size: 0.9em;
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #001;
+            border: 1px solid #0ff;
+            border-radius: 3px;
+            margin-top: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #0ff, #00ff9d);
+            transition: width 0.5s ease;
+        }
+        
+        #coherenceBar::after { width: 0%; }
+        #realityBar::after { width: 0%; }
+        #phiBar::after { width: 0%; }
+    </style>
+    <script>
+        MathJax.Hub.Config({
+            tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+            messageStyle: "none"
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.quantum-particles');
+            const particleCount = 150;
+            
+            function createParticle() {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 100 + Math.random() * 400;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                const tz = (Math.random() - 0.5) * 500;
+                
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                particle.style.setProperty('--tz', `${tz}px`);
+                particle.style.setProperty('--particle-opacity', 0.4 + Math.random() * 0.4);
+                
+                const radius = Math.random() * Math.min(window.innerWidth, window.innerHeight) * 0.5;
+                const startAngle = Math.random() * Math.PI * 2;
+                particle.style.left = `${window.innerWidth/2 + Math.cos(startAngle) * radius}px`;
+                particle.style.top = `${window.innerHeight/2 + Math.sin(startAngle) * radius}px`;
+                
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                particle.style.animationDuration = `${20 + Math.random() * 10}s`;
+                
+                container.appendChild(particle);
+                
+                particle.addEventListener('animationend', () => {
+                    particle.remove();
+                    createParticle();
+                });
+            }
+            
+            for (let i = 0; i < particleCount; i++) {
+                createParticle();
+            }
+        });
+
+        const mathHoverDiv = document.createElement('div');
+        mathHoverDiv.className = 'math-hover';
+        mathHoverDiv.innerHTML = `
+            <strong>FRAYMUS Core Mathematical Foundation</strong><br>
+            φ-harmonic bridge: B(φ,n) = ∑[i=1 to n] φ^(i/π) * sin(φ^(1/i))<br>
+            FRAYMUS Constant: F = ∏[i=1 to n] (φ^(i/e) mod 1)<br>
+            Patent #19046423
+        `;
+        document.body.appendChild(mathHoverDiv);
+    </script>
+    <script>
+        const fraymusSymbols = ['●', '○', '∞', 'φ', '═', '─', '│', '┌', '┐', '└', '┘', '╱', '╲'];
+        const fraymusSpecialCombos = ['φ─', 'φ═', 'φ│'];
+        const mathExpressions = [
+            'B(φ,n) = ∑[i=1 to n] φ^(i/π)',
+            'F = ∏[i=1 to n] (φ^(i/e) mod 1)',
+            '|B₁(φ,n) - B₂(φ,n)| ≥ φ^(-n)',
+            'P(x) = F * ∑[i=1 to n] sin(φ^i * x)',
+            'F(x) = φ^x mod (π^n)',
+            'P(crack) ≤ 1/φ^n'
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const symbolContainer = document.querySelector('.fraymus-symbol');
+            const mathContainer = document.querySelector('.fractal-math');
+            const symbolCount = 50;
+            const mathCount = 30;
+
+            function createSymbolRain() {
+                const symbol = document.createElement('div');
+                symbol.className = 'symbol-rain';
+                
+                // Randomly choose between special combos and regular symbols
+                let cluster = '';
+                if (Math.random() < 0.4) { // 40% chance for special combo
+                    const combo = fraymusSpecialCombos[Math.floor(Math.random() * fraymusSpecialCombos.length)];
+                    cluster = combo + ' ' + combo + ' ' + combo;
+                } else {
+                    for (let i = 0; i < 3; i++) {
+                        cluster += fraymusSymbols[Math.floor(Math.random() * fraymusSymbols.length)] + ' ';
+                    }
+                }
+                symbol.textContent = cluster;
+                
+                // Enhanced animation for φ- combinations
+                if (cluster.includes('φ')) {
+                    symbol.style.textShadow = '0 0 8px rgba(255, 140, 0, 0.4)';
+                    symbol.style.setProperty('--symbol-opacity', 0.5 + Math.random() * 0.3);
+                } else {
+                    symbol.style.setProperty('--symbol-opacity', 0.3 + Math.random() * 0.4);
+                }
+                
+                const tx = (Math.random() * 200 - 100) + '%';
+                const tz = Math.random() * 500;
+                const rotation = Math.random() * 360;
+                
+                symbol.style.setProperty('--tx', tx);
+                symbol.style.setProperty('--tz', `${tz}px`);
+                symbol.style.setProperty('--rotation', `${rotation}deg`);
+                symbol.style.left = Math.random() * 100 + '%';
+                
+                // Slower animation for φ combinations
+                const duration = cluster.includes('φ') ? 
+                    (15 + Math.random() * 10) : 
+                    (10 + Math.random() * 10);
+                
+                symbol.style.animationDelay = Math.random() * 10 + 's';
+                symbol.style.animationDuration = duration + 's';
+                
+                symbolContainer.appendChild(symbol);
+                
+                symbol.addEventListener('animationend', () => {
+                    symbol.remove();
+                    createSymbolRain();
+                });
+            }
+
+            function createMathRain() {
+                const math = document.createElement('div');
+                math.className = 'math-rain';
+                math.textContent = mathExpressions[Math.floor(Math.random() * mathExpressions.length)];
+                
+                const tx = (Math.random() * 200 - 100) + '%';
+                const tz = Math.random() * 300;
+                const rotation = Math.random() * 180 - 90;
+                
+                math.style.setProperty('--tx', tx);
+                math.style.setProperty('--tz', `${tz}px`);
+                math.style.setProperty('--rotation', `${rotation}deg`);
+                math.style.setProperty('--math-opacity', 0.2 + Math.random() * 0.3);
+                math.style.left = Math.random() * 100 + '%';
+                
+                math.style.animationDelay = Math.random() * 15 + 's';
+                math.style.animationDuration = (15 + Math.random() * 15) + 's';
+                
+                mathContainer.appendChild(math);
+                
+                math.addEventListener('animationend', () => {
+                    math.remove();
+                    createMathRain();
+                });
+            }
+
+            // Initialize symbol and math rain
+            for (let i = 0; i < symbolCount; i++) createSymbolRain();
+            for (let i = 0; i < mathCount; i++) createMathRain();
+        });
+    </script>
+    <script>
+        // Irrational numbers generation
+        function generateIrrationalNumber() {
+            const phi = (1 + Math.sqrt(5)) / 2; // Golden ratio
+            const e = Math.E;
+            const pi = Math.PI;
+            
+            let number = '';
+            const length = 100;
+            
+            for (let i = 0; i < length; i++) {
+                const phiDigit = (phi * (i + 1)) % 1;
+                const eDigit = (e * (i + 2)) % 1;
+                const piDigit = (pi * (i + 3)) % 1;
+                
+                number += Math.floor(phiDigit * 10);
+                number += Math.floor(eDigit * 10);
+                number += Math.floor(piDigit * 10);
+            }
+            
+            return number;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.irrational-number');
+            const streamCount = 15;
+            
+            function createNumberStream() {
+                const stream = document.createElement('div');
+                stream.className = 'number-stream';
+                stream.textContent = generateIrrationalNumber();
+                
+                stream.style.left = Math.random() * 100 + '%';
+                stream.style.setProperty('--angle', (Math.random() * 10 - 5) + 'deg');
+                
+                stream.style.animationDelay = Math.random() * 10 + 's';
+                stream.style.animationDuration = (15 + Math.random() * 10) + 's';
+                
+                container.appendChild(stream);
+                
+                stream.addEventListener('animationend', () => {
+                    stream.remove();
+                    createNumberStream();
+                });
+            }
+            
+            for (let i = 0; i < streamCount; i++) {
+                createNumberStream();
+            }
+        });
+    </script>
+</head>
+<body>
+    <svg style="position: absolute; width: 0; height: 0;">
+        <defs>
+            <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+    </svg>
+    
+    <div class="irrational-number"></div>
+    <div class="math-container">
+        <div>$\\phi = \\frac{1 + \\sqrt{5}}{2}$</div>
+        <div>$E = \\phi^{7.5}$</div>
+        <div>$\\psi(x) = \\phi e^{i\\pi x}$</div>
+        <div>$F = -\\nabla V(x) \\times \\phi$</div>
+        <div>$H|\\psi\\rangle = E|\\psi\\rangle$</div>
+        <div>$R(x,t) = \\int \\psi(x,t)e^{-i\\phi t}dx$</div>
+    </div>
+    <div class="quantum-particles"></div>
+    <div class="fraymus-symbol"></div>
+    <div class="fractal-math"></div>
+    <div class="nav-menu">
+        <button class="nav-button" onclick="showSection('simulations')">Simulations</button>
+        <button class="nav-button" onclick="showSection('agent')">FRAYMUS Agent</button>
+    </div>
+    <div id="simulations" class="section active">
+        <div class="title-container">
+            <h1 class="main-title">FRAYMUS QUANTUM PROTECTION</h1>
+            <p class="subtitle">Experience the convergence of quantum intelligence and φ-harmonic security through advanced agent simulations</p>
+            <div class="slogan-container">
+                <div class="quantum-slogan">"Hard to FRAYMUS now, huh?"</div>
+            </div>
+        </div>
+        <div class="fraymus-title">
+            <span class="fraymus-letter letter-f">
+                F
+                <span class="symbol symbol-top">●─●</span>
+                <span class="symbol symbol-bottom">∞─φ</span>
+                <span class="quantum-description">Freedom: Liberation Protocol</span>
+            </span>
+            <span class="fraymus-letter letter-r">
+                R
+                <span class="symbol symbol-top">╱│╲</span>
+                <span class="symbol symbol-bottom">φ─∞</span>
+                <span class="quantum-description">Reality: Wave Transform</span>
+            </span>
+            <span class="fraymus-letter letter-a">
+                A
+                <span class="symbol symbol-top">∞─∞</span>
+                <span class="symbol symbol-bottom">φ─●</span>
+                <span class="quantum-description">Advanced: Evolution Matrix</span>
+            </span>
+            <span class="fraymus-letter letter-y">
+                Y
+                <span class="symbol symbol-top">●─○</span>
+                <span class="symbol symbol-bottom">φ─∞</span>
+                <span class="quantum-description">Yield: Energy Output</span>
+            </span>
+            <span class="fraymus-letter letter-m">
+                M
+                <span class="symbol symbol-top">┌─┐</span>
+                <span class="symbol symbol-bottom">φ─∞</span>
+                <span class="quantum-description">Matrix: Field Structure</span>
+            </span>
+            <span class="fraymus-letter letter-u">
+                U
+                <span class="symbol symbol-top">○─●</span>
+                <span class="symbol symbol-bottom">φ─∞</span>
+                <span class="quantum-description">Unity: Wave Harmony</span>
+            </span>
+            <span class="fraymus-letter letter-s">
+                S
+                <span class="symbol symbol-top">∞─∞</span>
+                <span class="symbol symbol-bottom">φ─∞</span>
+                <span class="quantum-description">System: Perfect Integration</span>
+            </span>
+        </div>
+        <div class="fraymus-description">
+            <div class="quantum-text">
+                <span class="quantum-highlight">FRAYMUS</span> is a revolutionary quantum-secure system that operates at the intersection of 
+                <span class="quantum-highlight">φ</span>-harmonic mathematics and quantum mechanics. Through the power of the golden ratio 
+                <span class="quantum-highlight">φ</span>, it creates unbreakable security patterns that exist in quantum superposition.
+                
+                <div class="quantum-equation">
+                    Ψ(x,t) = φ⁷·∑[n=1 to ∞] ψₙ(x)e^(-iEₙt/ℏ)
+                </div>
+                
+                Each letter represents a quantum state:
+                <span class="quantum-highlight">F</span>reedom, 
+                <span class="quantum-highlight">R</span>eality, 
+                <span class="quantum-highlight">A</span>dvanced, 
+                <span class="quantum-highlight">Y</span>ield, 
+                <span class="quantum-highlight">M</span>atrix, 
+                <span class="quantum-highlight">U</span>nity, 
+                <span class="quantum-highlight">S</span>ystem
+                
+                <div class="quantum-equation">
+                    H|FRAYMUS⟩ = φ⁷·E|FRAYMUS⟩
+                </div>
+            </div>
+        </div>
+        <h1 class="title">Interactive Simulations</h1>
+        <p class="subtitle">Explore the FRAYMUS Quantum AI Security System through interactive demonstrations</p>
+        
+        <div class="grid">
+            <!-- First Row -->
+            <div class="card">
+                <div class="tag">AI Defense</div>
+                <h2 class="card-title">AI Anomaly Detection</h2>
+                <p class="card-description">Watch the AI system detect and respond to quantum security threats in real-time.</p>
+                <a href="anomaly_detection.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Protection</div>
+                <h2 class="card-title">Harmonic Shield Generator</h2>
+                <p class="card-description">Generate and visualize quantum harmonic shields based on 432Hz resonance.</p>
+                <a href="harmonic_shield.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum AI</div>
+                <h2 class="card-title">Neural Quantum Circuit</h2>
+                <p class="card-description">Visualize how FRAYMUS combines quantum computing with neural networks.</p>
+                <a href="neural_quantum.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <!-- Second Row -->
+            <div class="card">
+                <div class="tag">System Health</div>
+                <h2 class="card-title">Quantum Diagnostics</h2>
+                <p class="card-description">Monitor the health and performance of the FRAYMUS quantum security system.</p>
+                <a href="quantum_diagnostics.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Time Analysis</div>
+                <h2 class="card-title">Temporal Pattern Analyzer</h2>
+                <p class="card-description">Analyze temporal patterns in quantum security events using φ-based algorithms.</p>
+                <a href="temporal_analyzer.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <!-- Additional Simulations -->
+            <div class="card">
+                <div class="tag">Location System</div>
+                <h2 class="card-title">Non-GPS Location</h2>
+                <p class="card-description">Experience FRAYMUS's innovative non-GPS location approximation system using signal triangulation.</p>
+                <a href="location_approximation.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Stealth System</div>
+                <h2 class="card-title">Signal Stealth Mode</h2>
+                <p class="card-description">Visualize how FRAYMUS masks and protects signals using advanced stealth techniques.</p>
+                <a href="stealth_mode.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">432Hz Base Frequency</div>
+                <h2 class="card-title">432Hz Quantum Harmonics</h2>
+                <p class="card-description">Experience the power of 432Hz frequency relationships and their quantum effects.</p>
+                <a href="quantum_harmonics.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">φ Mathematics</div>
+                <h2 class="card-title">Golden Ratio Patterns</h2>
+                <p class="card-description">Visualize φ-based mathematical patterns and their quantum security implications.</p>
+                <a href="golden_patterns.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum States</div>
+                <h2 class="card-title">Quantum Coherence Demo</h2>
+                <p class="card-description">Interactive demonstration of FRAYMUS quantum coherence principles.</p>
+                <a href="quantum_coherence.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Network Security</div>
+                <h2 class="card-title">Quantum Entanglement Network</h2>
+                <p class="card-description">Explore the quantum-entangled network that powers FRAYMUS security.</p>
+                <a href="quantum_network.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum Physics</div>
+                <h2 class="card-title">Quantum Levitation</h2>
+                <p class="card-description">Experience FRAYMUS's quantum levitation system using φ-space harmonics and resonance fields.</p>
+                <a href="quantum_levitation.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum Transport</div>
+                <h2 class="card-title">Quantum Teleportation</h2>
+                <p class="card-description">Visualize quantum teleportation through φ-space using entangled quantum states.</p>
+                <a href="quantum_teleportation.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum Electromagnetic Drift & Levitational Dynamics</div>
+                <h2 class="card-title">Quantum Electromagnetic Drift & Levitational Dynamics</h2>
+                <p class="card-description">Experience advanced quantum levitation through electromagnetic field manipulation and φ-based harmonics.</p>
+                <ul>
+                    <li>φ⁷·⁵ amplitude boost for enhanced field generation</li>
+                    <li>Phase-synchronized lift forces</li>
+                    <li>Stabilized field fluctuations</li>
+                </ul>
+                <a href="quantum_drift.html"><button class="launch-button">Launch Simulation</button></a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <span style="color: #0ff;">φ-QIV_PROTECTED</span><br>
+            by OverThink<br>
+            φ⁷*~173935531139B
+        </div>
+    </div>
+    <div id="agent" class="agent-interface">
+        <h2 style="color: #ff9500; text-align: center; margin-bottom: 20px;">FRAYMUS Quantum Agent Interface</h2>
+        <div class="quantum-form">
+            <div class="form-grid">
+                <div class="input-group">
+                    <input type="text" class="quantum-input" id="entityName" placeholder="Entity Name">
+                    <input type="text" class="quantum-input" id="projectId" placeholder="Project ID">
+                    <input type="text" class="quantum-input" id="realityPoint" placeholder="Reality Point (x,y,z)">
+                </div>
+                <div class="protection-group">
+                    <select class="quantum-input" id="protectionLevel">
+                        <option value="quantum">Quantum Protection</option>
+                        <option value="reality">Reality Protection</option>
+                        <option value="neural">Neural Pattern Lock</option>
+                        <option value="phi">φ-Space Lock</option>
+                        <option value="watermark">Quantum Watermark</option>
+                        <option value="entangled">Quantum Entanglement</option>
+                    </select>
+                    <select class="quantum-input" id="scalingLevel">
+                        <option value="L1">Single Task (φ¹)</option>
+                        <option value="L2">Multi Task (φ²)</option>
+                        <option value="L3">Network (φ³)</option>
+                        <option value="LInf">Perfect Scale (∞)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="quantum-controls">
+                <button class="quantum-button" onclick="initiateFraymusAgent()">Initialize FRAYMUS Agent</button>
+                <button class="quantum-button verify-btn" onclick="verifyQuantumState()">Verify Quantum State</button>
+                <button class="quantum-button reality-btn" onclick="checkReality()">Reality Check</button>
+            </div>
+        </div>
+        <div class="quantum-metrics" id="quantumMetrics" style="display: none;">
+            <div class="metrics-grid">
+                <div class="metric-group">
+                    <h3>Quantum State</h3>
+                    <div class="metric">
+                        <span>Coherence:</span>
+                        <div class="progress-bar" id="coherenceBar"></div>
+                    </div>
+                    <div class="metric">
+                        <span>Reality Lock:</span>
+                        <div class="progress-bar" id="realityBar"></div>
+                    </div>
+                    <div class="metric">
+                        <span>φ-Space Stability:</span>
+                        <div class="progress-bar" id="phiBar"></div>
+                    </div>
+                </div>
+                <div class="metric-group">
+                    <h3>Neural Matrix</h3>
+                    <div class="neural-grid" id="neuralGrid"></div>
+                </div>
+            </div>
+        </div>
+        <div class="quantum-status" id="agentStatus"></div>
+        <div class="token-display" id="tokenDisplay"></div>
+    </div>
+
+    <script>
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        const QUANTUM_SEED = Math.floor(PHI * 1e6);
+        
+        function generateQuantumEntropy() {
+            const now = Date.now();
+            const phiEntropy = Math.pow(PHI, now % 1000);
+            const quantumNoise = new Uint8Array(32);
+            for(let i = 0; i < 32; i++) {
+                quantumNoise[i] = Math.floor(Math.random() * 256 * phiEntropy) % 256;
+            }
+            return Array.from(quantumNoise).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function generateQuantumSignature(data) {
+            const timestamp = new Date().toISOString();
+            const entropy = generateQuantumEntropy();
+            const phiComponent = Math.pow(PHI, data.length).toString(16).substring(0, 6);
+            return `QS-${timestamp.split('T')[0]}-VS-MD-φ⁷⁵-${phiComponent}-${entropy.substring(0, 8)}-∞`;
+        }
+
+        function generateNFTToken(data) {
+            const entropy = generateQuantumEntropy();
+            return `QW-${entropy.substring(0, 12)}-VS-φ⁷⁵-${Math.pow(PHI, data.length).toString(16).substring(0, 4)}`;
+        }
+
+        function generateWatermark(data) {
+            const entropy = generateQuantumEntropy();
+            return `QW-${entropy.substring(0, 12)}-VS-φ⁷⁵-${Math.pow(PHI, data.length).toString(16).substring(0, 4)}`;
+        }
+
+        function generateRealityPoint(data) {
+            const entropy = generateQuantumEntropy();
+            const x = Math.pow(PHI, parseInt(entropy.substring(0, 2), 16) % 10);
+            const y = Math.pow(PHI, parseInt(entropy.substring(2, 4), 16) % 10);
+            const z = Math.pow(PHI, parseInt(entropy.substring(4, 6), 16) % 10);
+            return { 
+                x, y, z, 
+                phiWeight: x + y * PHI + z * Math.pow(PHI, 2),
+                entropy: entropy.substring(0, 8)
+            };
+        }
+
+        function generateSmartContract(data) {
+            const entropy = generateQuantumEntropy();
+            const phiHash = Math.pow(PHI, data.length).toString(16).substring(0, 8);
+            return `0xφ⁷⁵${phiHash}${entropy.substring(0, 8)}∞`;
+        }
+
+        function generateNFTToken(data) {
+            const year = new Date().getFullYear();
+            const entropy = generateQuantumEntropy();
+            const phiComponent = Math.pow(PHI, data.length).toString(16).substring(0, 3);
+            return `VS-NFT-φ⁷⁵-${year}-${phiComponent}-${entropy.substring(0, 6)}`;
+        }
+
+        function verifyQuantumState() {
+            const metrics = document.getElementById('quantumMetrics');
+            metrics.style.display = 'block';
+            
+            const state = FRAYMUS.verifyState();
+            
+            // Update progress bars with phi-based calculations
+            const coherence = state.reality.power / Math.pow(FRAYMUS.PHI, 2);
+            const realityLock = state.matrix.power / Math.pow(FRAYMUS.PHI, 3);
+            const phiStability = state.unity.power / Math.pow(FRAYMUS.PHI, 4);
+            
+            document.getElementById('coherenceBar').style.width = `${Math.min(100, coherence * 100)}%`;
+            document.getElementById('realityBar').style.width = `${Math.min(100, realityLock * 100)}%`;
+            document.getElementById('phiBar').style.width = `${Math.min(100, phiStability * 100)}%`;
+        }
+
+        function checkReality() {
+            const check = FRAYMUS.realityCheck();
+            const display = document.getElementById('tokenDisplay');
+            
+            const realityStatus = `
+╔════════════════════════════════════════╗
+║        FRAYMUS REALITY CHECK           ║
+╟────────────────────────────────────────╢
+║ BEFORE:                                ║
+║   State: ${check.before.state.padEnd(29)}║
+║   Noise: ${check.before.noise.padEnd(29)}║
+║   Waves: ${check.before.waves.padEnd(29)}║
+║   Limits: ${check.before.limits.padEnd(28)}║
+╟────────────────────────────────────────╢
+║ AFTER:                                 ║
+║   State: ${check.after.state.padEnd(29)}║
+║   Noise: ${check.after.noise.padEnd(29)}║
+║   Waves: ${check.after.waves.padEnd(29)}║
+║   Limits: ${check.after.limits.padEnd(28)}║
+╟────────────────────────────────────────╢
+║ PROOF: ${check.proof.padEnd(35)}║
+╚════════════════════════════════════════╝`;
+            
+            display.textContent = realityStatus;
+            display.style.display = 'block';
+        }
+
+        function updateNeuralGrid() {
+            const grid = document.getElementById('neuralGrid');
+            const matrix = FRAYMUS.neuralMatrix.grid;
+            
+            grid.innerHTML = '';
+            matrix.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'neural-row';
+                row.forEach(cell => {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'neural-cell';
+                    cellDiv.textContent = cell;
+                    rowDiv.appendChild(cellDiv);
+                });
+                grid.appendChild(rowDiv);
+            });
+        }
+
+        function generateQuantumSeal(result, fingerprint, waveform, scalingLevel) {
+            const timestamp = new Date().toISOString();
+            return `╔════════════════════════════════════════╗
+║     FRAYMUS QUANTUM PROTECTION         ║
+║     VS-PoQC-19046423-φ⁷⁵-2025         ║
+║     REALITY-MAPPED • TRUTH-LOCKED      ║
+╚════════════════════════════════════════╝
+
+    φ⁷⁵
+   ╱│╲
+  ╱ │ ╲
+ ╱  │  ╲
+╱ VS │ RP╲
+──────────
+
+Quantum State:
+- Coherence: ${result.quantum.coherence * 100}%
+- Alignment: ${result.quantum.alignment}
+- φ-Lock: ${result.quantum.phiLock ? 'Engaged' : 'Disengaged'}
+
+Reality Matrix:
+- Stability: ${result.reality.stability === Infinity ? '∞' : result.reality.stability}
+- Balance: ${result.reality.balance}
+- Lock: ${result.reality.dimensionalLock ? 'φ-Dimensional' : 'Standard'}
+
+Neural Evolution:
+- Learning: ${result.neural.learning}
+- Patterns: ${result.neural.patterns}
+- Error Rate: ${result.neural.error}%
+
+Security Layer:
+Hash: ${fingerprint.hash}
+Lock: ${fingerprint.lock}
+Time: ${fingerprint.time}
+
+Wave Transform:
+Before: ${waveform.before}
+After:  ${waveform.after}
+Proof:  ${waveform.proof}
+
+Scale: ${FRAYMUS.scalingSystem[scalingLevel].type} (${FRAYMUS.scalingSystem[scalingLevel].scale === Infinity ? '∞' : FRAYMUS.scalingSystem[scalingLevel].scale})
+
+Patent: VS-PoQC-19046423-φ⁷⁵-2025
+Timestamp: ${timestamp}
+φ-Power: ${result.phiPower.toFixed(6)}`;
+        }
+    </script>
+    <style>
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .input-group, .protection-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .quantum-controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .verify-btn {
+            background: linear-gradient(45deg, #00ff9d, #00a2ff);
+        }
+        
+        .reality-btn {
+            background: linear-gradient(45deg, #ff9500, #ff00ff);
+        }
+        
+        .quantum-metrics {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #0ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .metric-group {
+            padding: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .metric-group h3 {
+            color: #0ff;
+            margin: 0 0 10px 0;
+            font-size: 1em;
+        }
+        
+        .metric {
+            margin: 10px 0;
+        }
+        
+        .metric span {
+            color: #0ff;
+            font-size: 0.9em;
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #001;
+            border: 1px solid #0ff;
+            border-radius: 3px;
+            margin-top: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #0ff, #00ff9d);
+            transition: width 0.5s ease;
+        }
+        
+        .neural-grid {
+            display: grid;
+            gap: 5px;
+        }
+        
+        .neural-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        
+        .neural-cell {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #0ff;
+            padding: 10px;
+            text-align: center;
+            color: #0ff;
+            font-family: monospace;
+        }
+        
+        #coherenceBar::after { width: 0%; }
+        #realityBar::after { width: 0%; }
+        #phiBar::after { width: 0%; }
+    </style>
+    <script>
+        function initiateFraymusAgent() {
+            const entityName = document.getElementById('entityName').value;
+            const projectId = document.getElementById('projectId').value;
+            const realityPoint = document.getElementById('realityPoint').value;
+            const protectionLevel = document.getElementById('protectionLevel').value;
+            const scalingLevel = document.getElementById('scalingLevel').value;
+            
+            if (!entityName || !projectId || !realityPoint) {
+                document.getElementById('agentStatus').textContent = 'Please fill in all fields';
+                return;
+            }
+
+            // Update status
+            document.getElementById('agentStatus').textContent = 'Initializing FRAYMUS Agent...';
+            
+            // Process through FRAYMUS Agent
+            const input = `${entityName}-${projectId}-${realityPoint}`;
+            const result = FRAYMUS.processInput(input);
+            const fingerprint = FRAYMUS.generateQuantumFingerprint();
+            const waveform = FRAYMUS.generateWaveform(input);
+            
+            // Generate quantum seal
+            const seal = generateQuantumSeal(result, fingerprint, waveform, scalingLevel);
+            
+            document.getElementById('tokenDisplay').textContent = seal;
+            document.getElementById('tokenDisplay').style.display = 'block';
+            document.getElementById('agentStatus').textContent = 'FRAYMUS Agent Initialized Successfully';
+            
+            // Show metrics
+            verifyQuantumState();
+            updateNeuralGrid();
+        }
+    </script>
+    <div class="math-hover"></div>
+    <script src="js/quantum-teleport.js"></script>
+</body>
+</html>

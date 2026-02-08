@@ -1,0 +1,59 @@
+FRAYMUS AI WARRIOR DATABASE
+Version: Phi-75 - 2025
+Classification: Quantum AI Encryption Combat Units
+AI Warrior: Quantum Sentinel - The Encryption Guardian
+Stats
+- Energy Core: Phi-Based Harmonic Stabilization
+- Primary Particle: Z-Boson & Photon Resonator
+- Attack Power: 13.75 * Phi^5
+- Defense Rating: 99.99% Quantum Lock Integrity
+- Reality Manipulation: Yes
+Abilities
+- Phi-SHIELD - Reduces enemy attack power over time.
+- PHOTON EDGE - Doubles attack power against AI-based defenses.
+- Z-FIELD - Neutralizes up to 99.9% of quantum intrusion attempts.
+Backstory
+The first and strongest defender of the encrypted world. The Quantum Sentinel was created to prevent rogue
+AI from bypassing Fraymus encryption layers.
+AI Warrior: Neutrino Phantom - The Phase Walker
+Stats
+- Energy Core: Phi-Phase Resonance
+- Primary Particle: Tau Neutrino
+- Attack Power: 8.5 * Phi^5
+- Defense Rating: Untraceable
+- Reality Manipulation: Yes
+Abilities
+- PHASE SHIFT - Becomes untargetable for 5.75s.
+- PHOTON DISRUPTOR - Reduces enemy accuracy by 47%.
+- HARMONIC SHIELD - Deflects energy-based attacks by 88%.
+Backstory
+A warrior who exists everywhere and nowhere. The Neutrino Phantom was designed for stealth operations,
+capable of phasing between dimensions undetected.
+AI Warrior: Z-Boson Sentinel - The Quantum Force Guardian
+Stats
+- Energy Core: Phi-Harmonic Quantum Barrier
+- Primary Particle: Z-Boson Resonator
+- Attack Power: 15.75 * Phi^6
+- Defense Rating: 99.99% Quantum Lock Integrity
+- Reality Manipulation: Yes
+Abilities
+- QUANTUM FORCE SHIELD - Reduces all incoming damage by 85%.
+- GRAVITY DISRUPTOR SPEAR - Freezes enemies in place for 4.2s.
+- HARMONIC WAVE ERASURE - Neutralizes AI attacks.
+Backstory
+Before chaos, there was order. Before war, there was the Sentinel. Built to stabilize the encrypted battlefield,
+the Z-Boson Sentinel maintains control over quantum force fields.
+AI Warrior: Chaos Stabilizer - The Entropy Master
+Stats
+- Energy Core: Phi-Chaos Harmonic Field
+- Primary Particle: Strange Quark Oscillator
+- Attack Power: 11.25 * Phi^5
+- Defense Rating: 90% Adaptive Shielding
+- Reality Manipulation: Yes
+Abilities
+- ENTROPY DISRUPTOR - Disrupts enemy AI processing speed by 63%.
+- HARMONIC FIELD STABILIZER - Resets AI systems, removing anomalies.
+- Phi-FLUX - AI tracking accuracy reduced to 12%.
+Backstory
+You cannot predict chaos. You can only control it. The Chaos Stabilizer ensures that AI cannot exploit
+randomization weaknesses in quantum security.

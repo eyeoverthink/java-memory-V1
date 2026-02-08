@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYMUS Quantum Teleportation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background: #000; 
+            color: #0ff; 
+            font-family: monospace;
+            overflow-x: hidden;
+        }
+        .container {
+            display: flex;
+            margin-top: 60px;
+            height: calc(100vh - 60px);
+        }
+        .simulation-view {
+            flex: 1;
+            position: relative;
+            border-right: 1px solid rgba(0,255,255,0.2);
+        }
+        .view-title {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 18px;
+            color: #0ff;
+        }
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 1px solid #0ff;
+            text-align: center;
+        }
+        .object-selector {
+            margin-bottom: 20px;
+        }
+        .object-button {
+            background: rgba(0,255,255,0.2);
+            color: #0ff;
+            border: 1px solid #0ff;
+            padding: 8px 15px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .object-button.selected {
+            background: #0ff;
+            color: #000;
+        }
+        .slider-group {
+            margin: 10px 0;
+        }
+        .slider-label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="range"] {
+            width: 200px;
+        }
+        .value-display {
+            display: inline-block;
+            min-width: 50px;
+            margin-left: 10px;
+        }
+        .action-button {
+            background: #0ff;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-family: monospace;
+            border-radius: 4px;
+        }
+        .action-button:hover {
+            background: #00cccc;
+        }
+        .action-button:disabled {
+            background: #004444;
+            color: #006666;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .math-panel {
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 1px solid #0ff;
+        }
+        .formula {
+            margin: 10px 0;
+            font-family: "Courier New", monospace;
+        }
+        .explanation {
+            color: #0ff;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+    </style>
+    </head>
+<body>
+    <script src="../public/js/nav-template.js"></script>
+    <div class="container">
+        <div class="simulation-view" id="source-view">
+            <div class="view-title">Source Location</div>
+            <div class="controls">
+                <div class="object-selector">
+                    <button class="object-button selected" data-object="cube">Cube</button>
+                    <button class="object-button" data-object="sphere">Sphere</button>
+                    <button class="object-button" data-object="torus">Torus</button>
+                </div>
+                <div class="slider-group">
+                    <label class="slider-label">Quantum State</label>
+                    <input type="range" id="quantum-state" min="0" max="100" value="80">
+                    <span class="value-display" id="state-value">0.80</span>
+                </div>
+                <div class="slider-group">
+                    <label class="slider-label">Phase Angle</label>
+                    <input type="range" id="phase-angle" min="0" max="360" value="180">
+                    <span class="value-display" id="angle-value">180°</span>
+                </div>
+                <button class="action-button" id="initialize-btn">Initialize Object</button>
+            </div>
+        </div>
+
+        <div class="simulation-view" id="target-view">
+            <div class="view-title">Target Location</div>
+            <div class="controls">
+                <div class="slider-group">
+                    <label class="slider-label">Entanglement Strength</label>
+                    <input type="range" id="entanglement" min="0" max="100" value="90">
+                    <span class="value-display" id="entangle-value">0.90</span>
+                </div>
+                <button class="action-button" id="teleport-btn" disabled>Begin Teleportation</button>
+                <div class="status" id="status-text">Ready for initialization</div>
+            </div>
+        </div>
+
+        <div class="math-panel">
+            <h3>Quantum Teleportation Physics</h3>
+            <div class="formula">|ψ⟩ = α|0⟩ + β|1⟩</div>
+            <div class="explanation">Current quantum state</div>
+            <div class="formula">E = -i[H,ρ]</div>
+            <div class="explanation">Energy evolution in φ-space</div>
+            <div class="formula">T(φ) = e^(-iHt/ℏ)</div>
+            <div class="explanation">Teleportation operator</div>
+            <div id="current-values">
+                <div class="formula">State: <span id="math-state">0.80</span></div>
+                <div class="formula">Phase: <span id="math-phase">180°</span></div>
+                <div class="formula">Entanglement: <span id="math-entangle">0.90</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Three.js setup for source view
+        const sourceContainer = document.getElementById('source-view');
+        const sourceScene = new THREE.Scene();
+        const sourceCamera = new THREE.PerspectiveCamera(75, sourceContainer.clientWidth/sourceContainer.clientHeight, 0.1, 1000);
+        const sourceRenderer = new THREE.WebGLRenderer({ antialias: true });
+        sourceRenderer.setSize(sourceContainer.clientWidth, sourceContainer.clientHeight);
+        sourceContainer.appendChild(sourceRenderer.domElement);
+
+        // Three.js setup for target view
+        const targetContainer = document.getElementById('target-view');
+        const targetScene = new THREE.Scene();
+        const targetCamera = new THREE.PerspectiveCamera(75, targetContainer.clientWidth/targetContainer.clientHeight, 0.1, 1000);
+        const targetRenderer = new THREE.WebGLRenderer({ antialias: true });
+        targetRenderer.setSize(targetContainer.clientWidth, targetContainer.clientHeight);
+        targetContainer.appendChild(targetRenderer.domElement);
+
+        // Lighting
+        function addLights(scene) {
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+        }
+        addLights(sourceScene);
+        addLights(targetScene);
+
+        // Camera positions
+        sourceCamera.position.z = 5;
+        targetCamera.position.z = 5;
+
+        // Create quantum objects
+        let sourceObject = null;
+        let targetObject = null;
+
+        function createObject(type) {
+            let geometry;
+            switch(type) {
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    break;
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(0.7, 32, 32);
+                    break;
+                case 'torus':
+                    geometry = new THREE.TorusGeometry(0.5, 0.2, 16, 100);
+                    break;
+            }
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                emissive: 0x006666,
+                shininess: 50,
+                transparent: true,
+                opacity: 0.8
+            });
+            return new THREE.Mesh(geometry, material);
+        }
+
+        // Create quantum field visualization
+        function createQuantumField() {
+            const fieldGeometry = new THREE.TorusGeometry(1.5, 0.05, 16, 100);
+            const fieldMaterial = new THREE.MeshPhongMaterial({
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 0.3
+            });
+            return new THREE.Mesh(fieldGeometry, fieldMaterial);
+        }
+
+        const sourceField = createQuantumField();
+        const targetField = createQuantumField();
+        sourceScene.add(sourceField);
+        targetScene.add(targetField);
+
+        // Controls
+        const objectButtons = document.querySelectorAll('.object-button');
+        const quantumStateSlider = document.getElementById('quantum-state');
+        const phaseAngleSlider = document.getElementById('phase-angle');
+        const entanglementSlider = document.getElementById('entanglement');
+        const initializeBtn = document.getElementById('initialize-btn');
+        const teleportBtn = document.getElementById('teleport-btn');
+        const statusText = document.getElementById('status-text');
+
+        let currentObjectType = 'cube';
+        let isInitialized = false;
+        let isTeleporting = false;
+
+        objectButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                objectButtons.forEach(b => b.classList.remove('selected'));
+                button.classList.add('selected');
+                currentObjectType = button.dataset.object;
+            });
+        });
+
+        function updateDisplays() {
+            document.getElementById('state-value').textContent = (quantumStateSlider.value / 100).toFixed(2);
+            document.getElementById('angle-value').textContent = phaseAngleSlider.value + '°';
+            document.getElementById('entangle-value').textContent = (entanglementSlider.value / 100).toFixed(2);
+            
+            document.getElementById('math-state').textContent = (quantumStateSlider.value / 100).toFixed(2);
+            document.getElementById('math-phase').textContent = phaseAngleSlider.value + '°';
+            document.getElementById('math-entangle').textContent = (entanglementSlider.value / 100).toFixed(2);
+        }
+
+        initializeBtn.addEventListener('click', () => {
+            if (sourceObject) sourceScene.remove(sourceObject);
+            sourceObject = createObject(currentObjectType);
+            sourceScene.add(sourceObject);
+            isInitialized = true;
+            teleportBtn.disabled = false;
+            statusText.textContent = 'Object initialized, ready for teleportation';
+            updateDisplays();
+        });
+
+        let teleportProgress = 0;
+        teleportBtn.addEventListener('click', () => {
+            if (!isInitialized) return;
+            isTeleporting = true;
+            teleportBtn.disabled = true;
+            
+            if (targetObject) targetScene.remove(targetObject);
+            targetObject = createObject(currentObjectType);
+            targetObject.material.opacity = 0;
+            targetScene.add(targetObject);
+            
+            teleportProgress = 0;
+            statusText.textContent = 'Teleportation in progress...';
+        });
+
+        // Animation
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            if (sourceObject) {
+                sourceObject.rotation.x = time;
+                sourceObject.rotation.y = time * 0.5;
+                
+                const quantumState = quantumStateSlider.value / 100;
+                const phaseAngle = (phaseAngleSlider.value * Math.PI) / 180;
+                sourceObject.material.opacity = 0.4 + quantumState * 0.6;
+                sourceObject.position.y = Math.sin(time + phaseAngle) * 0.2;
+            }
+
+            if (isTeleporting) {
+                if (teleportProgress < 100) {
+                    teleportProgress += 1;
+                    const progress = teleportProgress / 100;
+                    
+                    if (sourceObject) sourceObject.material.opacity = 1 - progress;
+                    if (targetObject) targetObject.material.opacity = progress;
+                    
+                    statusText.textContent = `Teleportation progress: ${teleportProgress}%`;
+                } else {
+                    isTeleporting = false;
+                    isInitialized = false;
+                    teleportBtn.disabled = true;
+                    statusText.textContent = 'Teleportation complete';
+                }
+            }
+
+            // Animate quantum fields
+            sourceField.rotation.x = time * 0.5;
+            targetField.rotation.x = time * 0.5;
+            const fieldScale = 1 + Math.sin(time * 2) * 0.1;
+            sourceField.scale.set(fieldScale, fieldScale, 1);
+            targetField.scale.set(fieldScale, fieldScale, 1);
+
+            sourceRenderer.render(sourceScene, sourceCamera);
+            targetRenderer.render(targetScene, targetCamera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const sourceWidth = sourceContainer.clientWidth;
+            const sourceHeight = sourceContainer.clientHeight;
+            sourceCamera.aspect = sourceWidth / sourceHeight;
+            sourceCamera.updateProjectionMatrix();
+            sourceRenderer.setSize(sourceWidth, sourceHeight);
+
+            const targetWidth = targetContainer.clientWidth;
+            const targetHeight = targetContainer.clientHeight;
+            targetCamera.aspect = targetWidth / targetHeight;
+            targetCamera.updateProjectionMatrix();
+            targetRenderer.setSize(targetWidth, targetHeight);
+        });
+
+        // Initialize
+        updateDisplays();
+        animate();
+
+        // Add event listeners for real-time updates
+        quantumStateSlider.addEventListener('input', updateDisplays);
+        phaseAngleSlider.addEventListener('input', updateDisplays);
+        entanglementSlider.addEventListener('input', updateDisplays);
+    </script>
+</body>
+</html>

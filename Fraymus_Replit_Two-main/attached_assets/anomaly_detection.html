@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYMUS Anomaly Detection</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="../public/js/nav-template.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 70px;
+            width: 100%;
+            color: #0ff;
+            text-align: center;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        .controls {
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            color: #0ff;
+            font-family: monospace;
+            border: 1px solid #0ff;
+        }
+        .status {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            color: #0ff;
+            font-family: monospace;
+            border: 1px solid #0ff;
+            text-align: center;
+        }
+        .status div {
+            margin: 5px 0;
+        }
+        .degraded {
+            color: #ff3333;
+        }
+    </style>
+    <script src="js/nav-template.js"></script>
+</head>
+<body>
+    <div id="info">FRAYMUS Anomaly Detection System</div>
+    <div class="controls">
+        <div>Detection Sensitivity</div>
+        <input type="range" id="sensitivity" min="0" max="100" value="50"><br><br>
+        <div>AI Response Time</div>
+        <input type="range" id="response" min="0" max="100" value="75"><br><br>
+        <div>Background Noise</div>
+        <input type="range" id="noise" min="0" max="100" value="25"><br><br>
+        <button id="injectAnomaly">Inject Test Anomaly</button>
+    </div>
+    <div class="status">
+        <div id="detectionRate">Detection Rate: 0.0%</div>
+        <div id="falsePositives">False Positives: 0</div>
+        <div id="systemStatus">System Status: Normal</div>
+    </div>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        // Create detection field
+        const fieldGeometry = new THREE.BoxGeometry(10, 10, 10);
+        const fieldMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00ffff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const field = new THREE.Mesh(fieldGeometry, fieldMaterial);
+        scene.add(field);
+
+        // Create anomaly particles
+        const particles = new THREE.Group();
+        for(let i = 0; i < 100; i++) {
+            const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.5
+            });
+            const particle = new THREE.Mesh(geometry, material);
+            particle.position.set(
+                (Math.random() - 0.5) * 8,
+                (Math.random() - 0.5) * 8,
+                (Math.random() - 0.5) * 8
+            );
+            particle.userData.isAnomaly = false;
+            particles.add(particle);
+        }
+        scene.add(particles);
+
+        camera.position.z = 15;
+
+        // Controls
+        const sensitivity = document.getElementById('sensitivity');
+        const response = document.getElementById('response');
+        const noise = document.getElementById('noise');
+        const injectButton = document.getElementById('injectAnomaly');
+
+        let time = 0;
+        let anomalyCount = 0;
+        let falsePositives = 0;
+        let anomalyActive = false;
+
+        function injectAnomaly() {
+            anomalyActive = true;
+            const anomalyParticles = Math.floor(Math.random() * 10) + 5;
+            
+            for(let i = 0; i < anomalyParticles; i++) {
+                const particle = particles.children[Math.floor(Math.random() * particles.children.length)];
+                particle.material.color.setHex(0xff0000);
+                particle.material.emissive.setHex(0xff0000);
+                particle.userData.isAnomaly = true;
+            }
+            
+            anomalyCount++;
+            updateStatus();
+        }
+
+        function updateStatus() {
+            const detectionRate = ((anomalyCount / (anomalyCount + falsePositives)) * 100 || 0).toFixed(1);
+            document.getElementById('detectionRate').textContent = `Detection Rate: ${detectionRate}%`;
+            document.getElementById('falsePositives').textContent = `False Positives: ${falsePositives}`;
+            
+            const status = document.getElementById('systemStatus');
+            if(anomalyActive) {
+                status.textContent = 'System Status: Degraded';
+                status.classList.add('degraded');
+            } else {
+                status.textContent = 'System Status: Normal';
+                status.classList.remove('degraded');
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            // Update field
+            field.rotation.x = time * 0.1;
+            field.rotation.y = time * 0.2;
+
+            // Update particles
+            const noiseLevel = noise.value / 100;
+            const sensitivityLevel = sensitivity.value / 100;
+            
+            particles.children.forEach((particle) => {
+                // Add noise movement
+                particle.position.x += (Math.random() - 0.5) * noiseLevel * 0.1;
+                particle.position.y += (Math.random() - 0.5) * noiseLevel * 0.1;
+                particle.position.z += (Math.random() - 0.5) * noiseLevel * 0.1;
+
+                // Keep particles within field
+                if(Math.abs(particle.position.x) > 5) particle.position.x *= -0.9;
+                if(Math.abs(particle.position.y) > 5) particle.position.y *= -0.9;
+                if(Math.abs(particle.position.z) > 5) particle.position.z *= -0.9;
+
+                // Random false positives based on sensitivity
+                if(Math.random() < sensitivityLevel * 0.001 && !particle.userData.isAnomaly) {
+                    particle.material.color.setHex(0xff0000);
+                    falsePositives++;
+                    updateStatus();
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Event handlers
+        injectButton.addEventListener('click', injectAnomaly);
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

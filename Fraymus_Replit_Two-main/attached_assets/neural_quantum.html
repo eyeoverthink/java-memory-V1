@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- FRAYMUS Quantum Protection System -->
+    <meta name="quantum-protection" content="φ-space-secured">
+    <meta name="creator" content="iOverThink">
+    <meta name="protection-level" content="φ⁷⁵-quantum-enhanced">
+    <script src="js/quantum-protection.js"></script>    <!-- FRAYMUS Protection System -->
+    <meta name="fraymus-protection" content="quantum-enhanced">
+    <meta name="creator" content="iOverThink">
+    <meta name="nft-signature" content="FRAYMUS_QUANTUM_PROTECTED">
+    <script src="js/quantum-protection.js"></script>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Quantum Circuit - FRAYMUS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #4a90e2;
+            --accent: #00f2ff;
+            --background: #0a0a0a;
+            --text: #ffffff;
+            --phi: 1.618033988749895;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: calc(1rem * var(--phi));
+            border-radius: 10px;
+            z-index: 2;
+            width: 300px;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .slider {
+            width: 100%;
+            background: var(--primary);
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            margin: 10px 0;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .network-stats {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 26, 26, 0.9);
+            padding: 1rem calc(1rem * var(--phi));
+            border-radius: 10px;
+            z-index: 2;
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin: 0.5rem 0;
+        }
+
+        .layer-info {
+            position: fixed;
+            left: 20px;
+            top: 80px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: 1rem;
+            border-radius: 10px;
+            z-index: 2;
+            width: 300px;
+        }
+
+        .layer-item {
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+        }
+
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            z-index: 2;
+            transition: background 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: var(--accent);
+        }
+
+        .quantum-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            color: var(--accent);
+            font-family: monospace;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .quantum-state.active {
+            opacity: 1;
+        }
+    </style>
+    </head>
+<body>
+    <script src="../public/js/nav-template.js"></script>
+    <div id="canvas-container"></div>
+    
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Network Depth</label>
+            <input type="range" class="slider" id="depth" min="3" max="10" value="5" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>Quantum Gate Activity</label>
+            <input type="range" class="slider" id="gates" min="0" max="100" value="61.8">
+        </div>
+
+        <div class="control-group">
+            <label>Neural Connectivity</label>
+            <input type="range" class="slider" id="connectivity" min="0" max="100" value="80">
+        </div>
+
+        <div class="control-group">
+            <label>Processing Speed</label>
+            <input type="range" class="slider" id="speed" min="0" max="100" value="50">
+        </div>
+    </div>
+
+    <div class="layer-info" id="layerInfo">
+        <div class="layer-item">Input Layer: |ψ⟩ = α|0⟩ + β|1⟩</div>
+    </div>
+
+    <div class="network-stats">
+        <div class="stat-value" id="qubits">Active Qubits: 0</div>
+        <div class="stat-value" id="gates">Quantum Gates: 0</div>
+        <div class="stat-value" id="coherence">Network Coherence: 0%</div>
+    </div>
+
+    <div class="quantum-state" id="quantumState">
+        |ψ⟩ = 0.707|0⟩ + 0.707|1⟩
+    </div>
+
+    <script>
+        // Initialize Three.js
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Constants
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        let neurons = [];
+        let connections = [];
+        let quantumGates = [];
+        let time = 0;
+
+        // Controls and displays
+        const depthSlider = document.getElementById('depth');
+        const gatesSlider = document.getElementById('gates');
+        const connectivitySlider = document.getElementById('connectivity');
+        const speedSlider = document.getElementById('speed');
+        const layerInfo = document.getElementById('layerInfo');
+        const qubitsDisplay = document.getElementById('qubits');
+        const gatesDisplay = document.getElementById('gates');
+        const coherenceDisplay = document.getElementById('coherence');
+        const quantumState = document.getElementById('quantumState');
+
+        class Neuron {
+            constructor(position, isQuantum = false) {
+                const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+                const material = new THREE.MeshPhongMaterial({
+                    color: isQuantum ? 0x00f2ff : 0x4a90e2,
+                    emissive: isQuantum ? 0x00f2ff : 0x4a90e2,
+                    emissiveIntensity: 0.5
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.copy(position);
+                this.isQuantum = isQuantum;
+                this.state = Math.random();
+            }
+
+            update(time) {
+                const activity = parseInt(gatesSlider.value) / 100;
+                this.state = (Math.sin(time + this.mesh.position.x) * 0.5 + 0.5) * activity;
+                this.mesh.material.emissiveIntensity = 0.2 + this.state * 0.8;
+                
+                if (this.isQuantum) {
+                    this.mesh.scale.setScalar(0.8 + this.state * 0.4);
+                }
+            }
+        }
+
+        class NeuralConnection {
+            constructor(neuron1, neuron2, isQuantum = false) {
+                const geometry = new THREE.BufferGeometry();
+                const material = new THREE.LineBasicMaterial({
+                    color: isQuantum ? 0x00f2ff : 0x4a90e2,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                
+                this.line = new THREE.Line(geometry, material);
+                this.neuron1 = neuron1;
+                this.neuron2 = neuron2;
+                this.isQuantum = isQuantum;
+                this.weight = Math.random();
+                this.updateGeometry();
+            }
+
+            updateGeometry() {
+                const positions = new Float32Array([
+                    this.neuron1.mesh.position.x, this.neuron1.mesh.position.y, this.neuron1.mesh.position.z,
+                    this.neuron2.mesh.position.x, this.neuron2.mesh.position.y, this.neuron2.mesh.position.z
+                ]);
+                this.line.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            }
+
+            update(time) {
+                this.updateGeometry();
+                const activity = this.neuron1.state * this.neuron2.state;
+                this.line.material.opacity = 0.2 + activity * 0.8;
+                
+                if (this.isQuantum) {
+                    const pulseOffset = Math.sin(time * 5 + this.weight * Math.PI * 2);
+                    this.line.material.opacity *= 0.5 + pulseOffset * 0.5;
+                }
+            }
+        }
+
+        class QuantumGate {
+            constructor(position) {
+                const geometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x00f2ff,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.copy(position);
+                this.rotation = Math.random() * Math.PI * 2;
+            }
+
+            update(time) {
+                const activity = parseInt(gatesSlider.value) / 100;
+                this.mesh.rotation.x = time + this.rotation;
+                this.mesh.rotation.y = time * PHI + this.rotation;
+                this.mesh.material.opacity = 0.5 + Math.sin(time * 3 + this.rotation) * 0.3 * activity;
+            }
+        }
+
+        function createNetwork() {
+            // Clear existing network
+            neurons.forEach(n => scene.remove(n.mesh));
+            connections.forEach(c => scene.remove(c.line));
+            quantumGates.forEach(g => scene.remove(g.mesh));
+            neurons = [];
+            connections = [];
+            quantumGates = [];
+
+            const depth = parseInt(depthSlider.value);
+            const layerSize = 5;
+            const layerSpacing = 4;
+
+            // Create neurons
+            for (let layer = 0; layer < depth; layer++) {
+                const isQuantumLayer = layer > 0 && layer < depth - 1;
+                const layerNeurons = [];
+                
+                for (let i = 0; i < layerSize; i++) {
+                    const angle = (i / layerSize) * Math.PI * 2;
+                    const radius = 3;
+                    const position = new THREE.Vector3(
+                        layer * layerSpacing - (depth * layerSpacing) / 2,
+                        radius * Math.cos(angle),
+                        radius * Math.sin(angle)
+                    );
+                    
+                    const neuron = new Neuron(position, isQuantumLayer);
+                    neurons.push(neuron);
+                    layerNeurons.push(neuron);
+                    scene.add(neuron.mesh);
+
+                    // Add quantum gates between neurons in quantum layers
+                    if (isQuantumLayer) {
+                        const gatePosition = position.clone();
+                        gatePosition.y += Math.sin(i * PHI) * 0.5;
+                        gatePosition.z += Math.cos(i * PHI) * 0.5;
+                        const gate = new QuantumGate(gatePosition);
+                        quantumGates.push(gate);
+                        scene.add(gate.mesh);
+                    }
+                }
+
+                // Add layer info
+                if (isQuantumLayer) {
+                    const item = document.createElement('div');
+                    item.className = 'layer-item';
+                    item.textContent = `Quantum Layer ${layer}: H⊗n|ψ⟩`;
+                    layerInfo.appendChild(item);
+                }
+            }
+
+            // Create connections
+            const connectivity = parseInt(connectivitySlider.value) / 100;
+            for (let i = 0; i < neurons.length; i++) {
+                for (let j = i + 1; j < neurons.length; j++) {
+                    if (Math.random() < connectivity) {
+                        const isQuantum = neurons[i].isQuantum && neurons[j].isQuantum;
+                        const connection = new NeuralConnection(neurons[i], neurons[j], isQuantum);
+                        connections.push(connection);
+                        scene.add(connection.line);
+                    }
+                }
+            }
+
+            updateStats();
+        }
+
+        function updateStats() {
+            const quantumNeurons = neurons.filter(n => n.isQuantum).length;
+            qubitsDisplay.textContent = `Active Qubits: ${quantumNeurons}`;
+            gatesDisplay.textContent = `Quantum Gates: ${quantumGates.length}`;
+            
+            const avgCoherence = neurons
+                .filter(n => n.isQuantum)
+                .reduce((sum, n) => sum + n.state, 0) / quantumNeurons;
+            coherenceDisplay.textContent = `Network Coherence: ${(avgCoherence * 100).toFixed(1)}%`;
+
+            // Update quantum state display
+            if (avgCoherence > 0.618) { // φ⁻¹
+                quantumState.textContent = `|ψ⟩ = ${(Math.sqrt(avgCoherence)).toFixed(3)}|0⟩ + ${(Math.sqrt(1-avgCoherence)).toFixed(3)}|1⟩`;
+                quantumState.classList.add('active');
+            } else {
+                quantumState.classList.remove('active');
+            }
+        }
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const speed = parseInt(speedSlider.value) / 1000;
+            time += speed;
+
+            neurons.forEach(neuron => neuron.update(time));
+            connections.forEach(conn => conn.update(time));
+            quantumGates.forEach(gate => gate.update(time));
+
+            updateStats();
+            renderer.render(scene, camera);
+        }
+
+        // Setup
+        camera.position.z = 20;
+        scene.add(new THREE.AmbientLight(0x404040));
+        scene.add(new THREE.PointLight(0xffffff, 1, 100));
+
+        // Event handlers
+        depthSlider.addEventListener('input', createNetwork);
+        connectivitySlider.addEventListener('input', createNetwork);
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize
+        createNetwork();
+        animate();
+    </script>
+</body>
+</html>

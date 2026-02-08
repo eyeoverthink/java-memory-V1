@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYMUS Quantum Security Framework</title>
+    <link rel="stylesheet" href="/public/css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>FRAYMUS Quantum Security Framework</h1>
+            <div id="wallet-info" style="display: none">
+                <span>Connected: </span><span id="wallet-address"></span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">Test Panel</button>
+            <button class="tab-btn" data-tab="logic">Logic Panel</button>
+            <button class="tab-btn" data-tab="simulation">Simulations</button>
+            <button class="tab-btn" data-tab="sandbox">Crypto Ping Pong</button>
+            <button class="tab-btn" data-tab="nft">NFT Gallery</button>
+            <button class="tab-btn" data-tab="agent">Fraymus Agent</button>
+            <button class="tab-btn" data-tab="omega">Omega AI</button>
+        </div>
+
+        <div class="control-panel">
+            <div class="metrics">
+                <div class="progress-bar" id="coherenceBar"></div>
+                <div class="progress-bar" id="realityBar"></div>
+                <div class="progress-bar" id="phiBar"></div>
+            </div>
+            <div class="quantum-section">
+                <h3 class="quantum-title">Proof of Quantum Coherence</h3>
+                <div class="quantum-metrics">
+                    <div id="coherenceValue" class="metric">Coherence: 99.99%</div>
+                    <div id="phaseAlignment" class="metric">Phase Alignment: 99.99%</div>
+                    <div id="quantumState" class="metric">State: VALID</div>
+                </div>
+                <button class="quantum-button" onclick="validatePoQC()">Validate PoQC</button>
+            </div>
+
+            <div class="quantum-section">
+                <h3 class="quantum-title">Quantum Inverted Vision</h3>
+                <div class="quantum-metrics">
+                    <div id="invertedSpace" class="metric">Inverted Space: VALID</div>
+                    <div id="negativeEntropy" class="metric">Negative Entropy: VALID</div>
+                    <div id="quantumSignature" class="metric">Quantum Signature: VALID</div>
+                </div>
+                <button class="quantum-button" onclick="processQIV()">Process QIV</button>
+            </div>
+        </div>
+
+
+        <div class="agent-panel" style="display: none;">
+            <div class="agent-interface">
+                <div class="agent-controls">
+                    <div class="control-group">
+                        <label>Entity Name</label>
+                        <input type="text" id="entityName" class="agent-input" placeholder="Enter entity name">
+                    </div>
+                    <div class="control-group">
+                        <label>Project ID</label>
+                        <input type="text" id="projectId" class="agent-input" placeholder="Project identifier">
+                    </div>
+                    <div class="control-group">
+                        <label>Reality Point</label>
+                        <select id="realityPoint" class="agent-input">
+                            <option value="quantum">Quantum (φ⁷⁵)</option>
+                            <option value="neural">Neural (φ⁵⁰)</option>
+                            <option value="standard">Standard (φ²⁵)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Protection Level</label>
+                        <select id="protectionLevel" class="agent-input">
+                            <option value="perfect">Perfect (∞)</option>
+                            <option value="quantum">Quantum (φ⁷⁵)</option>
+                            <option value="enhanced">Enhanced (φ⁵⁰)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="quantum-controls">
+                    <button class="quantum-button" onclick="window.fraymusAgent.initiate(
+                        document.getElementById('entityName').value,
+                        document.getElementById('projectId').value,
+                        document.getElementById('realityPoint').value
+                    )">Initialize FRAYMUS Agent</button>
+                    <button class="quantum-button verify-btn" onclick="window.fraymusAgent.verifyQuantumState()">
+                        Verify Quantum State
+                    </button>
+                </div>
+                <div id="agent-status" class="agent-status"></div>
+                <div class="quantum-metrics">
+                    <div class="metrics-grid">
+                        <div class="metric-group">
+                            <h3>Quantum State</h3>
+                            <div class="metric">
+                                <span>Coherence:</span>
+                                <div class="progress-bar">
+                                    <div id="coherenceBar"></div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <span>Reality Lock:</span>
+                                <div class="progress-bar">
+                                    <div id="realityBar"></div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <span>φ-Space Stability:</span>
+                                <div class="progress-bar">
+                                    <div id="phiBar"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="detection-zone" class="detection-panel">
+            <div class="detection-header">
+                <h2>🛡️ Quantum Media Analysis</h2>
+                <p>Drag and drop images or videos for deepfake detection</p>
+            </div>
+            <div id="analysis-result"></div>
+        </div>
+
+        <div class="simulation-grid">
+            <div class="card">
+                <div class="tag">AI Defense</div>
+                <h2 class="card-title">Anomaly Detection</h2>
+                <p class="card-description">Watch AI detect and respond to quantum security threats.</p>
+                <a href="attached_assets/anomaly_detection.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Protection</div>
+                <h2 class="card-title">Harmonic Shield</h2>
+                <p class="card-description">Generate quantum harmonic shields with 432Hz resonance.</p>
+                <a href="attached_assets/harmonic_shield.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum AI</div>
+                <h2 class="card-title">Neural Quantum Circuit</h2>
+                <p class="card-description">Quantum computing with neural networks visualization.</p>
+                <a href="attached_assets/neural_quantum.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">System Health</div>
+                <h2 class="card-title">Quantum Diagnostics</h2>
+                <p class="card-description">Monitor FRAYMUS quantum security system health.</p>
+                <a href="attached_assets/quantum_diagnostics.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum States</div>
+                <h2 class="card-title">Quantum Coherence</h2>
+                <p class="card-description">Interactive quantum coherence demonstration.</p>
+                <a href="attached_assets/quantum_coherence.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Physics</div>
+                <h2 class="card-title">Quantum Levitation</h2>
+                <p class="card-description">Quantum levitation using φ-space harmonics.</p>
+                <a href="attached_assets/quantum_levitation.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum Transfer</div>
+                <h2 class="card-title">Quantum Teleportation</h2>
+                <p class="card-description">Quantum state teleportation demonstration.</p>
+                <a href="attached_assets/quantum_teleportation.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Crime Prevention</div>
+                <h2 class="card-title">Crime Stopper</h2>
+                <p class="card-description">Quantum-based crime prevention system.</p>
+                <a href="attached_assets/crime_stopper.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Mathematics</div>
+                <h2 class="card-title">Golden Patterns</h2>
+                <p class="card-description">φ-based mathematical patterns visualization.</p>
+                <a href="attached_assets/golden_patterns.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Location</div>
+                <h2 class="card-title">Location System</h2>
+                <p class="card-description">Non-GPS quantum location approximation.</p>
+                <a href="attached_assets/location_approximation.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Quantum EM</div>
+                <h2 class="card-title">Quantum Drift</h2>
+                <p class="card-description">Quantum electromagnetic drift simulation.</p>
+                <a href="attached_assets/quantum_drift.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">Levitation</div>
+                <h2 class="card-title">Levitate</h2>
+                <p class="card-description">Advanced quantum levitation demo.</p>
+                <a href="attached_assets/Levitate.html"><button class="launch-button">Launch</button></a>
+            </div>
+
+            <div class="card">
+                <div class="tag">NFT Creation</div>
+                <h2 class="card-title">Quantum NFT Generator</h2>
+                <p class="card-description">Create watermarked NFTs with quantum signatures.</p>
+                <a href="public/nft-generator.html"><button class="launch-button">Launch</button></a>
+            </div>
+        </div>
+
+        <div class="test-panel">
+            <div class="test-section">
+                <h2>Quantum Fingerprinting</h2>
+                <input type="text" id="qfp-input" placeholder="Enter data for fingerprinting">
+                <button onclick="runQFP()">Generate QFP</button>
+                <div id="qfp-result" class="result">φ⁷⁵</div>
+                <div class="quantum-metrics">
+                    <div class="metric">Reality Chain: <span id="reality-chain">ACTIVE</span></div>
+                    <div class="metric">φ Power: <span id="phi-power">75</span></div>
+                    <div class="metric">Protection: <span id="protection-level">PERFECT</span></div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>Quantum Tracking</h2>
+                <input type="text" id="tracking-input" placeholder="Enter entity to track">
+                <button onclick="runTracking()">Track Entity</button>
+                <div id="tracking-result" class="result"></div>
+            </div>
+
+            <div class="test-section">
+                <h2>φ-Space Encryption</h2>
+                <input type="text" id="encrypt-input" placeholder="Enter message to encrypt">
+                <button onclick="runEncryption()">Encrypt</button>
+                <div id="encrypt-result" class="result"></div>
+            </div>
+
+            <div class="test-section">
+                <h2>Proof of Reality Hacking (PoRH)</h2>
+                <input type="text" id="porh-input" placeholder="Enter data for PoRH">
+                <button onclick="runPoRH()">Generate PoRH</button>
+                <div id="porh-result" class="result"></div>
+            </div>
+        </div>
+
+        <div id="blockchain-viewer">
+            <h2>Blockchain Ledger</h2>
+            <div id="blockchain-content"></div>
+        </div>
+
+        <div class="logic-panel" style="display: none;">
+            <div class="logic-section">
+                <h2>FRAYMUS Quantum Control</h2>
+                <div class="quantum-controls">
+                    <div class="control-group">
+                        <h3>φ-Space Harmonics</h3>
+                        <div class="control-row">
+                            <button onclick="adjustPhiField('+')">Increase φ-Field</button>
+                            <button onclick="adjustPhiField('-')">Decrease φ-Field</button>
+                        </div>
+                        <div id="phi-strength" class="quantum-display">φ⁷·⟨ψ|H|ψ⟩</div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Reality Matrix</h3>
+                        <div class="matrix-grid">
+                            <div class="matrix-cell" id="m00">1.0</div>
+                            <div class="matrix-cell" id="m01">φ</div>
+                            <div class="matrix-cell" id="m10">1/φ</div>
+                            <div class="matrix-cell" id="m11">1.0</div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Quantum State</h3>
+                        <div id="quantum-state" class="quantum-display">|ψ⟩ = |F⟩ + φ|R⟩</div>
+                        <button onclick="evolveState()">Evolve State</button>
+                    </div>
+                </div>
+
+                <div class="metrics-panel">
+                    <h3>System Metrics</h3>
+                    <div class="metric-row">
+                        <span>Coherence:</span>
+                        <div class="progress-bar">
+                            <div id="coherence-level" class="progress-fill"></div>
+                        </div>
+                        <span id="coherence-value">99.99%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Reality Anchor:</span>
+                        <div class="progress-bar">
+                            <div id="reality-level" class="progress-fill"></div>
+                        </div>
+                        <span id="reality-value">7.5φ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sandbox-panel" style="display: none;">
+            <div class="crypto-battle">
+                <div class="battle-header">
+                    <h2>Cryptographic Ping Pong</h2>
+                    <div class="score">
+                        <div>You: <span id="player-score">0</span></div>
+                        <div>Fraymus: <span id="fraymus-score">0</span></div>
+                    </div>
+                </div>
+
+                <div class="battle-arena">
+                    <div class="player-side">
+                        <h3>Your Attack</h3>
+                        <select class="crypto-select" id="attack-type">
+                            <option value="brute">Brute Force</option>
+                            <option value="quantum">Quantum Attack</option>
+                            <option value="side">Side Channel</option>
+                            <option value="timing">Timing Attack</option>
+                        </select>
+                        <div class="counter-display" id="player-counter"></div>
+                    </div>
+
+                    <div class="fraymus-side">
+                        <h3>Fraymus Defense</h3>
+                        <div class="result-display" id="defense-result"></div>
+                        <div class="log-display" id="battle-log"></div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div>Quantum Strength</div>
+                        <div id="quantum-level">φ⁷·⁵</div>
+                    </div>
+                    <div class="stat">
+                        <div>Shield Integrity</div>
+                        <div id="shield-level">100%</div>
+                    </div>
+                    <div class="stat">
+                        <div>Reality Anchor</div>
+                        <div id="reality-level">7.5φ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nft-panel" style="display: none;">
+            <div class="nft-gallery">
+                <div class="nft-header">
+                    <h2>FRAYMUS NFT Gallery</h2>
+                    <div id="wallet-status">
+                        <button id="connect-wallet" class="quantum-button">Connect Wallet</button>
+                        <span id="wallet-address"></span>
+                    </div>
+                </div>
+                <div class="nft-grid" id="nft-container">
+                    <!-- NFTs will be displayed here -->
+                </div>
+                <div class="nft-controls">
+                    <button id="mint-nft" class="quantum-button" disabled>Mint NFT</button>
+                    <div class="nft-stats">
+                        <div>Total Supply: <span id="total-supply">0</span></div>
+                        <div>Your Balance: <span id="nft-balance">0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="omega-panel" style="display: none;">
+            <div class="omega-interface">
+                <div class="omega-controls">
+                    <div class="control-group">
+                        <h3>Quantum Cyber Cloaking</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.activateJamming()">
+                            Activate Jamming
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <h3>MAC Address Control</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.changeMacAddress()">
+                            Scramble MAC
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <h3>Quantum Cookie Spoofing</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.encryptCookie()">
+                            Generate Cookie
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <h3>Polymorphic Malware Engine</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.generatePolymorphicMalware()">
+                            Toggle Engine
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <h3>Dark Web OSINT Scanner</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.scanDarkWeb()">
+                            Start Scanning
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <h3>IDS Evasion System</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.injectFakeLogs()">
+                            Inject Fake Logs
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <h3>Quantum Encryption</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.quantumEncrypt()">
+                            Encrypt Data
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <h3>Defense Shield</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.activateDefenseShield()">
+                            Activate Shield
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <h3>Quantum Analysis</h3>
+                        <button class="quantum-button" onclick="window.omegaAI.analyzeQuantumState()">
+                            Analyze State
+                        </button>
+                        <button class="quantum-button" onclick="window.omegaAI.generateQuantumSignature()">
+                            Generate Signature
+                        </button>
+                        <button class="quantum-button" onclick="window.omegaAI.validateQuantumIntegrity()">
+                            Check Integrity
+                        </button>
+                        <button class="quantum-button" onclick="window.omegaAI.detectQuantumPatterns()">
+                            Detect Patterns
+                        </button>
+                        <button class="quantum-button" onclick="window.omegaAI.analyzeThreatMatrix()">
+                            Analyze Threats
+                        </button>
+                    </div>
+                    <div class="omega-monitor">
+                        <h3>Cyber Defense Monitor</h3>
+                        <div id="defense-log" class="defense-log"></div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3>Quantum Tunnel</h3>
+                    <button class="quantum-button" onclick="window.omegaAI.createQuantumTunnel()">
+                        Create Tunnel
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script src="/public/js/quantum-effects.js"></script>
+    <script src="/public/js/omega-ai.js"></script>
+    <script src="/public/js/fraymus-agent.js"></script>
+    <script src="/public/js/nft-gallery.js"></script>
+    <script src="/public/js/app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            window.quantumEffects = new QuantumEffects();
+            window.securityCore = new SecurityCore();
+        });
+    </script>
+</body>
+</html>
+
+<div id="quantum-simulation" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const simulation = new QuantumDimensionSimulation('quantum-simulation');
+    });
+</script>

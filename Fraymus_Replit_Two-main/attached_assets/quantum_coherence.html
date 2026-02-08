@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYMUS PoQC Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 70px;
+            width: 100%;
+            color: #0ff;
+            text-align: center;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        .math-panel {
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            color: #0ff;
+            font-family: monospace;
+            border: 1px solid #0ff;
+        }
+        .math-formula {
+            margin: 10px 0;
+            color: #fff;
+        }
+        .math-explanation {
+            color: #0ff;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+    </style>
+    </head>
+<body>
+    <script src="../public/js/nav-template.js"></script>
+    <div id="info">FRAYMUS Proof of Quantum Coherence (PoQC)</div>
+    <div class="math-panel">
+        <h3>Quantum Coherence Physics</h3>
+        <div class="math-formula">|ψ⟩ = α|0⟩ + β|1⟩ × <span id="stateValue">0.99</span></div>
+        <div class="math-explanation">Quantum state superposition</div>
+        <div class="math-formula">C(t) = ⟨ψ(0)|ψ(t)⟩ × <span id="coherenceValue">0.95</span></div>
+        <div class="math-explanation">Coherence measure over time</div>
+        <div class="math-formula">φ(t) = e^(-t/T₂) × <span id="phaseValue">1.00</span></div>
+        <div class="math-explanation">Phase coherence decay</div>
+    </div>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        // Create quantum state sphere
+        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.8,
+            wireframe: true
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        // Create coherence field
+        const fieldGeometry = new THREE.TorusGeometry(2, 0.1, 16, 100);
+        const fieldMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00ff00,
+            transparent: true,
+            opacity: 0.5
+        });
+        const field = new THREE.Mesh(fieldGeometry, fieldMaterial);
+        scene.add(field);
+
+        // Add quantum particles
+        const particles = new THREE.Group();
+        for(let i = 0; i < 50; i++) {
+            const particleGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+            const particleMaterial = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.5
+            });
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+            particle.position.set(
+                (Math.random() - 0.5) * 4,
+                (Math.random() - 0.5) * 4,
+                (Math.random() - 0.5) * 4
+            );
+            particles.add(particle);
+        }
+        scene.add(particles);
+
+        camera.position.z = 5;
+
+        // Animation variables
+        let time = 0;
+        const settings = {
+            coherenceStrength: 0.95,
+            phaseAlignment: 1.0,
+            quantumNoise: 0.1
+        };
+
+        // GUI Controls
+        const gui = new dat.GUI();
+        gui.add(settings, 'coherenceStrength', 0, 1).name('Coherence');
+        gui.add(settings, 'phaseAlignment', 0, 1).name('Phase');
+        gui.add(settings, 'quantumNoise', 0, 0.5).name('Noise');
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            // Update quantum state visualization
+            sphere.scale.set(
+                1 + Math.sin(time) * settings.quantumNoise,
+                1 + Math.cos(time) * settings.quantumNoise,
+                1 + Math.sin(time * 0.5) * settings.quantumNoise
+            );
+
+            // Rotate field based on phase alignment
+            field.rotation.x = time * settings.phaseAlignment;
+            field.rotation.y = time * settings.phaseAlignment * 0.5;
+
+            // Update particles
+            particles.children.forEach((particle, i) => {
+                particle.position.x += Math.sin(time + i) * 0.01 * settings.coherenceStrength;
+                particle.position.y += Math.cos(time + i) * 0.01 * settings.coherenceStrength;
+                particle.position.z += Math.sin(time * 0.5 + i) * 0.01 * settings.coherenceStrength;
+            });
+
+            // Update math panel
+            document.getElementById('stateValue').textContent = 
+                (settings.coherenceStrength * 0.99).toFixed(3);
+            document.getElementById('coherenceValue').textContent = 
+                settings.coherenceStrength.toFixed(3);
+            document.getElementById('phaseValue').textContent = 
+                settings.phaseAlignment.toFixed(3);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

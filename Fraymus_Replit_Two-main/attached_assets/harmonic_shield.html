@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- FRAYMUS Quantum Protection System -->
+    <meta name="quantum-protection" content="φ-space-secured">
+    <meta name="creator" content="iOverThink">
+    <meta name="protection-level" content="φ⁷⁵-quantum-enhanced">
+    <script src="js/quantum-protection.js"></script>    <!-- FRAYMUS Protection System -->
+    <meta name="fraymus-protection" content="quantum-enhanced">
+    <meta name="creator" content="iOverThink">
+    <meta name="nft-signature" content="FRAYMUS_QUANTUM_PROTECTED">
+    <script src="js/fraymus-protection.js"></script>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonic Shield Generator - FRAYMUS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #4a90e2;
+            --accent: #00f2ff;
+            --background: #0a0a0a;
+            --text: #ffffff;
+            --phi: 1.618033988749895;
+            --shield: #4a90e2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: calc(1rem * var(--phi));
+            border-radius: 10px;
+            z-index: 2;
+            width: 300px;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .slider {
+            width: 100%;
+            background: var(--primary);
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            margin: 10px 0;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .button {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--secondary);
+            color: var(--text);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .button:hover {
+            background: var(--accent);
+        }
+
+        .shield-status {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 26, 26, 0.9);
+            padding: 1rem calc(1rem * var(--phi));
+            border-radius: 10px;
+            z-index: 2;
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .status-value {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin: 0.5rem 0;
+        }
+
+        .frequency-display {
+            position: fixed;
+            left: 20px;
+            top: 80px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: 1rem;
+            border-radius: 10px;
+            z-index: 2;
+            width: 300px;
+        }
+
+        .frequency-value {
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: var(--shield);
+            margin: 0.5rem 0;
+        }
+
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            z-index: 2;
+            transition: background 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: var(--accent);
+        }
+
+        .resonance-alert {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--accent);
+            font-size: 2rem;
+            text-shadow: 0 0 10px var(--accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .resonance-alert.active {
+            opacity: 1;
+        }
+    </style>
+    <script src="../public/js/nav-template.js"></script>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Base Frequency (Hz)</label>
+            <input type="range" class="slider" id="frequency" min="400" max="440" value="432" step="0.1">
+        </div>
+
+        <div class="control-group">
+            <label>Harmonic Intensity</label>
+            <input type="range" class="slider" id="intensity" min="0" max="100" value="61.8">
+        </div>
+
+        <div class="control-group">
+            <label>Shield Radius</label>
+            <input type="range" class="slider" id="radius" min="5" max="20" value="10">
+        </div>
+
+        <div class="control-group">
+            <label>Rotation Speed</label>
+            <input type="range" class="slider" id="speed" min="0" max="100" value="50">
+        </div>
+
+        <button class="button" id="harmonize">Harmonize Shield</button>
+    </div>
+
+    <div class="frequency-display">
+        <div class="frequency-value" id="currentFreq">432.000 Hz</div>
+        <div class="frequency-value" id="harmonicFreq">φ: 699.124 Hz</div>
+    </div>
+
+    <div class="shield-status">
+        <div class="status-value" id="shieldStrength">Shield Strength: 100%</div>
+        <div class="status-value" id="harmonicLevel">Harmonic Level: φ</div>
+        <div class="status-value" id="resonance">Resonance: Stable</div>
+    </div>
+
+    <div class="resonance-alert" id="resonanceAlert">HARMONIC RESONANCE ACHIEVED</div>
+
+    <script>
+        // Initialize Three.js
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Constants
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        let shield;
+        let harmonics = [];
+        let time = 0;
+
+        // Controls and displays
+        const frequencySlider = document.getElementById('frequency');
+        const intensitySlider = document.getElementById('intensity');
+        const radiusSlider = document.getElementById('radius');
+        const speedSlider = document.getElementById('speed');
+        const harmonizeButton = document.getElementById('harmonize');
+        const currentFreqDisplay = document.getElementById('currentFreq');
+        const harmonicFreqDisplay = document.getElementById('harmonicFreq');
+        const shieldStrengthDisplay = document.getElementById('shieldStrength');
+        const harmonicLevelDisplay = document.getElementById('harmonicLevel');
+        const resonanceDisplay = document.getElementById('resonance');
+        const resonanceAlert = document.getElementById('resonanceAlert');
+
+        class HarmonicShield {
+            constructor(radius) {
+                const geometry = new THREE.IcosahedronGeometry(radius, 2);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x4a90e2,
+                    transparent: true,
+                    opacity: 0.3,
+                    wireframe: true
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.radius = radius;
+                this.strength = 1.0;
+                this.harmonicLevel = 1.0;
+            }
+
+            update(time) {
+                const frequency = parseFloat(frequencySlider.value);
+                const intensity = parseInt(intensitySlider.value) / 100;
+                
+                // Update shield properties based on frequency proximity to 432Hz
+                const frequencyRatio = Math.abs(432 - frequency) / 432;
+                this.strength = Math.max(0, 1 - frequencyRatio);
+                
+                // Apply harmonic modulation
+                const scale = 1 + Math.sin(time * PHI) * 0.1 * intensity;
+                this.mesh.scale.setScalar(scale);
+                
+                // Update material properties
+                this.mesh.material.opacity = 0.3 * this.strength;
+                this.mesh.material.color.setHSL(0.5 + Math.sin(time) * 0.1, 0.8, 0.5);
+            }
+        }
+
+        class HarmonicRing {
+            constructor(radius, index) {
+                const geometry = new THREE.TorusGeometry(radius, 0.1, 16, 100);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x00f2ff,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.index = index;
+            }
+
+            update(time) {
+                const intensity = parseInt(intensitySlider.value) / 100;
+                
+                // Rotate based on harmonic series
+                this.mesh.rotation.x = time * (this.index + 1) * 0.1;
+                this.mesh.rotation.y = time * (this.index + 1) * 0.2;
+                
+                // Pulse with intensity
+                const scale = 1 + Math.sin(time * PHI + this.index) * 0.1 * intensity;
+                this.mesh.scale.setScalar(scale);
+                
+                // Update opacity based on harmonic resonance
+                this.mesh.material.opacity = 0.5 * intensity;
+            }
+        }
+
+        function createShield() {
+            if (shield) scene.remove(shield.mesh);
+            harmonics.forEach(h => scene.remove(h.mesh));
+            
+            const radius = parseInt(radiusSlider.value);
+            shield = new HarmonicShield(radius);
+            scene.add(shield.mesh);
+            
+            // Create harmonic rings
+            harmonics = [];
+            for (let i = 0; i < 5; i++) {
+                const ring = new HarmonicRing(radius * (1 + i * 0.2), i);
+                harmonics.push(ring);
+                scene.add(ring.mesh);
+            }
+        }
+
+        function harmonizeShield() {
+            frequencySlider.value = "432.0";
+            intensitySlider.value = "61.8"; // φ⁻¹ * 100
+            updateDisplays();
+            resonanceAlert.classList.add('active');
+            setTimeout(() => resonanceAlert.classList.remove('active'), 2000);
+        }
+
+        function updateDisplays() {
+            const frequency = parseFloat(frequencySlider.value);
+            const harmonicFreq = frequency * PHI;
+            
+            currentFreqDisplay.textContent = `${frequency.toFixed(3)} Hz`;
+            harmonicFreqDisplay.textContent = `φ: ${harmonicFreq.toFixed(3)} Hz`;
+            
+            const strength = Math.abs(432 - frequency) < 1 ? 100 : Math.max(0, 100 - Math.abs(432 - frequency));
+            shieldStrengthDisplay.textContent = `Shield Strength: ${strength.toFixed(1)}%`;
+            
+            const harmonicLevel = parseInt(intensitySlider.value) / 100;
+            harmonicLevelDisplay.textContent = `Harmonic Level: ${(harmonicLevel * PHI).toFixed(3)}`;
+            
+            const resonance = strength > 90 ? 'Optimal' : strength > 70 ? 'Stable' : 'Unstable';
+            resonanceDisplay.textContent = `Resonance: ${resonance}`;
+        }
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const speed = parseInt(speedSlider.value) / 1000;
+            time += speed;
+
+            if (shield) {
+                shield.update(time);
+                harmonics.forEach(h => h.update(time));
+                updateDisplays();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Setup
+        camera.position.z = 30;
+        scene.add(new THREE.AmbientLight(0x404040));
+        scene.add(new THREE.PointLight(0xffffff, 1, 100));
+
+        // Event handlers
+        radiusSlider.addEventListener('input', createShield);
+        harmonizeButton.addEventListener('click', harmonizeShield);
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize
+        createShield();
+        animate();
+    </script>
+</body>
+</html>

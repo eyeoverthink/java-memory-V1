@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYMUS Quantum Levitation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; background: #000; color: #0ff; font-family: monospace; }
+        .nav-link:hover {
+            background: #0ff;
+            color: #000;
+        }
+        #simulation-container {
+            position: absolute;
+            top: 50px;
+            width: 100%;
+            height: calc(100vh - 50px);
+        }
+        .physics-panel {
+            position: absolute;
+            left: 20px;
+            top: 70px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 1px solid #0ff;
+        }
+        .controls-panel {
+            position: absolute;
+            right: 20px;
+            top: 70px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 1px solid #0ff;
+        }
+        .slider-group {
+            margin: 10px 0;
+        }
+        .slider-label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="range"] {
+            width: 200px;
+        }
+        .value-display {
+            display: inline-block;
+            min-width: 50px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<script src="../public/js/nav-template.js"></script>
+    <div id="info"></div>
+
+    <div id="simulation-container"></div>
+
+    <div class="physics-panel">
+        <h3>Quantum Levitation Physics</h3>
+        <div class="formula">F = -∇V(r) × φ⁷ = <span id="force-value">0.100</span></div>
+        <div class="explanation">Levitation force from quantum potential</div>
+        <div class="formula">E = ℏω × <span id="energy-value">2.0</span></div>
+        <div class="explanation">Harmonic oscillator energy</div>
+        <div class="formula">ψ(t) = e<sup>-iωt</sup> × <span id="phase-value">0.000</span></div>
+        <div class="explanation">Quantum state phase evolution</div>
+    </div>
+
+    <div class="controls-panel">
+        <div class="slider-group">
+            <label class="slider-label">Quantum Drift</label>
+            <input type="range" id="quantum-drift" min="0" max="100" value="10">
+            <span class="value-display" id="drift-value">0.1</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Field Frequency</label>
+            <input type="range" id="field-frequency" min="0" max="100" value="20">
+            <span class="value-display" id="frequency-value">2.0</span>
+        </div>
+        <div class="slider-group">
+            <label class="slider-label">Phase Shift</label>
+            <input type="range" id="phase-shift" min="0" max="100" value="0">
+            <span class="value-display" id="shift-value">0.0</span>
+        </div>
+    </div>
+
+    <script>
+        // Three.js setup
+        const container = document.getElementById('simulation-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        // Create levitating object
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 32, 32),
+            new THREE.MeshPhongMaterial({
+                color: 0xffff00,
+                emissive: 0x666600,
+                shininess: 50
+            })
+        );
+        scene.add(sphere);
+
+        // Create quantum field visualization
+        const fieldGeometry = new THREE.TorusGeometry(2, 0.1, 16, 100);
+        const fieldMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.3
+        });
+        const quantumField = new THREE.Mesh(fieldGeometry, fieldMaterial);
+        scene.add(quantumField);
+
+        // Camera position
+        camera.position.z = 5;
+
+        // Animation parameters
+        let time = 0;
+        const baseHeight = 0;
+        let driftAmplitude = 0.1;
+        let fieldFrequency = 2.0;
+        let phaseShift = 0;
+
+        // Controls
+        const driftSlider = document.getElementById('quantum-drift');
+        const frequencySlider = document.getElementById('field-frequency');
+        const phaseSlider = document.getElementById('phase-shift');
+
+        driftSlider.addEventListener('input', () => {
+            driftAmplitude = driftSlider.value / 100;
+            document.getElementById('drift-value').textContent = driftAmplitude.toFixed(1);
+            document.getElementById('force-value').textContent = (driftAmplitude * 1.0).toFixed(3);
+        });
+
+        frequencySlider.addEventListener('input', () => {
+            fieldFrequency = frequencySlider.value / 10;
+            document.getElementById('frequency-value').textContent = fieldFrequency.toFixed(1);
+            document.getElementById('energy-value').textContent = fieldFrequency.toFixed(1);
+        });
+
+        phaseSlider.addEventListener('input', () => {
+            phaseShift = phaseSlider.value / 100;
+            document.getElementById('shift-value').textContent = phaseShift.toFixed(1);
+            document.getElementById('phase-value').textContent = phaseShift.toFixed(3);
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            // Update sphere position with quantum levitation effect
+            sphere.position.y = baseHeight + 
+                Math.sin(time * fieldFrequency + phaseShift) * driftAmplitude;
+
+            // Rotate quantum field
+            quantumField.rotation.x = time * 0.5;
+            quantumField.rotation.z = time * 0.3;
+
+            // Scale field based on frequency
+            const fieldScale = 1.5 + Math.sin(time * fieldFrequency) * 0.2;
+            quantumField.scale.set(fieldScale, fieldScale, 1);
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

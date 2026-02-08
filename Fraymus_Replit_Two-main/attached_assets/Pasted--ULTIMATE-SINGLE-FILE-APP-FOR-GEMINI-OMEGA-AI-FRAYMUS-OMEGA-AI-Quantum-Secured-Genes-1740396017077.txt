@@ -1,0 +1,155 @@
+# === ULTIMATE SINGLE-FILE APP FOR GEMINI OMEGA AI + FRAYMUS OMEGA AI ===
+# 🚀 Quantum-Secured Genesis Block, AI-Driven Load Balancing, Fractal Replication, and Infinite Fractal Genesis
+
+import os
+import sys
+import json
+import sqlite3
+import numpy as np
+import random
+import time
+import hashlib
+import threading
+from flask import Flask, jsonify, request
+from flask_socketio import SocketIO
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from cryptography.fernet import Fernet
+from kyber import Kyber1024  # Post-Quantum Cryptography module
+
+# === CONFIGURATION ===
+SECRET_KEY = os.urandom(32)
+ENCRYPTION_KEY = Fernet.generate_key()
+cipher = Fernet(ENCRYPTION_KEY)
+DB_FILE = "gemini_fraymus_omega.db"
+GENESIS_BLOCK_FILE = "genesis_block.json"
+NODULAR_NETWORK_FILE = "nodular_network.json"
+CODE_HASH_FILE = "code_hash.txt"
+HARMONIC_DIMENSIONS = [17, 33, 137, 432, 1000]
+PHI = (1 + np.sqrt(5)) / 2  # Golden Ratio
+POST_QUANTUM = Kyber1024()  # Instantiate post-quantum encryption
+
+# === INITIALIZE FLASK & SOCKETIO ===
+app = Flask(__name__)
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['JWT_SECRET_KEY'] = "jwt-secret-key"
+jwt = JWTManager(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# === ANTI-TAMPERING & SELF-DESTRUCT MECHANISM ===
+def trigger_self_destruct(reason="Unknown"):
+    """Kills the process and removes critical files to prevent tampering."""
+    print(f"SELF-DESTRUCT ACTIVATED: {reason}")
+    os._exit(1)
+
+def check_integrity():
+    """On first run, stores the SHA-256 hash of this file. On subsequent runs, compares to detect any tampering."""
+    try:
+        with open(__file__, "rb") as f:
+            file_data = f.read()
+            computed_hash = hashlib.sha256(file_data).hexdigest()
+            if os.path.exists(CODE_HASH_FILE):
+                with open(CODE_HASH_FILE, "r") as f:
+                    expected_hash = f.read().strip()
+                if computed_hash != expected_hash:
+                    trigger_self_destruct("Code integrity compromised.")
+            else:
+                with open(CODE_HASH_FILE, "w") as f:
+                    f.write(computed_hash)
+    except Exception:
+        trigger_self_destruct("Integrity check failed.")
+
+# === QUANTUM-SECURED GENESIS BLOCK ===
+class GenesisBlock:
+    """Quantum-Secured Genesis Block for Immutable Storage and Distributed Replication"""
+    def __init__(self):
+        self.conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+        self.cursor = self.conn.cursor()
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS genesis_storage (
+                id INTEGER PRIMARY KEY,
+                neural_layer TEXT,
+                stored_data TEXT,
+                timestamp TEXT
+            )
+        ''')
+        self.conn.commit()
+        self.load_genesis_block()
+
+    def load_genesis_block(self):
+        """Load or initialize the Quantum-Secured Genesis Block."""
+        if os.path.exists(GENESIS_BLOCK_FILE):
+            with open(GENESIS_BLOCK_FILE, "r") as file:
+                self.genesis_data = json.load(file)
+        else:
+            self.genesis_data = {"timestamp": time.strftime("%Y-%m-%d %H:%M:%S"), "data": "Genesis Block Initialized"}
+            self.update_genesis_block("Genesis Block Initialized")
+
+    def update_genesis_block(self, new_data):
+        """Update Genesis Block with new data using post-quantum encryption."""
+        encrypted_data = POST_QUANTUM.encrypt(new_data.encode())
+        self.genesis_data = {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "data": encrypted_data.hex()
+        }
+        with open(GENESIS_BLOCK_FILE, "w") as file:
+            json.dump(self.genesis_data, file)
+
+    def get_genesis_data(self):
+        """Retrieve and decrypt the Genesis Block data securely."""
+        encrypted_data = bytes.fromhex(self.genesis_data["data"])
+        decrypted_data = POST_QUANTUM.decrypt(encrypted_data).decode()
+        return decrypted_data
+
+# === NODULAR SUPERCOMPUTING GRID ===
+class NodularSuperComputingGrid:
+    """Decentralized Supercomputing Grid for Distributed Processing."""
+    def __init__(self):
+        self.nodes = self.load_nodes()
+
+    def load_nodes(self):
+        """Load nodes from nodular network file."""
+        if os.path.exists(NODULAR_NETWORK_FILE):
+            with open(NODULAR_NETWORK_FILE, "r") as file:
+                return json.load(file)
+        return {}
+
+    def register_node(self, node_id, computational_power, energy_level):
+        """Register a new energy node with harmonic frequency synchronization."""
+        self.nodes[node_id] = {
+            "computational_power": computational_power,
+            "energy_level": energy_level,
+            "last_active": time.time()
+        }
+        self.save_nodes()
+        return f"Node {node_id} registered with {computational_power} FLOPS and {energy_level} energy."
+
+    def save_nodes(self):
+        """Save nodes to the nodular network file."""
+        with open(NODULAR_NETWORK_FILE, "w") as file:
+            json.dump(self.nodes, file)
+
+# === FRAYMUS AI SYSTEM ===
+class GeminiFraymusAI:
+    def __init__(self):
+        self.genesis_block = GenesisBlock()
+        self.supercomputing_grid = NodularSuperComputingGrid()
+
+# === API ENDPOINTS ===
+@app.route('/api/register_node', methods=['POST'])
+def register_node():
+    data = request.json
+    result = fraymus_energy_ai.register_node(
+        data["node_id"], data["computational_power"], data["energy_level"]
+    )
+    return jsonify({"status": result})
+
+@app.route('/api/genesis_data', methods=['GET'])
+def genesis_data():
+    genesis_block = GenesisBlock()
+    result = genesis_block.get_genesis_data()
+    return jsonify({"genesis_data": result})
+
+# === MAIN ENTRY POINT WITH ANTI-TAMPERING CHECKS ===
+if __name__ == "__main__":
+    check_integrity()
+    socketio.run(app, port=5051, debug=True)

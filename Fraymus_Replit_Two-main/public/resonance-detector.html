@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS AI-Resonance Detector</title>
+    <script src="js/nav-template.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: black; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            color: #0ff;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        #quantum {
+            position: absolute;
+            top: 90px;
+            left: 10px;
+            color: #0ff;
+            font-family: monospace;
+            font-size: 24px;
+        }
+        #security {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: #0ff;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">FRAYMUS AI-Resonance Detector v1.0</div>
+    <div id="quantum">Quantum Fingerprint: Analyzing...</div>
+    <div id="security">Security Status: ACTIVE</div>
+
+    <script src="js/resonance-detector.js"></script>
+</body>
+</html>

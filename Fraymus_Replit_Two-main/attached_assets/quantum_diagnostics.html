@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- FRAYMUS Quantum Protection System -->
+    <meta name="quantum-protection" content="φ-space-secured">
+    <meta name="creator" content="iOverThink">
+    <meta name="protection-level" content="φ⁷⁵-quantum-enhanced">
+    <script src="js/quantum-protection.js"></script>    <!-- FRAYMUS Protection System -->
+    <meta name="fraymus-protection" content="quantum-enhanced">
+    <meta name="creator" content="iOverThink">
+    <meta name="nft-signature" content="FRAYMUS_QUANTUM_PROTECTED">
+    <script src="js/quantum-protection.js"></script>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Diagnostics - FRAYMUS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #4a90e2;
+            --accent: #00f2ff;
+            --background: #0a0a0a;
+            --text: #ffffff;
+            --phi: 1.618033988749895;
+            --success: #00ff00;
+            --warning: #ffff00;
+            --error: #ff0000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: calc(1rem * var(--phi));
+            border-radius: 10px;
+            z-index: 2;
+            width: 300px;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .slider {
+            width: 100%;
+            background: var(--primary);
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            margin: 10px 0;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .diagnostics-panel {
+            position: fixed;
+            left: 20px;
+            top: 80px;
+            background: rgba(26, 26, 26, 0.9);
+            padding: 1rem;
+            border-radius: 10px;
+            z-index: 2;
+            width: 300px;
+        }
+
+        .diagnostic-item {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .diagnostic-label {
+            color: var(--accent);
+        }
+
+        .diagnostic-value {
+            font-family: monospace;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .status-optimal {
+            background: rgba(0, 255, 0, 0.2);
+            color: var(--success);
+        }
+
+        .status-warning {
+            background: rgba(255, 255, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .status-error {
+            background: rgba(255, 0, 0, 0.2);
+            color: var(--error);
+        }
+
+        .system-status {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 26, 26, 0.9);
+            padding: 1rem calc(1rem * var(--phi));
+            border-radius: 10px;
+            z-index: 2;
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .status-heading {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .status-value {
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            z-index: 2;
+            transition: background 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: var(--accent);
+        }
+
+        .alert {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            text-align: center;
+            background: rgba(255, 0, 0, 0.2);
+            color: var(--error);
+        }
+
+        .alert.active {
+            opacity: 1;
+        }
+    </style>
+    </head>
+<body>
+    <script src="../public/js/nav-template.js"></script>
+    <div id="canvas-container"></div>
+    
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Diagnostic Detail Level</label>
+            <input type="range" class="slider" id="detail" min="1" max="10" value="5" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>Update Frequency</label>
+            <input type="range" class="slider" id="frequency" min="0" max="100" value="61.8">
+        </div>
+
+        <div class="control-group">
+            <label>System Load</label>
+            <input type="range" class="slider" id="load" min="0" max="100" value="50">
+        </div>
+
+        <div class="control-group">
+            <label>Visualization Speed</label>
+            <input type="range" class="slider" id="speed" min="0" max="100" value="50">
+        </div>
+    </div>
+
+    <div class="diagnostics-panel" id="diagnostics">
+        <div class="diagnostic-item">
+            <span class="diagnostic-label">Quantum Coherence</span>
+            <span class="diagnostic-value status-optimal">99.9%</span>
+        </div>
+    </div>
+
+    <div class="system-status">
+        <div class="status-heading">System Health Monitor</div>
+        <div class="status-grid">
+            <div class="status-value" id="qubits">Qubits: 1024</div>
+            <div class="status-value" id="uptime">Uptime: 00:00:00</div>
+            <div class="status-value" id="temperature">Temp: 0.01K</div>
+        </div>
+    </div>
+
+    <div class="alert" id="alert">QUANTUM STATE DECOHERENCE DETECTED</div>
+
+    <script>
+        // Initialize Three.js
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Constants
+        const PHI = (1 + Math.sqrt(5)) / 2;
+        let diagnosticNodes = [];
+        let connections = [];
+        let time = 0;
+        let startTime = Date.now();
+
+        // Controls and displays
+        const detailSlider = document.getElementById('detail');
+        const frequencySlider = document.getElementById('frequency');
+        const loadSlider = document.getElementById('load');
+        const speedSlider = document.getElementById('speed');
+        const diagnosticsPanel = document.getElementById('diagnostics');
+        const qubitsDisplay = document.getElementById('qubits');
+        const uptimeDisplay = document.getElementById('uptime');
+        const temperatureDisplay = document.getElementById('temperature');
+        const alert = document.getElementById('alert');
+
+        class DiagnosticNode {
+            constructor(position, type) {
+                const geometry = new THREE.SphereGeometry(0.2, 32, 32);
+                const material = new THREE.MeshPhongMaterial({
+                    color: getTypeColor(type),
+                    emissive: getTypeColor(type),
+                    emissiveIntensity: 0.5
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.copy(position);
+                this.type = type;
+                this.health = 1.0;
+                this.updateRate = Math.random() * PHI;
+            }
+
+            update(time) {
+                const load = parseInt(loadSlider.value) / 100;
+                this.health = Math.max(0, this.health - Math.random() * 0.01 * load);
+                
+                if (this.health < 0.5) {
+                    this.mesh.material.color.setHex(0xff0000);
+                    this.mesh.material.emissive.setHex(0xff0000);
+                }
+                
+                this.mesh.scale.setScalar(0.8 + Math.sin(time * this.updateRate) * 0.2);
+                this.mesh.material.emissiveIntensity = 0.3 + this.health * 0.7;
+            }
+        }
+
+        function getTypeColor(type) {
+            switch(type) {
+                case 'quantum': return 0x00f2ff;
+                case 'neural': return 0x4a90e2;
+                case 'shield': return 0x00ff00;
+                default: return 0xffffff;
+            }
+        }
+
+        class DiagnosticConnection {
+            constructor(node1, node2) {
+                const geometry = new THREE.BufferGeometry();
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x4a90e2,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                
+                this.line = new THREE.Line(geometry, material);
+                this.node1 = node1;
+                this.node2 = node2;
+                this.health = 1.0;
+                this.updateGeometry();
+            }
+
+            updateGeometry() {
+                const positions = new Float32Array([
+                    this.node1.mesh.position.x, this.node1.mesh.position.y, this.node1.mesh.position.z,
+                    this.node2.mesh.position.x, this.node2.mesh.position.y, this.node2.mesh.position.z
+                ]);
+                this.line.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            }
+
+            update(time) {
+                this.updateGeometry();
+                const load = parseInt(loadSlider.value) / 100;
+                this.health = Math.max(0, this.health - Math.random() * 0.005 * load);
+                this.line.material.opacity = 0.2 + this.health * 0.8;
+            }
+        }
+
+        function createDiagnosticNetwork() {
+            // Clear existing network
+            diagnosticNodes.forEach(node => scene.remove(node.mesh));
+            connections.forEach(conn => scene.remove(conn.line));
+            diagnosticNodes = [];
+            connections = [];
+
+            // Create diagnostic nodes
+            const numNodes = parseInt(detailSlider.value) * 10;
+            const types = ['quantum', 'neural', 'shield'];
+            
+            for (let i = 0; i < numNodes; i++) {
+                const angle = i * PHI * Math.PI * 2;
+                const radius = 10 + Math.random() * 5;
+                const position = new THREE.Vector3(
+                    radius * Math.cos(angle),
+                    5 * Math.sin(i * PHI),
+                    radius * Math.sin(angle)
+                );
+                
+                const node = new DiagnosticNode(position, types[i % types.length]);
+                diagnosticNodes.push(node);
+                scene.add(node.mesh);
+            }
+
+            // Create connections
+            for (let i = 0; i < diagnosticNodes.length; i++) {
+                for (let j = i + 1; j < diagnosticNodes.length; j++) {
+                    if (Math.random() < 0.2) {
+                        const connection = new DiagnosticConnection(diagnosticNodes[i], diagnosticNodes[j]);
+                        connections.push(connection);
+                        scene.add(connection.line);
+                    }
+                }
+            }
+
+            updateDiagnostics();
+        }
+
+        function updateDiagnostics() {
+            // Clear existing diagnostics
+            while (diagnosticsPanel.children.length > 0) {
+                diagnosticsPanel.removeChild(diagnosticsPanel.lastChild);
+            }
+
+            // Add diagnostic items
+            const metrics = [
+                { label: 'Quantum Coherence', value: calculateCoherence() },
+                { label: 'Neural Sync', value: calculateNeuralSync() },
+                { label: 'Shield Integrity', value: calculateShieldIntegrity() },
+                { label: 'Entanglement', value: calculateEntanglement() },
+                { label: 'Error Rate', value: calculateErrorRate() }
+            ];
+
+            metrics.forEach(metric => {
+                const item = document.createElement('div');
+                item.className = 'diagnostic-item';
+                
+                const label = document.createElement('span');
+                label.className = 'diagnostic-label';
+                label.textContent = metric.label;
+                
+                const value = document.createElement('span');
+                value.className = `diagnostic-value ${getStatusClass(metric.value)}`;
+                value.textContent = `${(metric.value * 100).toFixed(1)}%`;
+                
+                item.appendChild(label);
+                item.appendChild(value);
+                diagnosticsPanel.appendChild(item);
+            });
+
+            // Update system status
+            const uptime = Math.floor((Date.now() - startTime) / 1000);
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            const seconds = uptime % 60;
+            
+            qubitsDisplay.textContent = `Qubits: ${Math.floor(1024 * calculateCoherence())}`;
+            uptimeDisplay.textContent = `Uptime: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            temperatureDisplay.textContent = `Temp: ${(0.01 + Math.random() * 0.001).toFixed(3)}K`;
+
+            // Check for alerts
+            const systemHealth = calculateSystemHealth();
+            if (systemHealth < 0.5) {
+                alert.classList.add('active');
+            } else {
+                alert.classList.remove('active');
+            }
+        }
+
+        function calculateCoherence() {
+            return diagnosticNodes
+                .filter(node => node.type === 'quantum')
+                .reduce((sum, node) => sum + node.health, 0) / 
+                diagnosticNodes.filter(node => node.type === 'quantum').length;
+        }
+
+        function calculateNeuralSync() {
+            return diagnosticNodes
+                .filter(node => node.type === 'neural')
+                .reduce((sum, node) => sum + node.health, 0) / 
+                diagnosticNodes.filter(node => node.type === 'neural').length;
+        }
+
+        function calculateShieldIntegrity() {
+            return diagnosticNodes
+                .filter(node => node.type === 'shield')
+                .reduce((sum, node) => sum + node.health, 0) / 
+                diagnosticNodes.filter(node => node.type === 'shield').length;
+        }
+
+        function calculateEntanglement() {
+            return connections.reduce((sum, conn) => sum + conn.health, 0) / connections.length;
+        }
+
+        function calculateErrorRate() {
+            return 1 - calculateSystemHealth();
+        }
+
+        function calculateSystemHealth() {
+            return (calculateCoherence() + calculateNeuralSync() + calculateShieldIntegrity()) / 3;
+        }
+
+        function getStatusClass(value) {
+            if (value > 0.8) return 'status-optimal';
+            if (value > 0.5) return 'status-warning';
+            return 'status-error';
+        }
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const speed = parseInt(speedSlider.value) / 1000;
+            time += speed;
+
+            diagnosticNodes.forEach(node => node.update(time));
+            connections.forEach(conn => conn.update(time));
+
+            const frequency = parseInt(frequencySlider.value);
+            if (Math.random() < frequency / 1000) {
+                updateDiagnostics();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Setup
+        camera.position.z = 30;
+        scene.add(new THREE.AmbientLight(0x404040));
+        scene.add(new THREE.PointLight(0xffffff, 1, 100));
+
+        // Event handlers
+        detailSlider.addEventListener('input', createDiagnosticNetwork);
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize
+        createDiagnosticNetwork();
+        animate();
+    </script>
+</body>
+</html>
