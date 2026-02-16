@@ -301,9 +301,9 @@ def main():
         steps=args.steps
     )
     
-    print("═══════════════════════════════════════════════════════════════")
-    print("🎥 DREAMSCAPE SESSION COMPLETE")
-    print("═══════════════════════════════════════════════════════════════")
+    print("=" * 63)
+    print("DREAMSCAPE SESSION COMPLETE")
+    print("=" * 63)
 
 if __name__ == "__main__":
     main()
