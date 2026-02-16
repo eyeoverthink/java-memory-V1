@@ -31,27 +31,40 @@ public class CortexServer {
      * Start the web server
      */
     public void start(int port) {
-        try {
-            server = HttpServer.create(new InetSocketAddress(port), 0);
-            
-            // API: Current State
-            server.createContext("/api/status", this::handleStatus);
-            
-            // API: Statistics
-            server.createContext("/api/stats", this::handleStats);
+        int currentPort = port;
+        int maxAttempts = 10;
+        
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                server = HttpServer.create(new InetSocketAddress(currentPort), 0);
+                
+                // API: Current State
+                server.createContext("/api/status", this::handleStatus);
+                
+                // API: Statistics
+                server.createContext("/api/stats", this::handleStats);
 
-            // UI: The Dashboard
-            server.createContext("/", this::handleDashboard);
+                // UI: The Dashboard
+                server.createContext("/", this::handleDashboard);
 
-            server.setExecutor(null); // Default executor
-            server.start();
-            
-            System.out.println("🌐 CORTEX WEB LIVE: http://localhost:" + port);
-            
-        } catch (Exception e) {
-            System.err.println("❌ Failed to start Cortex Server: " + e.getMessage());
-            e.printStackTrace();
+                server.setExecutor(null); // Default executor
+                server.start();
+                
+                System.out.println("🌐 CORTEX WEB LIVE: http://localhost:" + currentPort);
+                return; // Success!
+                
+            } catch (java.net.BindException e) {
+                System.err.println("⚠️  Port " + currentPort + " in use, trying " + (currentPort + 1) + "...");
+                currentPort++;
+            } catch (Exception e) {
+                System.err.println("❌ Failed to start Cortex Server: " + e.getMessage());
+                e.printStackTrace();
+                return;
+            }
         }
+        
+        System.err.println("❌ Could not find available port after " + maxAttempts + " attempts");
+        System.err.println("❌ WEB DASHBOARD OFFLINE");
     }
 
     /**

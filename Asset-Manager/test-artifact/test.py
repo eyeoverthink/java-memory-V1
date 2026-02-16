@@ -1,0 +1,1 @@
+print('Genesis Sandbox Test Passed!')\nassert 1 + 1 == 2\nprint('All tests passed')\n

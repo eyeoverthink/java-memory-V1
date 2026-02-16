@@ -313,6 +313,16 @@ task runPrime(type: JavaExec) {
     errorOutput = System.err
 }
 
+task runPrimeDaemon(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Prime Daemon - Headless Web Dashboard (Port 8080)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusPrimeDaemon'
+    standardOutput = System.out
+    errorOutput = System.err
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
 task runConsole(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus Console - Command Deck with Uplink Protocol'
