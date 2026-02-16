@@ -246,6 +246,7 @@ def main():
     
     parser = argparse.ArgumentParser(description="Video Cortex - Quantum State Visualizer")
     parser.add_argument("state_json", nargs="?", help="JSON string with quantum state")
+    parser.add_argument("--state-file", help="Path to JSON file with quantum state")
     parser.add_argument("--cpu", action="store_true", help="Force CPU mode")
     parser.add_argument("--quantize", action="store_true", help="Use 8-bit quantization")
     parser.add_argument("--width", type=int, default=DEFAULT_WIDTH, help="Video width")
@@ -261,11 +262,18 @@ def main():
     dreamer = ignite_dream_engine(use_cpu=args.cpu, quantize=args.quantize)
     
     # Parse quantum state
-    if args.state_json:
+    if args.state_file:
+        try:
+            with open(args.state_file, 'r') as f:
+                state = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            print(f"ERROR: Failed to read state file: {e}")
+            sys.exit(1)
+    elif args.state_json:
         try:
             state = json.loads(args.state_json)
         except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON: {e}")
+            print(f"ERROR: Invalid JSON: {e}")
             sys.exit(1)
     else:
         # Default test state

@@ -114,11 +114,17 @@ public class VisualCortex {
         System.out.println();
         
         try {
+            // Write JSON to temp file to avoid command-line parsing issues
+            java.io.File tempFile = java.io.File.createTempFile("quantum_state_", ".json");
+            tempFile.deleteOnExit();
+            java.nio.file.Files.write(tempFile.toPath(), jsonState.getBytes());
+            
             // Build command
             List<String> command = new ArrayList<>();
             command.add("python");
             command.add(PYTHON_SCRIPT);
-            command.add(jsonState);
+            command.add("--state-file");
+            command.add(tempFile.getAbsolutePath());
             
             // Invoke the Python LTX-Video Script
             ProcessBuilder pb = new ProcessBuilder(command);
