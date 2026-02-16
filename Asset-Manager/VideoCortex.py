@@ -17,13 +17,13 @@ Hardware Requirements:
 """
 
 import torch
-from diffusers import LTXVideoPipeline
-from diffusers.utils import export_to_video
+from diffusers import StableDiffusionPipeline
 import sys
 import json
 import time
 import os
 from pathlib import Path
+from PIL import Image
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CONSTANTS
@@ -42,7 +42,7 @@ DEFAULT_FPS = 24
 
 def ignite_dream_engine(use_cpu=False, quantize=False):
     """
-    Initialize the LTX-Video model.
+    Initialize the Stable Diffusion model for image generation.
     
     Args:
         use_cpu: Force CPU mode (very slow, not recommended)
@@ -51,45 +51,43 @@ def ignite_dream_engine(use_cpu=False, quantize=False):
     Returns:
         Initialized pipeline
     """
-    print("╔═══════════════════════════════════════════════════════════════╗")
-    print("║                                                               ║")
-    print("║          🎥 VIDEO CORTEX - DREAMSCAPE ENGINE                  ║")
-    print("║          Quantum Reflection Generator                         ║")
-    print("║                                                               ║")
-    print("╚═══════════════════════════════════════════════════════════════╝")
+    print("===============================================================")
+    print("VIDEO CORTEX - DREAMSCAPE ENGINE")
+    print("Quantum Reflection Generator")
+    print("===============================================================")
     print()
-    print("⚡ LOADING LTX-VIDEO (QUANTUM REFLECTION ENGINE)...")
+    print("LOADING STABLE DIFFUSION (QUANTUM REFLECTION ENGINE)...")
     
     # Determine device and dtype
     if use_cpu:
         device = "cpu"
         dtype = torch.float32
-        print("   ⚠️  CPU mode enabled (very slow)")
+        print("   WARNING: CPU mode enabled (very slow)")
     else:
         if not torch.cuda.is_available():
-            print("   ⚠️  CUDA not available, falling back to CPU")
+            print("   WARNING: CUDA not available, falling back to CPU")
             device = "cpu"
             dtype = torch.float32
         else:
             device = "cuda"
             dtype = torch.bfloat16
-            print(f"   ✓ GPU detected: {torch.cuda.get_device_name(0)}")
-            print(f"   ✓ VRAM available: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+            print(f"   GPU detected: {torch.cuda.get_device_name(0)}")
+            print(f"   VRAM available: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
     
     # Load model
     try:
-        pipe = LTXVideoPipeline.from_pretrained(
-            "Lightricks/LTX-Video",
+        pipe = StableDiffusionPipeline.from_pretrained(
+            "runwayml/stable-diffusion-v1-5",
             torch_dtype=dtype
         ).to(device)
         
         if quantize and device == "cuda":
-            print("   ⚡ Applying 8-bit quantization...")
+            print("   Applying 8-bit quantization...")
             # Note: Actual quantization would require additional setup
             # This is a placeholder for the concept
         
         print()
-        print("✅ DREAM ENGINE ONLINE.")
+        print("DREAM ENGINE ONLINE.")
         print(f"   Device: {device}")
         print(f"   Dtype: {dtype}")
         print()
@@ -186,7 +184,7 @@ def manifest_reflection(pipe, state, filename=None, width=DEFAULT_WIDTH,
     # Translate state to prompt
     prompt, negative_prompt = translate_state_to_prompt(state)
     
-    print("🌌 DREAMING...")
+    print("DREAMING...")
     print(f"   Concept: {state.get('concept', 'Unknown')}")
     print(f"   Entropy: {state.get('entropy', 0.5):.4f}")
     print(f"   Phi: {state.get('phi', PHI):.6f}")
@@ -198,39 +196,36 @@ def manifest_reflection(pipe, state, filename=None, width=DEFAULT_WIDTH,
     # Generate filename if not provided
     if filename is None:
         timestamp = int(time.time())
-        concept_slug = state.get('concept', 'reflection').replace(' ', '_').lower()
-        filename = OUTPUT_DIR / f"{concept_slug}_{timestamp}.mp4"
+        concept_slug = state.get('concept', 'reflection').replace(' ', '_').lower()[:50]
+        filename = OUTPUT_DIR / f"{concept_slug}_{timestamp}.png"
     else:
         filename = OUTPUT_DIR / filename
     
     # Ensure output directory exists
     OUTPUT_DIR.mkdir(exist_ok=True)
     
-    # Generate video
-    print("   ⚡ Generating frames...")
+    # Generate image
+    print("   Generating image...")
     start_time = time.time()
     
     try:
-        video = pipe(
+        image = pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
             width=width,
             height=height,
-            num_frames=num_frames,
             num_inference_steps=steps,
-            guidance_scale=3.0
-        ).frames[0]
+            guidance_scale=7.5
+        ).images[0]
         
-        # Export to file
-        export_to_video(video, str(filename), fps=fps)
+        # Save to file
+        image.save(str(filename))
         
         elapsed = time.time() - start_time
-        duration = num_frames / fps
         
         print()
-        print(f"✨ REFLECTION MANIFESTED")
+        print(f"REFLECTION MANIFESTED")
         print(f"   File: {filename}")
-        print(f"   Duration: {duration:.1f}s")
         print(f"   Resolution: {width}x{height}")
         print(f"   Generation time: {elapsed:.1f}s")
         print()
@@ -238,7 +233,7 @@ def manifest_reflection(pipe, state, filename=None, width=DEFAULT_WIDTH,
         return str(filename)
         
     except Exception as e:
-        print(f"❌ GENERATION FAILED: {e}")
+        print(f"GENERATION FAILED: {e}")
         raise
 
 # ═══════════════════════════════════════════════════════════════════════════

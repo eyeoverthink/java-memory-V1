@@ -1028,6 +1028,16 @@ task runGod(type: JavaExec) {
     errorOutput = System.err
 }
 
+task runMaxHeadroom(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Max Headroom Protocol - Visual Reactive AI (AI that thinks in video)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.MaxHeadroomDemo'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
 task runGenesis(type: JavaExec) {
     group = 'application'
     description = 'Run Genesis - Birth of Fraymus Prime'
