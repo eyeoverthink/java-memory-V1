@@ -196,7 +196,11 @@ def manifest_reflection(pipe, state, filename=None, width=DEFAULT_WIDTH,
     # Generate filename if not provided
     if filename is None:
         timestamp = int(time.time())
-        concept_slug = state.get('concept', 'reflection').replace(' ', '_').lower()[:50]
+        concept_text = state.get('concept', 'reflection')
+        # Sanitize filename: remove invalid characters for Windows
+        import re
+        concept_slug = re.sub(r'[<>:"/\\|?*]', '', concept_text)
+        concept_slug = concept_slug.replace(' ', '_').lower()[:50]
         filename = OUTPUT_DIR / f"{concept_slug}_{timestamp}.png"
     else:
         filename = OUTPUT_DIR / filename
