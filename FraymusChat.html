@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FRAYMUS // UNIVERSAL INTERFACE</title>
+  <style>
+    body { background:#050505; color:#00FF00; font-family:'Courier New', monospace; margin:0; padding:20px; }
+    .hint { font-size:12px; color:#8f8; opacity:.8; margin-bottom:10px; }
+    #chat { height:82vh; overflow-y:auto; border-bottom:2px solid #005500; padding-bottom:12px; }
+    .msg { margin:10px 0; padding:10px; border-left:3px solid transparent; white-space:pre-wrap; }
+    .user { border-color:#00FFFF; color:#E0E0E0; background:rgba(0,50,50,.2); }
+    .ai { border-color:#00FF00; color:#00FF00; background:rgba(0,50,0,.2); }
+    .sys { border-color:#888; color:#bbb; background:rgba(80,80,80,.15); }
+    #bar { margin-top:12px; display:flex; gap:10px; align-items:center; }
+    input { flex:1; background:#000; border:1px solid #005500; color:#FFF; padding:14px; font:inherit; font-size:16px; outline:none; }
+    input:focus { border-color:#00FF00; box-shadow:0 0 10px #005500; }
+  </style>
+</head>
+<body>
+  <div class="hint">Commands: TRANSMUTE: /path/file.pdf | /mode chat|prove|derive | /prove ... | /derive ... | /extract</div>
+  <div id="chat"></div>
+  <div id="bar"><input id="cmd" placeholder="COMMAND THE SYSTEM..." autofocus /></div>
+
+<script>
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('cmd');
+  const socket = new WebSocket("ws://localhost:8887");
+
+  let currentAI = null;
+
+  socket.onmessage = (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); }
+    catch { add(ev.data, 'ai'); return; }
+
+    if (msg.type === 'info') add('SYSTEM: ' + msg.data, 'sys');
+    if (msg.type === 'error') add('ERROR: ' + msg.data, 'sys');
+
+    if (msg.type === 'start') {
+      currentAI = add('SYSTEM: ', 'ai');
+      currentAI.dataset.raw = '';
+    }
+
+    if (msg.type === 'token' && currentAI) {
+      currentAI.dataset.raw += msg.data;
+      currentAI.innerText = 'SYSTEM: ' + currentAI.dataset.raw;
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    if (msg.type === 'final' && currentAI) {
+      const raw = msg.data || currentAI.dataset.raw || '';
+      // try pretty JSON
+      try {
+        const obj = JSON.parse(raw);
+        currentAI.innerText = 'SYSTEM(JSON):\n' + JSON.stringify(obj, null, 2);
+      } catch {
+        currentAI.innerText = 'SYSTEM: ' + raw;
+      }
+      currentAI = null;
+      chat.scrollTop = chat.scrollHeight;
+    }
+  };
+
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const text = input.value.trim();
+      if (!text) return;
+      add('YOU: ' + text, 'user');
+      socket.send(text);
+      input.value = '';
+    }
+  });
+
+  function add(text, type) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + type;
+    div.innerText = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
+</script>
+</body>
+</html>

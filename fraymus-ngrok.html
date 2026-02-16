@@ -1,0 +1,767 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>FRAYMUS DARK SECTOR // GEN 178</title>-->
+<!--    <style>-->
+<!--        /* -&#45;&#45; AESTHETIC: SITH HOLOCRON -&#45;&#45; */-->
+<!--        :root { &#45;&#45;void: #000000; &#45;&#45;danger: #FF0033; &#45;&#45;data: #00FFFF; &#45;&#45;shield: #4488FF; &#45;&#45;glass: rgba(10, 0, 0, 0.9); }-->
+<!--        body { margin: 0; overflow: hidden; background: var(&#45;&#45;void); font-family: 'Consolas', monospace; color: var(&#45;&#45;danger); user-select: none; }-->
+
+<!--        /* HUD OVERLAY */-->
+<!--        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(circle, transparent 60%, #000 150%); }-->
+
+<!--        /* TOP BAR */-->
+<!--        #top-bar {-->
+<!--            position: absolute; top: 0; width: 100%; height: 50px;-->
+<!--            border-bottom: 2px solid var(&#45;&#45;danger);-->
+<!--            background: linear-gradient(90deg, #000 0%, rgba(50,0,0,0.5) 50%, #000 100%);-->
+<!--            display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box;-->
+<!--            text-shadow: 0 0 10px var(&#45;&#45;danger);-->
+<!--        }-->
+<!--        .alert-box { border: 1px solid var(&#45;&#45;danger); padding: 5px 10px; font-weight: bold; animation: pulse 2s infinite; }-->
+
+<!--        /* SIDEBAR INTEL */-->
+<!--        #intel {-->
+<!--            position: absolute; top: 70px; right: 20px; width: 300px;-->
+<!--            background: rgba(0, 0, 0, 0.8); border: 1px solid var(&#45;&#45;data);-->
+<!--            padding: 10px; font-size: 11px; color: var(&#45;&#45;data);-->
+<!--            pointer-events: auto;-->
+<!--        }-->
+<!--        .intel-row { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px solid #222; }-->
+
+<!--        /* CONTROLS */-->
+<!--        #controls {-->
+<!--            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);-->
+<!--            display: flex; gap: 20px; pointer-events: auto;-->
+<!--        }-->
+<!--        .tac-btn {-->
+<!--            background: #000; border: 1px solid var(&#45;&#45;danger); color: var(&#45;&#45;danger);-->
+<!--            padding: 10px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold;-->
+<!--            transition: 0.2s; letter-spacing: 2px;-->
+<!--        }-->
+<!--        .tac-btn:hover { background: var(&#45;&#45;danger); color: #000; box-shadow: 0 0 20px var(&#45;&#45;danger); }-->
+
+<!--        /* UAP ALERT */-->
+<!--        #uap-warning {-->
+<!--            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);-->
+<!--            font-size: 40px; color: var(&#45;&#45;danger); border: 4px solid var(&#45;&#45;danger);-->
+<!--            padding: 20px; background: rgba(0,0,0,0.9); display: none;-->
+<!--            animation: flash 0.5s infinite; text-align: center;-->
+<!--        }-->
+
+<!--        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }-->
+<!--        @keyframes flash { 0% { border-color: transparent; } 50% { border-color: var(&#45;&#45;danger); } 100% { border-color: transparent; } }-->
+
+<!--        canvas { display: block; }-->
+<!--    </style>-->
+
+<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div id="uap-warning">-->
+<!--    ⚠️ UAP DETECTED ⚠️<br>-->
+<!--    <span style="font-size:16px;">NON-BALLISTIC TRAJECTORY CONFIRMED</span>-->
+<!--</div>-->
+
+<!--<div id="top-bar">-->
+<!--    <div style="font-size: 18px; letter-spacing: 5px;">FRAYMUS // DARK SECTOR</div>-->
+<!--    <div class="alert-box" id="threat-level">DEFCON 5: MONITORING</div>-->
+<!--    <div style="color:var(&#45;&#45;data)">NGROK FIELD: <span id="ngrok-status">STABLE</span></div>-->
+<!--</div>-->
+
+<!--<div id="intel">-->
+<!--    <div style="text-align:center; margin-bottom:10px; color:#FFF; font-weight:bold;">TACTICAL READOUT</div>-->
+<!--    <div class="intel-row"><span>ASTEROIDS TRACKED:</span> <span id="ast-count">0</span></div>-->
+<!--    <div class="intel-row"><span>COLLISION PROB:</span> <span id="col-prob">0.00%</span></div>-->
+<!--    <div class="intel-row"><span>UAP SIGHTINGS:</span> <span id="uap-count">0</span></div>-->
+<!--    <div class="intel-row"><span>DARK MATTER DENSITY:</span> <span>96.4%</span></div>-->
+<!--</div>-->
+
+<!--<div id="controls">-->
+<!--    <button class="tac-btn" onclick="toggleLayer('MAGNET')">MAGNETOSPHERE</button>-->
+<!--    <button class="tac-btn" onclick="toggleLayer('SAT')">SAT SWARM</button>-->
+<!--    <button class="tac-btn" onclick="spawnUAP()">TRIGGER UAP</button>-->
+<!--    <button class="tac-btn" onclick="toggleLayer('NGROK')">NGROK FORCE</button>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    /**-->
+<!--     * 🧬 FRAYMUS DARK SECTOR // GEN 178-->
+<!--     * "Give it to me harder."-->
+<!--     */-->
+
+<!--    // -&#45;&#45; CONFIG -&#45;&#45;-->
+<!--    const SYSTEM_SCALE = 100;-->
+<!--    const TIME_SPEED = 0.5; // Fast orbits for visual impact-->
+
+<!--    // REAL ASTEROID DATA (Keplerian approx)-->
+<!--    const ASTEROIDS = [-->
+<!--        { name: "APOPHIS", a: 0.92, e: 0.19, i: 3.3, color: 0xFF0000, size: 2 },-->
+<!--        { name: "BENNU", a: 1.12, e: 0.20, i: 6.0, color: 0xFFAA00, size: 1.5 },-->
+<!--        { name: "CERES", a: 2.77, e: 0.07, i: 10.6, color: 0x888888, size: 4 },-->
+<!--        { name: "VESTA", a: 2.36, e: 0.08, i: 7.1, color: 0xAAAAAA, size: 3 }-->
+<!--    ];-->
+
+<!--    // -&#45;&#45; GLOBAL STATE -&#45;&#45;-->
+<!--    let scene, camera, renderer, composer, controls;-->
+<!--    let planets = [], asteroids = [], sats = [], uaps = [];-->
+<!--    let ngrokField;-->
+<!--    let layers = { MAGNET: false, SAT: false, NGROK: false };-->
+<!--    let frame = 0;-->
+
+<!--    // -&#45;&#45; INIT -&#45;&#45;-->
+<!--    function init() {-->
+<!--        scene = new THREE.Scene();-->
+<!--        scene.fog = new THREE.FogExp2(0x050000, 0.0005); // Red fog of war-->
+
+<!--        camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);-->
+<!--        camera.position.set(0, 400, 600);-->
+
+<!--        renderer = new THREE.WebGLRenderer({ antialias: true });-->
+<!--        renderer.setSize(window.innerWidth, window.innerHeight);-->
+<!--        renderer.toneMapping = THREE.ReinhardToneMapping;-->
+<!--        document.body.appendChild(renderer.domElement);-->
+
+<!--        // POST-PROCESSING (THE STAR WARS LOOK)-->
+<!--        const renderScene = new THREE.RenderPass(scene, camera);-->
+<!--        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);-->
+<!--        bloomPass.threshold = 0;-->
+<!--        bloomPass.strength = 2.0; // MAX BLOOM-->
+<!--        bloomPass.radius = 0.5;-->
+
+<!--        composer = new THREE.EffectComposer(renderer);-->
+<!--        composer.addPass(renderScene);-->
+<!--        composer.addPass(bloomPass);-->
+
+<!--        controls = new THREE.OrbitControls(camera, renderer.domElement);-->
+<!--        controls.autoRotate = true;-->
+<!--        controls.autoRotateSpeed = 0.5;-->
+
+<!--        // LIGHTING-->
+<!--        const sunLight = new THREE.PointLight(0xFFFFFF, 3, 2000);-->
+<!--        scene.add(sunLight);-->
+<!--        scene.add(new THREE.AmbientLight(0x220000)); // Sith Ambient-->
+
+<!--        // BUILD SYSTEM-->
+<!--        createSun();-->
+<!--        createPlanets();-->
+<!--        createAsteroidBelt();-->
+<!--        createRealAsteroids();-->
+<!--        createNgrokField(); // Hidden by default-->
+
+<!--        // EVENTS-->
+<!--        window.addEventListener('resize', onResize);-->
+
+<!--        animate();-->
+<!--    }-->
+
+<!--    // -&#45;&#45; OBJECT FACTORIES -&#45;&#45;-->
+
+<!--    function createSun() {-->
+<!--        const geo = new THREE.SphereGeometry(20, 32, 32);-->
+<!--        const mat = new THREE.MeshBasicMaterial({ color: 0xFF0000 }); // Red Giant Look-->
+<!--        const sun = new THREE.Mesh(geo, mat);-->
+
+<!--        // Solar Flare Sprite-->
+<!--        const cvs = document.createElement('canvas'); cvs.width=128; cvs.height=128;-->
+<!--        const cx = cvs.getContext('2d');-->
+<!--        const grd = cx.createRadialGradient(64,64,0,64,64,64);-->
+<!--        grd.addColorStop(0, 'white'); grd.addColorStop(0.2, 'red'); grd.addColorStop(1, 'transparent');-->
+<!--        cx.fillStyle = grd; cx.fillRect(0,0,128,128);-->
+<!--        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cvs), blending:THREE.AdditiveBlending}));-->
+<!--        sprite.scale.set(150,150,1);-->
+<!--        sun.add(sprite);-->
+
+<!--        scene.add(sun);-->
+<!--    }-->
+
+<!--    function createPlanets() {-->
+<!--        const data = [-->
+<!--            { name:"EARTH", r:100, size:5, col:0x0088FF, magnet:true, sats:true },-->
+<!--            { name:"MARS", r:150, size:4, col:0xFF4400, magnet:false },-->
+<!--            { name:"JUPITER", r:300, size:12, col:0xDDAA88, magnet:true },-->
+<!--        ];-->
+
+<!--        data.forEach(p => {-->
+<!--            const mesh = new THREE.Mesh(new THREE.SphereGeometry(p.size, 32, 32), new THREE.MeshStandardMaterial({color:p.col, roughness:0.5}));-->
+<!--            scene.add(mesh);-->
+
+<!--            // Magnetosphere (Hidden)-->
+<!--            let magField = null;-->
+<!--            if(p.magnet) {-->
+<!--                const magGeo = new THREE.TorusGeometry(p.size*4, 0.2, 16, 100);-->
+<!--                const magMat = new THREE.MeshBasicMaterial({color:0x4488FF, transparent:true, opacity:0.3});-->
+<!--                magField = new THREE.Group();-->
+
+<!--                // Create field lines-->
+<!--                for(let i=0; i<8; i++) {-->
+<!--                    const ring = new THREE.Mesh(magGeo, magMat);-->
+<!--                    ring.rotation.x = Math.PI/2;-->
+<!--                    ring.rotation.y = (Math.PI/4) * i;-->
+<!--                    magField.add(ring);-->
+<!--                }-->
+<!--                magField.visible = false;-->
+<!--                mesh.add(magField);-->
+<!--            }-->
+
+<!--            // Satellites (Starlink Swarm)-->
+<!--            let satSwarm = null;-->
+<!--            if(p.sats) {-->
+<!--                const sGeo = new THREE.BufferGeometry();-->
+<!--                const sPos = [];-->
+<!--                for(let i=0; i<500; i++) {-->
+<!--                    const theta = Math.random() * Math.PI * 2;-->
+<!--                    const phi = Math.random() * Math.PI;-->
+<!--                    const r = p.size + 1 + Math.random();-->
+<!--                    sPos.push(r*Math.sin(phi)*Math.cos(theta), r*Math.sin(phi)*Math.sin(theta), r*Math.cos(phi));-->
+<!--                }-->
+<!--                sGeo.setAttribute('position', new THREE.Float32BufferAttribute(sPos, 3));-->
+<!--                satSwarm = new THREE.Points(sGeo, new THREE.PointsMaterial({color:0x00FF00, size:0.5}));-->
+<!--                satSwarm.visible = false;-->
+<!--                mesh.add(satSwarm);-->
+<!--            }-->
+
+<!--            planets.push({ mesh:mesh, dist:p.r, speed:(1/p.r)*10, angle:Math.random()*10, mag:magField, sat:satSwarm });-->
+<!--        });-->
+<!--    }-->
+
+<!--    function createAsteroidBelt() {-->
+<!--        const geo = new THREE.BufferGeometry();-->
+<!--        const pos = [];-->
+<!--        for(let i=0; i<3000; i++) {-->
+<!--            const angle = Math.random() * 6.28;-->
+<!--            const r = 200 + Math.random() * 50;-->
+<!--            const x = Math.cos(angle) * r;-->
+<!--            const y = (Math.random()-0.5) * 10;-->
+<!--            const z = Math.sin(angle) * r;-->
+<!--            pos.push(x,y,z);-->
+<!--        }-->
+<!--        geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));-->
+<!--        const mat = new THREE.PointsMaterial({color:0x888888, size:1});-->
+<!--        scene.add(new THREE.Points(geo, mat));-->
+<!--    }-->
+
+<!--    function createRealAsteroids() {-->
+<!--        ASTEROIDS.forEach(a => {-->
+<!--            const geo = new THREE.DodecahedronGeometry(a.size, 0);-->
+<!--            const mat = new THREE.MeshStandardMaterial({color:a.color, wireframe:true});-->
+<!--            const mesh = new THREE.Mesh(geo, mat);-->
+<!--            scene.add(mesh);-->
+<!--            asteroids.push({ mesh:mesh, data:a, angle:Math.random()*10 });-->
+<!--        });-->
+<!--        document.getElementById('ast-count').innerText = "3,004 (TRACKING)";-->
+<!--    }-->
+
+<!--    function createNgrokField() {-->
+<!--        // The "Dark Force" - A massive, warping grid-->
+<!--        const geo = new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(600, 2));-->
+<!--        const mat = new THREE.LineBasicMaterial({color:0x330033, transparent:true, opacity:0.1});-->
+<!--        ngrokField = new THREE.LineSegments(geo, mat);-->
+<!--        ngrokField.visible = false;-->
+<!--        scene.add(ngrokField);-->
+<!--    }-->
+
+<!--    // -&#45;&#45; DYNAMICS -&#45;&#45;-->
+
+<!--    function spawnUAP() {-->
+<!--        // Create an erratic object-->
+<!--        const geo = new THREE.ConeGeometry(2, 5, 4);-->
+<!--        const mat = new THREE.MeshBasicMaterial({color:0xFFFFFF});-->
+<!--        const mesh = new THREE.Mesh(geo, mat);-->
+<!--        scene.add(mesh);-->
+
+<!--        uaps.push({-->
+<!--            mesh:mesh,-->
+<!--            t:0,-->
+<!--            origin: new THREE.Vector3((Math.random()-0.5)*800, (Math.random()-0.5)*200, (Math.random()-0.5)*800)-->
+<!--        });-->
+
+<!--        // Alert UI-->
+<!--        const alert = document.getElementById('uap-warning');-->
+<!--        alert.style.display = 'block';-->
+<!--        document.getElementById('threat-level').innerText = "DEFCON 1: INTERCEPT";-->
+<!--        document.getElementById('threat-level').style.color = "#FF0000";-->
+<!--        setTimeout(() => { alert.style.display = 'none'; }, 3000);-->
+
+<!--        document.getElementById('uap-count').innerText = uaps.length;-->
+<!--    }-->
+
+<!--    function updateUAPs() {-->
+<!--        for(let i=uaps.length-1; i>=0; i&#45;&#45;) {-->
+<!--            const u = uaps[i];-->
+<!--            u.t += 0.02;-->
+
+<!--            // Erratic Movement Logic (Zig Zag)-->
+<!--            u.mesh.position.x = u.origin.x + Math.sin(u.t * 5) * 100 + (u.t * 50);-->
+<!--            u.mesh.position.y = u.origin.y + Math.cos(u.t * 13) * 50;-->
+<!--            u.mesh.position.z = u.origin.z + Math.sin(u.t * 3) * 100;-->
+
+<!--            u.mesh.rotation.x += 0.1;-->
+<!--            u.mesh.rotation.z += 0.1;-->
+
+<!--            if(u.t > 10) { // Despawn-->
+<!--                scene.remove(u.mesh);-->
+<!--                uaps.splice(i, 1);-->
+<!--                document.getElementById('threat-level').innerText = "DEFCON 5: MONITORING";-->
+<!--                document.getElementById('threat-level').style.color = "#FF0033";-->
+<!--            }-->
+<!--        }-->
+<!--    }-->
+
+<!--    function checkCollisions() {-->
+<!--        // Check if Apophis hits Earth-->
+<!--        const earth = planets[0].mesh.position;-->
+<!--        asteroids.forEach(a => {-->
+<!--            const dist = a.mesh.position.distanceTo(earth);-->
+<!--            if(dist < 20) {-->
+<!--                document.getElementById('col-prob').innerText = "CRITICAL (99.9%)";-->
+<!--                document.getElementById('col-prob').style.color = "#FFF";-->
+<!--                document.getElementById('col-prob').style.backgroundColor = "#F00";-->
+<!--            } else {-->
+<!--                document.getElementById('col-prob').innerText = "0.04%";-->
+<!--                document.getElementById('col-prob').style.color = "#00FFFF";-->
+<!--                document.getElementById('col-prob').style.backgroundColor = "transparent";-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    // -&#45;&#45; CONTROLS -&#45;&#45;-->
+
+<!--    function toggleLayer(key) {-->
+<!--        layers[key] = !layers[key];-->
+
+<!--        if(key === 'MAGNET') {-->
+<!--            planets.forEach(p => { if(p.mag) p.mag.visible = layers[key]; });-->
+<!--        }-->
+<!--        if(key === 'SAT') {-->
+<!--            planets.forEach(p => { if(p.sat) p.sat.visible = layers[key]; });-->
+<!--        }-->
+<!--        if(key === 'NGROK') {-->
+<!--            ngrokField.visible = layers[key];-->
+<!--            document.getElementById('ngrok-status').innerText = layers[key] ? "MANIFESTING" : "DORMANT";-->
+<!--            document.getElementById('ngrok-status').style.color = layers[key] ? "#FF00FF" : "#00FFFF";-->
+<!--        }-->
+<!--    }-->
+
+<!--    function animate() {-->
+<!--        requestAnimationFrame(animate);-->
+<!--        controls.update();-->
+
+<!--        // Move Planets-->
+<!--        planets.forEach(p => {-->
+<!--            p.angle += p.speed * TIME_SPEED;-->
+<!--            p.mesh.position.x = Math.cos(p.angle) * p.dist;-->
+<!--            p.mesh.position.z = Math.sin(p.angle) * p.dist;-->
+<!--            p.mesh.rotation.y += 0.01;-->
+<!--        });-->
+
+<!--        // Move Asteroids (Elliptical)-->
+<!--        asteroids.forEach(a => {-->
+<!--            a.angle += 0.005 * TIME_SPEED;-->
+<!--            // Simple ellipse approximation-->
+<!--            a.mesh.position.x = Math.cos(a.angle) * (a.data.a * 200);-->
+<!--            a.mesh.position.z = Math.sin(a.angle) * (a.data.a * 180);-->
+<!--            a.mesh.position.y = Math.sin(a.angle * 2) * (a.data.i * 2); // Inclination-->
+<!--            a.mesh.rotation.x += 0.01;-->
+<!--        });-->
+
+<!--        // Animate Ngrok Field-->
+<!--        if(layers.NGROK) {-->
+<!--            ngrokField.rotation.y += 0.001;-->
+<!--            ngrokField.rotation.z -= 0.0005;-->
+<!--            ngrokField.scale.setScalar(1 + Math.sin(frame*0.01)*0.05); // Breathing effect-->
+<!--        }-->
+
+<!--        updateUAPs();-->
+<!--        checkCollisions();-->
+
+<!--        frame++;-->
+<!--        composer.render();-->
+<!--    }-->
+
+<!--    function onResize() {-->
+<!--        renderer.setSize(window.innerWidth, window.innerHeight);-->
+<!--        camera.aspect = window.innerWidth/window.innerHeight;-->
+<!--        camera.updateProjectionMatrix();-->
+<!--        composer.setSize(window.innerWidth, window.innerHeight);-->
+<!--    }-->
+
+<!--    // START-->
+<!--    init();-->
+
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS TRUTH ENGINE // GEN 179</title>
+    <style>
+        /* --- AESTHETIC: THE VOID --- */
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Consolas', monospace; color: #FFF; user-select: none; }
+
+        /* UI LAYER */
+        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+        /* TOP BAR */
+        #header {
+            position: absolute; top: 0; width: 100%; height: 60px;
+            background: linear-gradient(to bottom, rgba(10,0,0,1), transparent);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-sizing: border-box;
+            border-bottom: 1px solid #330000;
+        }
+        .title { font-size: 18px; font-weight: bold; color: #FF3333; letter-spacing: 4px; text-shadow: 0 0 10px #FF0000; }
+        .data-block { text-align: right; font-size: 11px; color: #00FFFF; }
+
+        /* SIDEBAR INTEL */
+        #intel {
+            position: absolute; top: 80px; right: 20px; width: 280px;
+            background: rgba(0, 0, 0, 0.8); border-left: 2px solid #FF3333;
+            padding: 15px; pointer-events: auto;
+        }
+        .intel-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; border-bottom: 1px dashed #333; padding-bottom: 2px; }
+        .lbl { color: #888; } .val { color: #00FFFF; font-weight: bold; } .alert { color: #FF3333; animation: blink 1s infinite; }
+
+        /* CONTROLS */
+        #controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; pointer-events: auto;
+        }
+        .btn {
+            background: rgba(0,0,0,0.8); border: 1px solid #444; color: #888;
+            padding: 10px 20px; cursor: pointer; font-family: inherit; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
+            transition: 0.2s;
+        }
+        .btn:hover { border-color: #00FFFF; color: #00FFFF; box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
+        .btn.danger:hover { border-color: #FF0000; color: #FF0000; box-shadow: 0 0 20px #FF0000; }
+        .btn.active { background: rgba(0, 255, 255, 0.1); border-color: #00FFFF; color: #00FFFF; }
+
+        /* LOADING */
+        #loader {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 20px; color: #FF3333; letter-spacing: 5px; animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<div id="loader">INITIALIZING TRUTH ENGINE...</div>
+
+<div id="hud">
+    <div id="header">
+        <div class="title">FRAYMUS // TRUTH ENGINE</div>
+        <div class="data-block">
+            <div>SYSTEM TIME: <span id="sys-time">CALCULATING</span></div>
+            <div>PHYSICS: <span style="color:#FFD700">KEPLERIAN-PHI</span></div>
+        </div>
+    </div>
+
+    <div id="intel" style="display:none;">
+        <div style="color:#FF3333; margin-bottom:10px; font-weight:bold;">TARGET TELEMETRY</div>
+        <div class="intel-row"><span class="lbl">DESIGNATION:</span> <span class="val" id="t-name">EARTH</span></div>
+        <div class="intel-row"><span class="lbl">DISTANCE (SUN):</span> <span class="val" id="t-dist">1.00 AU</span></div>
+        <div class="intel-row"><span class="lbl">ORBITAL VEL:</span> <span class="val" id="t-vel">29.78 km/s</span></div>
+        <div class="intel-row"><span class="lbl">THREAT LEVEL:</span> <span class="val" id="t-threat">LOW</span></div>
+    </div>
+
+    <div id="controls" style="display:none;">
+        <button class="btn" onclick="setMode('ORBIT')">ORBIT VIEW</button>
+        <button class="btn danger" onclick="toggleDarkSector()">THREAT MODE</button>
+        <button class="btn" onclick="setMode('SYSTEM')">SYSTEM VIEW</button>
+    </div>
+</div>
+
+<script>
+    /**
+     * 🧬 FRAYMUS TRUTH ENGINE // GEN 179
+     * Pure Math. No External Shaders. 100% Reliability.
+     */
+
+    // --- CONSTANTS ---
+    const AU = 50; // Visual scale for 1 Astronomical Unit
+    const PI = Math.PI;
+    const PHI = 1.6180339887;
+
+    // --- STATE ---
+    let scene, camera, renderer;
+    let planets = {}, asteroids = [], ngrokField;
+    let target = null;
+    let isDarkSector = false;
+    let time = 0;
+
+    // KEPLER DATA (Semi-major axis, Eccentricity, Speed factor)
+    const BODIES = {
+        MERCURY: { a: 0.39, e: 0.205, speed: 4.7, color: 0xAAAAAA, size: 0.8 },
+        VENUS:   { a: 0.72, e: 0.007, speed: 3.5, color: 0xFFCC00, size: 1.5 },
+        EARTH:   { a: 1.00, e: 0.017, speed: 2.9, color: 0x0088FF, size: 1.6 },
+        MARS:    { a: 1.52, e: 0.094, speed: 2.4, color: 0xFF4400, size: 1.2 },
+        JUPITER: { a: 5.20, e: 0.049, speed: 1.3, color: 0xDDAA88, size: 6.0 },
+        SATURN:  { a: 9.58, e: 0.056, speed: 0.9, color: 0xDDBB66, size: 5.0, ring: true }
+    };
+
+    // THREATS
+    const NEOs = [
+        { name: "APOPHIS", a: 0.9, e: 0.19, speed: 3.1, color: 0xFF0000 },
+        { name: "BENNU",   a: 1.1, e: 0.20, speed: 2.8, color: 0xFF0000 },
+    ];
+
+    function init() {
+        // 1. SETUP ENGINE
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.002); // Deep Space Fog
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 100, 150);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // 2. LIGHTING (The Truth is Bright)
+        const sunLight = new THREE.PointLight(0xFFFFFF, 2, 1000);
+        scene.add(sunLight);
+        scene.add(new THREE.AmbientLight(0x222222));
+
+        // 3. BUILD UNIVERSE
+        createSun();
+        createStarfield();
+
+        Object.keys(BODIES).forEach(name => createPlanet(name, BODIES[name]));
+        createDarkSector(); // Hidden initially
+
+        // 4. LAUNCH
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('controls').style.display = 'flex';
+        document.getElementById('intel').style.display = 'block';
+
+        window.addEventListener('resize', onResize);
+        animate();
+    }
+
+    // --- CREATION FUNCTIONS ---
+
+    function createSun() {
+        // Core
+        const geo = new THREE.SphereGeometry(8, 32, 32);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+        const sun = new THREE.Mesh(geo, mat);
+        scene.add(sun);
+
+        // Glow (Using Native Sprites - No Shaders)
+        const spriteMat = new THREE.SpriteMaterial({
+            map: generateGlowTexture(0xFFD700),
+            color: 0xFFD700,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        const glow = new THREE.Sprite(spriteMat);
+        glow.scale.set(60, 60, 1.0);
+        sun.add(glow);
+    }
+
+    function createPlanet(name, data) {
+        // 1. Orbit Path (The Math)
+        const pathGeo = new THREE.BufferGeometry();
+        const pts = [];
+        for(let i=0; i<=64; i++) {
+            const theta = (i/64) * Math.PI * 2;
+            // Keplerian Ellipse: r = a(1-e^2) / (1+e cos theta)
+            const r = (data.a * AU) * (1 - data.e*data.e) / (1 + data.e * Math.cos(theta));
+            pts.push(r * Math.cos(theta), 0, r * Math.sin(theta));
+        }
+        pathGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+        const path = new THREE.Line(pathGeo, new THREE.LineBasicMaterial({ color: 0x333333 }));
+        scene.add(path);
+
+        // 2. Planet Mesh
+        const geo = new THREE.SphereGeometry(data.size, 32, 32);
+        const mat = new THREE.MeshStandardMaterial({
+            color: data.color, roughness: 0.7, metalness: 0.1
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+
+        // 3. Ring?
+        if(data.ring) {
+            const rGeo = new THREE.RingGeometry(data.size*1.2, data.size*2.0, 64);
+            const rMat = new THREE.MeshBasicMaterial({ color: 0x998866, side: THREE.DoubleSide, transparent:true, opacity:0.6 });
+            const ring = new THREE.Mesh(rGeo, rMat);
+            ring.rotation.x = Math.PI/2;
+            mesh.add(ring);
+        }
+
+        planets[name] = { mesh: mesh, data: data, angle: Math.random() * PI };
+    }
+
+    function createDarkSector() {
+        // 1. Asteroids (Threats)
+        NEOs.forEach(n => {
+            const geo = new THREE.DodecahedronGeometry(0.5, 0);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xFF0000, wireframe: true });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.visible = false; // Hidden
+            scene.add(mesh);
+
+            // Threat Path
+            const pathGeo = new THREE.BufferGeometry();
+            const pts = [];
+            for(let i=0; i<=64; i++) {
+                const theta = (i/64) * Math.PI * 2;
+                const r = (n.a * AU);
+                pts.push(r * Math.cos(theta), (Math.sin(theta*2)*10), r * Math.sin(theta)); // Inclined
+            }
+            pathGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+            const path = new THREE.Line(pathGeo, new THREE.LineBasicMaterial({ color: 0x550000 }));
+            path.visible = false;
+            scene.add(path);
+
+            asteroids.push({ mesh: mesh, path: path, data: n, angle: Math.random() * PI });
+        });
+
+        // 2. Ngrok Field (Dark Matter)
+        const gridSize = 300;
+        const gridDiv = 20;
+        const gridHelper = new THREE.GridHelper(gridSize, gridDiv, 0x330033, 0x110011);
+        gridHelper.position.y = -20;
+        gridHelper.visible = false;
+        scene.add(gridHelper);
+        ngrokField = gridHelper;
+    }
+
+    function createStarfield() {
+        const geo = new THREE.BufferGeometry();
+        const pos = [];
+        for(let i=0; i<3000; i++) {
+            pos.push((Math.random()-0.5)*1000, (Math.random()-0.5)*1000, (Math.random()-0.5)*1000);
+        }
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        const mat = new THREE.PointsMaterial({color:0x888888, size:1});
+        scene.add(new THREE.Points(geo, mat));
+    }
+
+    // --- UTILS: Procedural Glow Texture ---
+    function generateGlowTexture(color) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64; canvas.height = 64;
+        const context = canvas.getContext('2d');
+        const gradient = context.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.2, 'rgba(255,200,0,0.5)');
+        gradient.addColorStop(0.5, 'rgba(0,0,0,0)');
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 64, 64);
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    // --- DYNAMICS (THE PHYSICS LOOP) ---
+    function animate() {
+        requestAnimationFrame(animate);
+        time += 0.005; // Time Flow
+
+        // 1. Update Planets (Keplerian Approx)
+        Object.keys(planets).forEach(name => {
+            const p = planets[name];
+            // v = sqrt(GM/r) -> Speed ~ 1/sqrt(a)
+            const speed = p.data.speed * 0.002;
+            p.angle += speed;
+
+            // Calculate Position
+            const r = (p.data.a * AU) * (1 - p.data.e*p.data.e) / (1 + p.data.e * Math.cos(p.angle));
+            p.mesh.position.x = r * Math.cos(p.angle);
+            p.mesh.position.z = r * Math.sin(p.angle);
+            p.mesh.rotation.y += 0.01;
+
+            // Tracking
+            if(target === name) {
+                document.getElementById('t-name').innerText = name;
+                document.getElementById('t-dist').innerText = p.data.a.toFixed(2) + " AU";
+                document.getElementById('t-threat').innerText = "SAFE";
+                document.getElementById('t-threat').style.color = "#00FFFF";
+            }
+        });
+
+        // 2. Update Threats
+        if(isDarkSector) {
+            asteroids.forEach(a => {
+                a.angle += a.data.speed * 0.002;
+                const r = a.data.a * AU;
+                a.mesh.position.x = r * Math.cos(a.angle);
+                a.mesh.position.z = r * Math.sin(a.angle);
+                a.mesh.position.y = Math.sin(a.angle * 2) * 10;
+
+                // Check Collision Logic
+                const earth = planets['EARTH'].mesh.position;
+                const dist = a.mesh.position.distanceTo(earth);
+                if(dist < 15) {
+                    document.getElementById('t-threat').innerText = "COLLISION WARNING: " + a.data.name;
+                    document.getElementById('t-threat').style.color = "#FF0000";
+                    document.getElementById('t-name').innerText = "EARTH (TARGETED)";
+                }
+            });
+
+            // Ngrok Pulse
+            ngrokField.rotation.y += 0.001;
+            ngrokField.scale.setScalar(1 + Math.sin(time)*0.02);
+        }
+
+        // 3. System Time
+        const date = new Date();
+        document.getElementById('sys-time').innerText = date.toISOString().split('T')[1].split('.')[0];
+
+        renderer.render(scene, camera);
+    }
+
+    // --- CONTROLS ---
+    function setMode(m) {
+        if(m === 'ORBIT') {
+            camera.position.set(0, 200, 0); // Top Down
+            camera.lookAt(0,0,0);
+        }
+        if(m === 'SYSTEM') {
+            camera.position.set(0, 100, 150); // Angled
+            camera.lookAt(0,0,0);
+        }
+    }
+
+    function toggleDarkSector() {
+        isDarkSector = !isDarkSector;
+
+        asteroids.forEach(a => {
+            a.mesh.visible = isDarkSector;
+            a.path.visible = isDarkSector;
+        });
+        ngrokField.visible = isDarkSector;
+
+        if(isDarkSector) {
+            scene.background = new THREE.Color(0x110000); // Red Alert BG
+            scene.fog = new THREE.FogExp2(0x110000, 0.005);
+        } else {
+            scene.background = new THREE.Color(0x000000);
+            scene.fog = new THREE.FogExp2(0x000000, 0.002);
+        }
+    }
+
+    function onResize() {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    }
+
+    init();
+
+</script>
+</body>
+</html>

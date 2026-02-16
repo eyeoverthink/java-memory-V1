@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS BIOSPHERE // GEN 180</title>
+    <style>
+        /* --- AESTHETIC: THE PRIMORDIAL SOUP --- */
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Consolas', monospace; color: #E0E0E0; user-select: none; }
+
+        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+        #header {
+            position: absolute; top: 0; width: 100%; height: 60px;
+            background: linear-gradient(to bottom, rgba(0,20,0,0.9), transparent);
+            border-bottom: 1px solid #004400;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+        }
+        .title { font-size: 18px; font-weight: bold; color: #00FF00; letter-spacing: 4px; text-shadow: 0 0 10px #00FF00; }
+
+        #stats {
+            position: absolute; top: 70px; left: 20px; width: 250px;
+            background: rgba(0, 10, 0, 0.8); border: 1px solid #00FF00;
+            padding: 15px; pointer-events: auto;
+        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+        .val { color: #00FF00; font-weight: bold; }
+
+        #controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; pointer-events: auto;
+        }
+        .btn {
+            background: #000; border: 1px solid #004400; color: #008800;
+            padding: 10px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; transition: 0.2s;
+        }
+        .btn:hover { border-color: #00FF00; color: #00FF00; box-shadow: 0 0 15px #00FF00; }
+
+        canvas { display: block; filter: contrast(1.2) brightness(1.1); }
+    </style>
+</head>
+<body>
+
+<div id="hud">
+    <div id="header">
+        <div class="title">FRAYMUS // BIOSPHERE</div>
+        <div style="font-size:11px; color:#00FF00;">ENGINE: EVOLUTIONARY</div>
+    </div>
+
+    <div id="stats">
+        <div style="border-bottom:1px dashed #004400; margin-bottom:10px; color:#FFF;">GENETIC TELEMETRY</div>
+        <div class="stat-row"><span>GENERATION:</span> <span class="val" id="gen">0</span></div>
+        <div class="stat-row"><span>POPULATION:</span> <span class="val" id="pop">0</span></div>
+        <div class="stat-row"><span>AVG SPEED:</span> <span class="val" id="avg-spd">0.00</span></div>
+        <div class="stat-row"><span>AVG SENSE (NGROK):</span> <span class="val" id="avg-sen">0.00</span></div>
+        <div class="stat-row"><span>MUTATION RATE:</span> <span class="val">1/φ (Low)</span></div>
+    </div>
+
+    <div id="controls">
+        <button class="btn" onclick="triggerExtinction()">METEOR STRIKE</button>
+        <button class="btn" onclick="addFood()">SEED FOOD</button>
+        <button class="btn" onclick="toggleView()">TOGGLE NETWORK</button>
+    </div>
+</div>
+
+<canvas id="simCanvas"></canvas>
+
+<script>
+    /**
+     * 🧬 FRAYMUS BIOSPHERE // GEN 180
+     * Logic: Genetic Algorithms + Boids + Phi Scaling
+     */
+
+    const PHI = 1.6180339887;
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // --- CONFIG ---
+    let width, height;
+    let entities = [];
+    let food = [];
+    let predators = [];
+    let generation = 1;
+    let showNetwork = false;
+
+    // --- CLASSES ---
+
+    class Organism {
+        constructor(x, y, dna) {
+            this.pos = { x: x, y: y };
+            this.vel = { x: (Math.random()-0.5)*2, y: (Math.random()-0.5)*2 };
+            this.dna = dna || {
+                speed: 2 + (Math.random()-0.5),     // How fast it moves
+                sense: 50 + (Math.random()-0.5)*20, // Ngrok Radius (Connection)
+                size: 3 + (Math.random()-0.5)       // Physical Mass
+            };
+            this.energy = 100;
+            this.age = 0;
+            this.color = `hsl(${100 + (this.dna.speed*20)}, 100%, 50%)`; // Color based on speed
+        }
+
+        update() {
+            // Physics
+            this.pos.x += this.vel.x * (this.dna.speed * 0.5);
+            this.pos.y += this.vel.y * (this.dna.speed * 0.5);
+
+            // Boundary Wrap (Toroidal Universe)
+            if (this.pos.x < 0) this.pos.x = width;
+            if (this.pos.x > width) this.pos.x = 0;
+            if (this.pos.y < 0) this.pos.y = height;
+            if (this.pos.y > height) this.pos.y = 0;
+
+            // Life Cost
+            this.energy -= (this.dna.speed * this.dna.size) * 0.05;
+            this.age++;
+
+            // Steering Behavior (The Brain)
+            this.interact();
+        }
+
+        interact() {
+            let closestFood = null;
+            let minDist = Infinity;
+
+            // 1. Find Food (Survival)
+            for (let i = 0; i < food.length; i++) {
+                let d = dist(this.pos, food[i]);
+                if (d < this.dna.sense && d < minDist) {
+                    minDist = d;
+                    closestFood = food[i];
+                }
+            }
+
+            if (closestFood) {
+                // Seek
+                let dx = closestFood.x - this.pos.x;
+                let dy = closestFood.y - this.pos.y;
+                let mag = Math.sqrt(dx*dx + dy*dy);
+                this.vel.x += (dx/mag) * 0.2;
+                this.vel.y += (dy/mag) * 0.2;
+
+                // Eat
+                if (minDist < this.dna.size + 2) {
+                    this.energy += 30;
+                    // Remove food (simulation trick)
+                    food.splice(food.indexOf(closestFood), 1);
+                    // Reproduce if energy high (Phi Growth)
+                    if (this.energy > 150) this.reproduce();
+                }
+            }
+
+            // 2. Avoid Predators (Threat)
+            for (let p of predators) {
+                let d = dist(this.pos, p.pos);
+                if (d < this.dna.sense) {
+                    // Flee
+                    let dx = this.pos.x - p.pos.x;
+                    let dy = this.pos.y - p.pos.y;
+                    let mag = Math.sqrt(dx*dx + dy*dy);
+                    this.vel.x += (dx/mag) * 0.5;
+                    this.vel.y += (dy/mag) * 0.5;
+                }
+            }
+
+            // Normalize Velocity
+            let speed = Math.sqrt(this.vel.x*this.vel.x + this.vel.y*this.vel.y);
+            if (speed > 1) {
+                this.vel.x = (this.vel.x / speed);
+                this.vel.y = (this.vel.y / speed);
+            }
+        }
+
+        reproduce() {
+            this.energy -= 60; // Cost of birth
+            // Mutation (Lazarus Evolution)
+            let mutRate = 0.1;
+            let newDNA = {
+                speed: this.dna.speed + (Math.random()-0.5)*mutRate,
+                sense: this.dna.sense + (Math.random()-0.5)*mutRate*10,
+                size: this.dna.size + (Math.random()-0.5)*mutRate
+            };
+            entities.push(new Organism(this.pos.x, this.pos.y, newDNA));
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, this.dna.size, 0, Math.PI*2);
+            ctx.fill();
+
+            // Ngrok Field (Connection Line)
+            if (showNetwork) {
+                ctx.strokeStyle = "rgba(0, 255, 0, 0.1)";
+                ctx.beginPath();
+                ctx.arc(this.pos.x, this.pos.y, this.dna.sense, 0, Math.PI*2);
+                ctx.stroke();
+            }
+        }
+    }
+
+    class Predator {
+        constructor(x, y) {
+            this.pos = {x:x, y:y};
+            this.vel = {x:Math.random()*2, y:Math.random()*2};
+        }
+        update() {
+            this.pos.x += this.vel.x;
+            this.pos.y += this.vel.y;
+            if(this.pos.x < 0 || this.pos.x > width) this.vel.x *= -1;
+            if(this.pos.y < 0 || this.pos.y > height) this.vel.y *= -1;
+
+            // Kill Logic
+            for(let i=entities.length-1; i>=0; i--) {
+                if(dist(this.pos, entities[i].pos) < 10) {
+                    entities.splice(i, 1); // Extinction event for individual
+                }
+            }
+        }
+        draw() {
+            ctx.fillStyle = "#FF0000";
+            ctx.beginPath(); ctx.arc(this.pos.x, this.pos.y, 6, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = "#550000";
+            ctx.beginPath(); ctx.arc(this.pos.x, this.pos.y, 12, 0, Math.PI*2); ctx.stroke();
+        }
+    }
+
+    // --- SYSTEM ---
+
+    function init() {
+        resize();
+        // Seed Life (Adam & Eve + n)
+        for(let i=0; i<20; i++) {
+            entities.push(new Organism(Math.random()*width, Math.random()*height));
+        }
+        // Seed Food
+        for(let i=0; i<100; i++) {
+            food.push({x:Math.random()*width, y:Math.random()*height});
+        }
+        // Seed Darkness (Ngrok forces)
+        for(let i=0; i<3; i++) {
+            predators.push(new Predator(Math.random()*width, Math.random()*height));
+        }
+
+        loop();
+    }
+
+    function loop() {
+        // Clear
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; // Trail effect
+        ctx.fillRect(0, 0, width, height);
+
+        // Food Logic (Regrow based on Phi)
+        if (Math.random() < 0.05 * PHI) {
+            food.push({x:Math.random()*width, y:Math.random()*height});
+        }
+        for(let f of food) {
+            ctx.fillStyle = "#004400";
+            ctx.fillRect(f.x, f.y, 3, 3);
+        }
+
+        // Organism Logic
+        let totalSpeed = 0;
+        let totalSense = 0;
+
+        for (let i = entities.length - 1; i >= 0; i--) {
+            let e = entities[i];
+            e.update();
+            e.draw();
+
+            totalSpeed += e.dna.speed;
+            totalSense += e.dna.sense;
+
+            if (e.energy <= 0) entities.splice(i, 1); // Death
+        }
+
+        // Predator Logic
+        for(let p of predators) {
+            p.update();
+            p.draw();
+        }
+
+        // Telemetry
+        if (entities.length > 0) {
+            document.getElementById('gen').innerText = generation + Math.floor(Date.now()/10000); // Mock gen ticker
+            document.getElementById('pop').innerText = entities.length;
+            document.getElementById('avg-spd').innerText = (totalSpeed / entities.length).toFixed(2);
+            document.getElementById('avg-sen').innerText = (totalSense / entities.length).toFixed(2);
+        } else {
+            ctx.fillStyle = "#FFF";
+            ctx.font = "20px Consolas";
+            ctx.fillText("EXTINCTION EVENT. RE-SEEDING...", width/2 - 150, height/2);
+            if(Math.random() < 0.01) init(); // Auto restart
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    // --- CONTROLS ---
+    function triggerExtinction() {
+        // Kill 80% of population
+        entities.splice(0, Math.floor(entities.length * 0.8));
+        // Shake screen (visual only)
+        canvas.style.transform = `translate(${Math.random()*10}px, ${Math.random()*10}px)`;
+        setTimeout(() => canvas.style.transform = "none", 200);
+    }
+
+    function addFood() {
+        for(let i=0; i<50; i++) food.push({x:Math.random()*width, y:Math.random()*height});
+    }
+
+    function toggleView() {
+        showNetwork = !showNetwork;
+    }
+
+    function dist(a, b) {
+        return Math.sqrt(Math.pow(a.x-b.x, 2) + Math.pow(a.y-b.y, 2));
+    }
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+
+    init();
+
+</script>
+</body>
+</html>

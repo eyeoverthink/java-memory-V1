@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS COSMOS // GEN 167</title>
+    <style>
+        :root {
+            --platinum: #E0E0E0;
+            --obsidian: #101010;
+            --amber: #FFB000;
+            --void: #050505;
+            --grid: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+            font-family: 'Courier New', monospace;
+            user-select: none;
+        }
+
+        /* --- OS LAYER --- */
+        #desktop {
+            width: 100vw; height: 100vh;
+            background: #111;
+            position: relative;
+            background-image:
+                linear-gradient(var(--grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* --- WINDOW SYSTEM --- */
+        .window {
+            position: absolute;
+            background: var(--obsidian);
+            border: 2px solid var(--platinum);
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            min-width: 400px;
+            min-height: 300px;
+        }
+
+        .title-bar {
+            background: var(--platinum);
+            color: #000;
+            padding: 5px 10px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content {
+            flex-grow: 1;
+            position: relative;
+            background: var(--void);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 10px; left: 10px;
+            color: var(--amber);
+            font-size: 11px;
+            pointer-events: none;
+            text-shadow: 0 1px 2px #000;
+            background: rgba(0,0,0,0.7);
+            padding: 5px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+
+<div id="desktop">
+
+    <div class="window" style="top: 20px; left: 20px; width: 800px; height: 600px; z-index: 10;">
+        <div class="title-bar">
+            <span>SOLAR_SYSTEM.EXE [N-BODY PHYSICS]</span>
+            <span>[X]</span>
+        </div>
+        <div class="content">
+            <canvas id="orreryCanvas"></canvas>
+            <div class="overlay">
+                <div>SYSTEM: SOL</div>
+                <div>OBJECTS: 10 (SUN + 8 PLANETS + MOON)</div>
+                <div>PHYSICS: F = G * (m1*m2)/r^2</div>
+                <div id="date-display">T+0 CYCLES</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" style="top: 20px; left: 840px; width: 500px; height: 300px; z-index: 9;">
+        <div class="title-bar">
+            <span>RESONANCE.DAT [HARMONIC ANALYSIS]</span>
+            <span>[X]</span>
+        </div>
+        <div class="content">
+            <canvas id="resCanvas"></canvas>
+            <div class="overlay">
+                <div>HARMONIC OUTPUT</div>
+                <div>WAVEFORM: Σ sin(t * orbital_freq)</div>
+                <div id="resonance-val">AMP: 0.00</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- WINDOW DRAG LOGIC ---
+    document.querySelectorAll('.title-bar').forEach(bar => {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+        const win = bar.parentElement;
+
+        bar.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialLeft = win.offsetLeft;
+            initialTop = win.offsetTop;
+            // Z-Index Management
+            document.querySelectorAll('.window').forEach(w => w.style.zIndex = 10);
+            win.style.zIndex = 100;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            win.style.left = `${initialLeft + dx}px`;
+            win.style.top = `${initialTop + dy}px`;
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+    });
+
+    // ======================================================
+    // MODULE 1: THE ORRERY (Physics Engine)
+    // ======================================================
+    const orreryCanvas = document.getElementById('orreryCanvas');
+    const ctx = orreryCanvas.getContext('2d');
+    let width, height;
+
+    // Simulation Constants
+    const CX = () => width / 2;
+    const CY = () => height / 2;
+    const G = 0.5; // Gravitational Constant (Visual Scale)
+
+    // Planetary Data (Scaled for visual clarity, not 1:1 scale)
+    // Speed is relative angular velocity
+    const planets = [
+        { name: "SUN",     r: 15, dist: 0,   speed: 0,    col: "#FFD700", mass: 1000, angle: 0 },
+        { name: "MERCURY", r: 3,  dist: 40,  speed: 0.04, col: "#AAAAAA", mass: 10,   angle: Math.random()*6 },
+        { name: "VENUS",   r: 5,  dist: 70,  speed: 0.03, col: "#E3BB76", mass: 20,   angle: Math.random()*6 },
+        { name: "EARTH",   r: 5,  dist: 100, speed: 0.02, col: "#00A2FF", mass: 25,   angle: Math.random()*6, hasMoon: true },
+        { name: "MARS",    r: 4,  dist: 140, speed: 0.015,col: "#FF4500", mass: 15,   angle: Math.random()*6 },
+        { name: "JUPITER", r: 10, dist: 220, speed: 0.008,col: "#D9A07E", mass: 300,  angle: Math.random()*6 },
+        { name: "SATURN",  r: 9,  dist: 290, speed: 0.006,col: "#F4D03F", mass: 250,  angle: Math.random()*6, ring: true },
+        { name: "URANUS",  r: 7,  dist: 350, speed: 0.004,col: "#4FD0E7", mass: 100,  angle: Math.random()*6 },
+        { name: "NEPTUNE", r: 7,  dist: 400, speed: 0.003,col: "#2E5D94", mass: 100,  angle: Math.random()*6 }
+    ];
+
+    // The Moon (Sub-Orbital System)
+    let moonAngle = 0;
+
+    function initOrrery() {
+        width = orreryCanvas.width = orreryCanvas.offsetWidth;
+        height = orreryCanvas.height = orreryCanvas.offsetHeight;
+    }
+
+    function updateOrrery() {
+        // Clear Void
+        ctx.fillStyle = "rgba(5, 5, 5, 0.2)"; // Trail effect
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw Orbits (Faint Lines)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+        ctx.lineWidth = 1;
+        planets.forEach(p => {
+            if (p.dist > 0) {
+                ctx.beginPath();
+                ctx.arc(CX(), CY(), p.dist, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        });
+
+        // Update & Draw Planets
+        planets.forEach(p => {
+            // Orbital Math
+            p.angle += p.speed;
+            let x = CX() + Math.cos(p.angle) * p.dist;
+            let y = CY() + Math.sin(p.angle) * p.dist;
+
+            // Draw Planet
+            ctx.fillStyle = p.col;
+            ctx.beginPath();
+            ctx.arc(x, y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Label
+            ctx.fillStyle = "#AAA";
+            ctx.font = "10px Monospace";
+            ctx.fillText(p.name, x + 8, y + 3);
+
+            // SATURN RING
+            if (p.ring) {
+                ctx.strokeStyle = "rgba(200, 200, 200, 0.5)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.ellipse(x, y, p.r + 8, p.r + 2, 0.5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // MOON LOGIC (Relative to Earth)
+            if (p.hasMoon) {
+                moonAngle += 0.1; // Moon is fast
+                let mx = x + Math.cos(moonAngle) * 15;
+                let my = y + Math.sin(moonAngle) * 15;
+
+                // Draw Moon Orbit
+                ctx.strokeStyle = "rgba(255,255,255,0.1)";
+                ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI*2); ctx.stroke();
+
+                // Draw Moon
+                ctx.fillStyle = "#FFF";
+                ctx.beginPath(); ctx.arc(mx, my, 2, 0, Math.PI*2); ctx.fill();
+            }
+        });
+
+        requestAnimationFrame(updateOrrery);
+    }
+
+    // ======================================================
+    // MODULE 2: RESONANCE CHAMBER (The Harmonic Visualizer)
+    // ======================================================
+    const resCanvas = document.getElementById('resCanvas');
+    const rCtx = resCanvas.getContext('2d');
+    let rWidth, rHeight;
+    let waveBuffer = [];
+
+    function initResonance() {
+        rWidth = resCanvas.width = resCanvas.offsetWidth;
+        rHeight = resCanvas.height = resCanvas.offsetHeight;
+        // Fill buffer
+        for(let i=0; i<rWidth; i++) waveBuffer.push(rHeight/2);
+    }
+
+    function updateResonance() {
+        // Clear
+        rCtx.fillStyle = "#000";
+        rCtx.fillRect(0, 0, rWidth, rHeight);
+
+        // Calculate Total Resonance (Sum of Sine Waves)
+        // We treat every planet's Y position relative to the Sun as a wave component.
+        // If planets align vertically, the wave constructive interferes.
+        let amplitude = 0;
+        planets.forEach(p => {
+            if(p.dist > 0) {
+                amplitude += Math.sin(p.angle) * (1000 / p.dist); // Closer planets = louder
+            }
+        });
+
+        // Update Buffer (Scrolling Wave)
+        waveBuffer.push((rHeight/2) + amplitude * 2);
+        waveBuffer.shift();
+
+        // Draw Wave
+        rCtx.beginPath();
+        rCtx.strokeStyle = "#FFB000"; // Amber
+        rCtx.lineWidth = 2;
+        rCtx.shadowBlur = 10;
+        rCtx.shadowColor = "#FFB000";
+
+        for(let i=0; i<rWidth; i++) {
+            let x = i;
+            let y = waveBuffer[i];
+            if (i===0) rCtx.moveTo(x, y);
+            else rCtx.lineTo(x, y);
+        }
+        rCtx.stroke();
+        rCtx.shadowBlur = 0; // Reset
+
+        // Draw Grid
+        rCtx.strokeStyle = "#333";
+        rCtx.lineWidth = 1;
+        rCtx.beginPath();
+        rCtx.moveTo(0, rHeight/2); rCtx.lineTo(rWidth, rHeight/2);
+        rCtx.stroke();
+
+        // Update Metric
+        let displayAmp = Math.abs(amplitude).toFixed(2);
+        document.getElementById('resonance-val').innerText = `AMP: ${displayAmp} φ`;
+
+        // Alert on Alignment
+        if (Math.abs(amplitude) > 20) {
+            document.getElementById('resonance-val').style.color = "#FF0000";
+            document.getElementById('resonance-val').innerText += " [ALIGNMENT DETECTED]";
+        } else {
+            document.getElementById('resonance-val').style.color = "#FFB000";
+        }
+
+        requestAnimationFrame(updateResonance);
+    }
+
+    // BOOT
+    window.addEventListener('resize', () => {
+        initOrrery();
+        initResonance();
+    });
+
+    setTimeout(() => {
+        initOrrery();
+        updateOrrery();
+        initResonance();
+        updateResonance();
+    }, 100);
+
+</script>
+</body>
+</html>

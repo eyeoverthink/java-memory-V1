@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS TITAN // GEN 175 (CHRONOS)</title>
+    <style>
+        :root { --platinum: #E0E0E0; --obsidian: #050505; --amber: #FFB000; --cyan: #00F3FF; --glass: rgba(5, 5, 5, 0.95); --border: 1px solid rgba(255, 255, 255, 0.15); }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', monospace; color: var(--platinum); user-select: none; }
+
+        /* BOOT SCREEN */
+        #boot-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #boot-terminal { width: 500px; height: 300px; border: 1px solid #333; padding: 20px; background: rgba(10, 10, 10, 0.8); box-shadow: 0 0 50px rgba(0, 243, 255, 0.1); display: flex; flex-direction: column; }
+        #boot-text { flex-grow: 1; overflow-y: auto; font-size: 11px; color: #888; }
+        #progress-container { margin-top: auto; width: 100%; height: 4px; background: #222; } #progress-bar { width: 0%; height: 100%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); transition: width 0.1s; }
+
+        /* UI LAYER */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; opacity: 0; transition: opacity 1s; }
+        #header { height: 40px; background: rgba(20, 20, 20, 0.9); border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; pointer-events: auto; backdrop-filter: blur(10px); z-index: 10; }
+        .logo { font-weight: bold; letter-spacing: 2px; color: #FFF; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .btn-group { display: flex; gap: 10px; }
+        .sys-btn { background: transparent; color: #888; border: 1px solid #333; padding: 5px 20px; cursor: pointer; font-size: 11px; text-transform: uppercase; transition: 0.3s; letter-spacing: 1px; }
+        .sys-btn:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+        .sys-btn.active { background: rgba(0, 243, 255, 0.1); border-color: var(--cyan); color: var(--cyan); font-weight: bold; box-shadow: 0 0 20px rgba(0, 243, 255, 0.4); }
+
+        /* DATA PANEL */
+        #sidebar { position: absolute; top: 60px; left: 20px; width: 360px; background: var(--glass); border: var(--border); padding: 15px; pointer-events: auto; backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 0 30px rgba(0,0,0,0.5); max-height: 85vh; overflow-y: auto; }
+        .panel-header { border-bottom: 1px solid #333; padding-bottom: 5px; color: var(--amber); font-size: 14px; letter-spacing: 2px; text-shadow: 0 0 5px rgba(255, 176, 0, 0.5); margin-top: 10px; }
+        .metric-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 2px; }
+        .label { color: #888; } .value { color: var(--cyan); font-weight: bold; } .unit { color: #555; margin-left: 2px; }
+
+        /* NAV & CONTROLS */
+        #planet-nav { display: none; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        .planet-btn { flex: 1 0 22%; background: rgba(255,255,255,0.05); border: 1px solid #333; color: #AAA; padding: 5px; cursor: pointer; font-size: 9px; text-align: center; transition: 0.2s; }
+        .planet-btn:hover { border-color: var(--platinum); color: #FFF; background: rgba(255,255,255,0.1); }
+        #scanline { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0, 0, 0, 0.2) 50%); background-size: 100% 4px; pointer-events: none; z-index: 99; }
+        #region-highlight { margin-top: 10px; border: 1px solid var(--cyan); background: rgba(0, 243, 255, 0.1); padding: 5px; text-align: center; display:none; }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+<body>
+
+<div id="boot-screen"><div id="boot-terminal"><div id="boot-text"></div><div id="progress-container"><div id="progress-bar"></div></div></div></div>
+
+<div id="ui-layer">
+    <div id="header">
+        <span class="logo">FRAYMUS TITAN // GEN 175</span>
+        <div class="btn-group">
+            <button class="sys-btn active" onclick="switchMode('GALAXY')" id="btn-galaxy">GALAXY</button>
+            <button class="sys-btn" onclick="switchMode('SOLAR')" id="btn-solar">SOLAR</button>
+            <button class="sys-btn" onclick="switchMode('SCANNER')" id="btn-scanner">SCANNER</button>
+        </div>
+        <span id="clock" style="font-size:12px; color:#888;">00:00:00</span>
+    </div>
+
+    <div id="sidebar">
+        <div id="panel-title" class="panel-header" style="margin-top:0;">SYSTEM READY</div>
+        <div id="telemetry-content"></div>
+        <div id="region-highlight">SCANNING REGION...</div>
+        <div id="planet-nav"></div>
+    </div>
+</div>
+
+<div id="scanline"></div>
+
+<script>
+    /**
+     * 🧬 FRAYMUS TITAN GEN 175 // CHRONOS EDITION
+     * Features: True-Time Rotation, Regional Topography Injection.
+     */
+
+    // --- GLOBAL CONFIG ---
+    let scene, camera, renderer, controls, composer, mode = "NONE";
+    let galaxySystem, solarBodies = [], scannerSystem = {}, currentScannerKey = "";
+    let frameCount = 0;
+
+    // TRUE DATA (Spin is Hours per Day, Negative = Retrograde)
+    // Region Data maps rotation angle to features.
+    const DB = {
+        MERCURY: { color:0xA5A5A5, type:"TERRESTRIAL", grav:3.7, spinSpeed:0.0005,  spinDesc:"VERY SLOW", regions: ["Caloris Basin", "Borealis Planitia", "Sobkou Planitia"] },
+        VENUS:   { color:0xE3BB76, type:"TERRESTRIAL", grav:8.87, spinSpeed:-0.001,  spinDesc:"RETROGRADE", regions: ["Ishtar Terra", "Aphrodite Terra", "Maxwell Montes"] },
+        EARTH:   { color:0x2233FF, type:"TERRESTRIAL", grav:9.81, spinSpeed:0.02,    spinDesc:"24 HOURS", regions: ["Pacific Ocean", "Americas", "Atlantic", "Africa/Europe", "Asia"] },
+        MARS:    { color:0xC1440E, type:"TERRESTRIAL", grav:3.71, spinSpeed:0.019,   spinDesc:"24.6 HOURS", regions: ["Olympus Mons", "Tharsis", "Valles Marineris", "Hellas Planitia"] },
+        JUPITER: { color:0xD9A07E, type:"GAS GIANT",   grav:24.79,spinSpeed:0.05,    spinDesc:"9.9 HOURS (FAST)", regions: ["Great Red Spot", "Equatorial Belt", "South Temperate Belt"] },
+        SATURN:  { color:0xF4D03F, type:"GAS GIANT",   grav:10.44,spinSpeed:0.045,   spinDesc:"10.7 HOURS", regions: ["Hexagon Storm", "Ring Shadow", "Equatorial Jet"] },
+        URANUS:  { color:0xD1F5F0, type:"ICE GIANT",   grav:8.69, spinSpeed:-0.03,   spinDesc:"ROLLING BARREL", regions: ["Dark Spot", "Haze Layer"] },
+        NEPTUNE: { color:0x2E5D94, type:"ICE GIANT",   grav:11.15,spinSpeed:0.032,   spinDesc:"16 HOURS", regions: ["Great Dark Spot", "Scooter Storm"] }
+    };
+
+    // --- BOOT LOGIC ---
+    const bootText=document.getElementById('boot-text'); const progressBar=document.getElementById('progress-bar'); const bootScreen=document.getElementById('boot-screen'); const uiLayer=document.getElementById('ui-layer');
+    function logBoot(m,t="normal"){ const d=document.createElement('div'); d.className=`boot-log ${t}`; d.innerText=`> ${m}`; bootText.appendChild(d); bootText.scrollTop=bootText.scrollHeight; }
+    function updateProgress(p){ progressBar.style.width=`${p}%`; }
+    function bootSequence(){
+        logBoot("FRAYMUS KERNEL GEN 175 (CHRONOS) INITIALIZING...", "highlight");
+        setTimeout(()=>{ logBoot("Syncing Atomic Clock..."); initThreeJS(); updateProgress(30);
+        setTimeout(()=>{ logBoot("Injecting Topography Maps...", "warn"); updateProgress(60);
+        setTimeout(()=>{ logBoot("Calibrating Rotation Matrices...", "success"); updateProgress(100);
+        setTimeout(()=>{ bootScreen.style.opacity=0; setTimeout(()=>bootScreen.style.display='none',1000); uiLayer.style.opacity=1; animate(); },500); },500); },500);
+    }
+
+    // --- ENGINE ---
+    function initThreeJS() {
+        scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x000000, 0.0002);
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 5000);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(window.devicePixelRatio); renderer.toneMapping = THREE.ReinhardToneMapping;
+        document.body.appendChild(renderer.domElement);
+        controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true;
+
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold=0; bloomPass.strength=1.2; bloomPass.radius=0.5;
+        composer = new THREE.EffectComposer(renderer); composer.addPass(renderScene); composer.addPass(bloomPass);
+        scene.add(new THREE.AmbientLight(0x111111));
+        mode="GALAXY"; window.addEventListener('resize', onResize);
+    }
+
+    // --- SWITCHER ---
+    function switchMode(n){ if(mode===n)return; mode=n;
+        document.querySelectorAll('.sys-btn').forEach(b=>b.classList.remove('active')); document.getElementById('btn-'+mode.toLowerCase()).classList.add('active');
+        document.getElementById('planet-nav').style.display=(mode==='SCANNER')?'flex':'none';
+        document.getElementById('region-highlight').style.display='none';
+        cleanup();
+        if(mode==='GALAXY') initGalaxy();
+        if(mode==='SOLAR') initSolar();
+        if(mode==='SCANNER') { initScanner('EARTH'); populatePlanetNav(); }
+    }
+    function cleanup(){
+        if(galaxySystem){scene.remove(galaxySystem);galaxySystem=null;}
+        solarBodies.forEach(b=>{scene.remove(b.mesh);scene.remove(b.orbit);scene.remove(b.trail);}); solarBodies=[];
+        if(scannerSystem.mesh){scene.remove(scannerSystem.mesh);scene.remove(scannerSystem.atm);scene.remove(scannerSystem.ring);scannerSystem={};}
+    }
+
+    // --- GALAXY & SOLAR (Standard) ---
+    function initGalaxy(){
+        document.getElementById('panel-title').innerText="MACRO: MILKY WAY";
+        updateTelemetry(`<div class="metric-row"><span class="label">TYPE:</span> <span class="value">SBc</span></div>`);
+        camera.position.set(0,400,700); controls.autoRotate=true;
+        const geo=new THREE.BufferGeometry(); const pos=new Float32Array(30000); const col=new Float32Array(30000);
+        for(let i=0;i<10000;i++){
+            const r=Math.random()*400; const a=r*4+(i%2)*Math.PI;
+            pos[i*3]=Math.cos(a)*r+(Math.random()-0.5)*50; pos[i*3+1]=(Math.random()-0.5)*(50-r/10); pos[i*3+2]=Math.sin(a)*r+(Math.random()-0.5)*50;
+            col[i*3]=0.5+r/800; col[i*3+1]=0.5; col[i*3+2]=1-r/800;
+        }
+        geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+        galaxySystem=new THREE.Points(geo,new THREE.PointsMaterial({size:2,vertexColors:true,blending:2,transparent:true,opacity:0.6})); scene.add(galaxySystem);
+    }
+    function initSolar(){
+        document.getElementById('panel-title').innerText="MESO: SOLAR SYSTEM";
+        updateTelemetry(`<div class="metric-row"><span class="label">PHYSICS:</span> <span class="value">N-BODY</span></div>`);
+        camera.position.set(0,200,300); controls.autoRotate=false; scene.add(new THREE.PointLight(0xffffff,2,1000));
+        const d=[{k:"SUN",r:10,d:0},{k:"MERCURY",r:1.5,d:25},{k:"VENUS",r:3,d:40},{k:"EARTH",r:3.2,d:60},{k:"MARS",r:2,d:80},{k:"JUPITER",r:8,d:130},{k:"SATURN",r:7,d:170},{k:"URANUS",r:5,d:210},{k:"NEPTUNE",r:5,d:250}];
+        d.forEach(p=>{
+            const c=p.k==='SUN'?0xFFD700:DB[p.k].color;
+            const mesh=new THREE.Mesh(new THREE.SphereGeometry(p.r,32,32),new THREE.MeshStandardMaterial({color:c,emissive:p.d===0?c:0,emissiveIntensity:p.d===0?1:0})); scene.add(mesh);
+            const tG=new THREE.BufferGeometry(); tG.setAttribute('position',new THREE.BufferAttribute(new Float32Array(600),3));
+            const tr=new THREE.Line(tG,new THREE.LineBasicMaterial({color:c,transparent:true,opacity:0.3})); scene.add(tr);
+            solarBodies.push({name:p.k,mesh:mesh,trail:tr,tArr:[],dist:p.d,angle:Math.random()*10,speed:p.d===0?0:2/p.d});
+        });
+    }
+
+    // ======================================================
+    // MODE: SCANNER (TOPOGRAPHY & TRUE ROTATION)
+    // ======================================================
+    function initScanner(k) {
+        document.getElementById('panel-title').innerText = `MICRO: ${k}`;
+        currentScannerKey = k;
+        camera.position.set(0,0,8); controls.autoRotate = false; // Disable auto to see true spin
+
+        const d = DB[k];
+
+        // 1. GENESIS TEXTURE (With Features)
+        const tex = generateGenesisTexture(k, d.color);
+        const mat = new THREE.MeshStandardMaterial({map:tex, roughness:0.7});
+        if(k==='EARTH') { mat.roughness=0.5; mat.metalness=0.1; }
+
+        scannerSystem.mesh = new THREE.Mesh(new THREE.SphereGeometry(2.5,64,64), mat);
+        scannerSystem.mesh.rotation.y = Math.PI; // Align start
+        scene.add(scannerSystem.mesh);
+
+        // Atmosphere
+        let atmCol = d.color; if(k==='EARTH') atmCol=0x0088ff; if(k==='MARS') atmCol=0xff5500;
+        const atm = new THREE.Mesh(new THREE.SphereGeometry(2.7,64,64), new THREE.MeshBasicMaterial({color:atmCol, transparent:true, opacity:0.1, side:THREE.BackSide, blending:THREE.AdditiveBlending}));
+        scannerSystem.atm = atm; scene.add(atm);
+
+        if(k==='SATURN'){
+            const rg=new THREE.Mesh(new THREE.RingGeometry(3.5,5.5,128),new THREE.MeshBasicMaterial({color:0xaa9966,side:2,transparent:true,opacity:0.8}));
+            rg.rotation.x=Math.PI/2-0.2; scannerSystem.ring=rg; scene.add(rg);
+        }
+
+        updateTelemetry(renderDataBlock(k, d));
+        document.getElementById('region-highlight').style.display='block';
+    }
+
+    function renderDataBlock(k, d) {
+        return `
+        <div class="panel-header">ROTATION DATA</div>
+        <div class="metric-row"><span class="label">SPEED:</span> <span class="value">${d.spinDesc}</span></div>
+        <div class="metric-row"><span class="label">GRAVITY:</span> <span><span class="value">${d.grav}</span> <span class="unit">m/s²</span></span></div>
+        <div class="panel-header">TOPOGRAPHY</div>
+        <div class="metric-row"><span class="label">FEATURES:</span> <span class="value">${d.regions.length} MAPPED</span></div>
+        <div class="metric-row"><span class="label">TERRAIN:</span> <span class="value">${k==='EARTH'?'LIQUID/SOLID':'CRATER/GAS'}</span></div>
+        `;
+    }
+
+    function updateRegionTracker(k) {
+        const d = DB[k];
+        const rot = scannerSystem.mesh.rotation.y % (Math.PI * 2);
+        // Map rotation 0-6.28 to the region array
+        const normRot = (rot < 0 ? rot + Math.PI*2 : rot) / (Math.PI*2);
+        const index = Math.floor(normRot * d.regions.length);
+        document.getElementById('region-highlight').innerText = `VISIBLE SECTOR: ${d.regions[index]}`;
+    }
+
+    // GENESIS ENGINE V3 (Topography Injection)
+    function generateGenesisTexture(k, colHex) {
+        const s=1024; const c=document.createElement('canvas'); c.width=s; c.height=s; const cx=c.getContext('2d');
+        const base = new THREE.Color(colHex); cx.fillStyle=`#${base.getHexString()}`; cx.fillRect(0,0,s,s);
+
+        if(k==='JUPITER'){
+            // Bands
+            for(let i=0;i<50;i++){ cx.fillStyle = Math.random()>0.5 ? '#'+base.clone().offsetHSL(0,0,Math.random()*0.2-0.1).getHexString() : '#'+base.clone().offsetHSL(0.05,0,Math.random()*0.2-0.1).getHexString(); cx.globalAlpha=0.6; cx.fillRect(0, Math.random()*s, s, Math.random()*s/10); }
+            // The Great Red Spot (Specific Feature)
+            cx.fillStyle='#aa4422'; cx.globalAlpha=0.8; cx.beginPath(); cx.ellipse(s/2, s/2, s/8, s/12, 0, 0, 6.28); cx.fill();
+        } else if(k==='EARTH'){
+            // Oceans
+            cx.fillStyle='#002244'; cx.fillRect(0,0,s,s);
+            // Continents (Green Band)
+            cx.fillStyle='#1a662a'; cx.globalAlpha=1.0;
+            for(let i=0;i<30;i++){ cx.beginPath(); cx.arc(Math.random()*s, (s/2)+(Math.random()*s/2-s/4), Math.random()*s/6, 0, 6.28); cx.fill(); }
+            // Ice Caps
+            cx.fillStyle='#ffffff'; cx.fillRect(0,0,s,s/10); cx.fillRect(0,s-s/10,s,s/10);
+        } else if(k==='MARS'){
+            // Tharsis Bulge
+            cx.fillStyle='#883300'; cx.beginPath(); cx.arc(s/2, s/2, s/4, 0, 6.28); cx.fill();
+            // Valles Marineris (Scar)
+            cx.strokeStyle='#331100'; cx.lineWidth=10; cx.beginPath(); cx.moveTo(s/3, s/2); cx.lineTo(s*0.7, s/2); cx.stroke();
+        } else {
+            // Generic Noise
+            for(let i=0;i<3000;i++){ cx.fillStyle = Math.random()>0.5?'#ffffff':'#000000'; cx.globalAlpha=Math.random()*0.15; cx.beginPath(); cx.arc(Math.random()*s,Math.random()*s,Math.random()*s/20,0,6.28); cx.fill(); }
+        }
+        return new THREE.CanvasTexture(c);
+    }
+
+    // --- UTILS ---
+    function updateTelemetry(h){document.getElementById('telemetry-content').innerHTML=h;}
+    function populatePlanetNav(){const c=document.getElementById('planet-nav');c.innerHTML='';Object.keys(DB).forEach(p=>{const b=document.createElement('div');b.className='planet-btn';b.innerText=p;b.onclick=()=>{initScanner(p);};c.appendChild(b);});}
+    function onResize(){renderer.setSize(window.innerWidth,window.innerHeight);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();composer.setSize(window.innerWidth,window.innerHeight);}
+    function animate(){
+        requestAnimationFrame(animate); controls.update();
+        document.getElementById('clock').innerText=new Date().toISOString().split('T')[1].split('.')[0];
+
+        if(mode==='SOLAR'){solarBodies.forEach(b=>{if(b.name==='SUN')return;b.angle+=b.speed;b.mesh.position.x=Math.cos(b.angle)*b.dist;b.mesh.position.z=Math.sin(b.angle)*b.dist;b.tArr.push(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z);if(b.tArr.length>600)b.tArr.splice(0,3);b.trail.geometry.setAttribute('position',new THREE.Float32BufferAttribute(b.tArr,3));});}
+
+        // TRUE ROTATION LOGIC
+        if(mode==='SCANNER' && scannerSystem.mesh){
+            const d = DB[currentScannerKey];
+            scannerSystem.mesh.rotation.y += d.spinSpeed;
+            if(scannerSystem.atm) scannerSystem.atm.rotation.y += d.spinSpeed * 1.2; // Atmosphere moves differently
+            updateRegionTracker(currentScannerKey);
+        }
+
+        composer.render();
+    }
+
+    bootSequence();
+</script>
+</body>
+</html>

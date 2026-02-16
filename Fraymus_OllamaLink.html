@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS // OLLAMA LINK // GEN 185</title>
+    <style>
+        /* --- AESTHETIC: TERMINAL OBSIDIAN --- */
+        body { margin: 0; overflow: hidden; background: #080808; font-family: 'Consolas', monospace; color: #00FF00; display: flex; height: 100vh; }
+        
+        #input-panel, #output-panel {
+            width: 30%; height: 100%; background: #050505; border-right: 1px solid #333;
+            display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; z-index: 10;
+        }
+        #output-panel { border-right: none; border-left: 1px solid #333; }
+        
+        #sim-container { flex-grow: 1; position: relative; background: #000; overflow: hidden; }
+        
+        textarea {
+            flex-grow: 1; background: #111; border: 1px solid #333; color: #AAA; 
+            font-family: inherit; font-size: 12px; padding: 10px; resize: none; outline: none;
+        }
+        textarea:focus { border-color: #00FF00; color: #FFF; }
+        
+        .header { font-weight: bold; margin-bottom: 10px; color: #00FF00; letter-spacing: 2px; }
+        
+        #transmute-btn {
+            background: #004400; color: #00FF00; border: 1px solid #00FF00; padding: 15px; 
+            font-weight: bold; cursor: pointer; margin-top: 10px; text-transform: uppercase;
+            transition: 0.2s; letter-spacing: 2px;
+        }
+        #transmute-btn:hover { background: #00FF00; color: #000; box-shadow: 0 0 20px #00FF00; }
+        #transmute-btn.processing { background: #333; color: #888; border-color: #555; cursor: not-allowed; }
+
+        /* HUD */
+        #hud {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            text-align: center; pointer-events: none; width: 300px;
+        }
+        #model-status { font-size: 10px; color: #555; margin-bottom: 5px; }
+        #progress-bar { width: 100%; height: 4px; background: #333; margin-top: 5px; }
+        #progress-fill { width: 0%; height: 100%; background: #00FF00; box-shadow: 0 0 10px #00FF00; transition: width 0.1s; }
+        
+        canvas { display: block; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="input-panel">
+        <div class="header">SOURCE CODE</div>
+        <textarea id="code-in" placeholder="// Paste raw code here..."></textarea>
+        <button id="transmute-btn" onclick="connectToOllama()">TRANSMUTE</button>
+    </div>
+
+    <div id="sim-container">
+        <div id="hud">
+            <div id="model-status">TARGET: eyeoverthink/Fraymus</div>
+            <div style="font-size:12px; color:#888;">NEURAL LINK STATUS</div>
+            <div id="progress-bar"><div id="progress-fill"></div></div>
+            <div id="status-text" style="font-size:10px; margin-top:5px; color:#00FF00;">READY</div>
+        </div>
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <div id="output-panel">
+        <div class="header">FRAYMUS OUTPUT</div>
+        <textarea id="code-out" readonly placeholder="WAITING FOR LOCALHOST..."></textarea>
+    </div>
+
+<script>
+/**
+ * 🧬 FRAYMUS NEURAL LINK // GEN 185
+ * Connects directly to Localhost:11434/api/generate
+ */
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+// --- STATE ---
+let packets = [], agents = [], particles = [];
+let isProcessing = false;
+const API_URL = "http://localhost:11434/api/generate";
+const MODEL_NAME = "eyeoverthink/fraymus-recursive"; // YOUR MODEL
+
+// --- VISUAL ENGINE (The Swarm) ---
+class Agent {
+    constructor(type) {
+        this.type = type; 
+        this.pos = { x: width/2, y: height/2 };
+        this.vel = { x: (Math.random()-0.5)*10, y: (Math.random()-0.5)*10 };
+    }
+    update() {
+        this.pos.x += this.vel.x; this.pos.y += this.vel.y;
+        if(this.pos.x<0||this.pos.x>width) this.vel.x*=-1;
+        if(this.pos.y<0||this.pos.y>height) this.vel.y*=-1;
+    }
+    draw() {
+        ctx.fillStyle = this.type==='REQ' ? '#00FF00' : '#0088FF';
+        ctx.fillRect(this.pos.x, this.pos.y, 3, 3);
+    }
+}
+
+// --- THE REAL CONNECTION ---
+async function connectToOllama() {
+    const inputCode = document.getElementById('code-in').value;
+    if(!inputCode) return;
+
+    // 1. UI LOCK
+    isProcessing = true;
+    document.getElementById('transmute-btn').classList.add('processing');
+    document.getElementById('transmute-btn').innerText = "TRANSMITTING...";
+    document.getElementById('status-text').innerText = "ACTIVATING BICAMERAL MIND...";
+    document.getElementById('status-text').style.color = "#00FF00";
+    document.getElementById('code-out').value = ""; // Clear output
+    spawnSwarm(50); // Visuals start
+
+    // Try Python bridge first (bicameral processing), fallback to direct Ollama
+    let useBridge = true;
+    let apiUrl = "/transmute"; // Python bridge endpoint
+    let payload;
+
+    if (useBridge) {
+        // 2A. BICAMERAL MODE (via Python bridge)
+        payload = { source: inputCode };
+    } else {
+        // 2B. DIRECT MODE (straight to Ollama)
+        apiUrl = API_URL;
+        const promptText = `Refactor and optimize this code. Return ONLY the code, no markdown:\n\n${inputCode}`;
+        payload = {
+            model: MODEL_NAME,
+            prompt: promptText,
+            stream: false
+        };
+    }
+
+    try {
+        // 3. HIT THE API
+        document.getElementById('status-text').innerText = useBridge ? 
+            "BICAMERAL PROCESSING..." : "SENDING TO LOCALHOST:11434...";
+        
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            // If bridge fails, try direct connection
+            if (useBridge) {
+                console.log("Bridge failed, trying direct Ollama connection...");
+                useBridge = false;
+                throw new Error("Bridge unavailable, retrying direct...");
+            }
+            throw new Error("Connection Failed");
+        }
+
+        const data = await response.json();
+        
+        // 4. SUCCESS
+        const result = useBridge ? data.result : data.response;
+        document.getElementById('code-out').value = result;
+        document.getElementById('status-text').innerText = useBridge ? 
+            "BICAMERAL TRANSMUTATION COMPLETE" : "REFACTOR COMPLETE";
+        
+        if (useBridge && data.bytes_generated) {
+            document.getElementById('model-status').innerText = 
+                `PROCESSED: ${data.bytes_processed}B → ${data.bytes_generated}B`;
+        }
+        
+        createExplosion(); // Visual payoff
+
+    } catch (error) {
+        // Retry with direct connection if bridge failed
+        if (useBridge && error.message.includes("retry")) {
+            document.getElementById('status-text').innerText = "SWITCHING TO DIRECT MODE...";
+            setTimeout(() => {
+                useBridge = false;
+                connectToOllama(); // Recursive retry
+            }, 500);
+            return;
+        }
+        
+        // 5. ERROR HANDLING
+        document.getElementById('code-out').value = 
+            "ERROR: Could not connect to Ollama.\n\n" +
+            "Make sure either:\n" +
+            "1. Python bridge is running: python transmuter_server.py\n" +
+            "   OR\n" +
+            "2. Ollama is running with CORS: OLLAMA_ORIGINS=\"*\" ollama serve";
+        document.getElementById('status-text').innerText = "CONNECTION REFUSED";
+        document.getElementById('status-text').style.color = "#FF0000";
+        console.error("Connection error:", error);
+    } finally {
+        if (!error || !error.message.includes("retry")) {
+            isProcessing = false;
+            document.getElementById('transmute-btn').classList.remove('processing');
+            document.getElementById('transmute-btn').innerText = "TRANSMUTE";
+            agents = []; // Despawn
+        }
+    }
+}
+
+// --- VISUAL LOOP ---
+function spawnSwarm(count) {
+    agents = [];
+    for(let i=0; i<count; i++) agents.push(new Agent('REQ'));
+}
+
+function createExplosion() {
+    for(let i=0; i<100; i++) {
+        particles.push({
+            x: width/2, y: height/2,
+            vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20,
+            life: 50, col: '#00FF00'
+        });
+    }
+}
+
+function loop() {
+    // Fade Trail
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.fillRect(0, 0, width, height);
+
+    if(isProcessing) {
+        // Progress Bar Mock (Visual Feedback while waiting)
+        const bar = document.getElementById('progress-fill');
+        let curr = parseFloat(bar.style.width) || 0;
+        if(curr < 90) bar.style.width = (curr + 0.5) + "%";
+        
+        // Swarm Logic
+        for(let a of agents) {
+            a.update();
+            a.draw();
+            // Draw lines to center (Data Stream)
+            if(Math.random()>0.9) {
+                ctx.strokeStyle = "rgba(0, 255, 0, 0.1)";
+                ctx.beginPath(); ctx.moveTo(a.pos.x, a.pos.y); ctx.lineTo(width/2, height/2); ctx.stroke();
+            }
+        }
+    } else {
+        document.getElementById('progress-fill').style.width = "100%";
+    }
+
+    // Particles
+    for(let i=particles.length-1; i>=0; i--) {
+        let p = particles[i];
+        p.x+=p.vx; p.y+=p.vy; p.life--;
+        ctx.fillStyle = p.col; ctx.fillRect(p.x, p.y, 2, 2);
+        if(p.life<=0) particles.splice(i,1);
+    }
+
+    requestAnimationFrame(loop);
+}
+
+function resize() {
+    width = document.getElementById('sim-container').clientWidth;
+    height = document.getElementById('sim-container').clientHeight;
+    canvas.width = width; canvas.height = height;
+}
+window.addEventListener('resize', resize);
+resize();
+loop();
+
+</script>
+</body>
+</html>

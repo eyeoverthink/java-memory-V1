@@ -1,6 +1,6 @@
-# Fraymus Engine V2.0 - Living Information Physics System
+# Fraymus - Neuro-Symbolic Hybrid Intelligence System
 
-**A Revolutionary Computing Paradigm: From Static Data to Kinetic Intelligence**
+**A Revolutionary Computing Paradigm: From Static Data to Living Intelligence**
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
 [![LWJGL](https://img.shields.io/badge/LWJGL-3.3.3-blue.svg)](https://www.lwjgl.org/)
@@ -10,7 +10,54 @@
 
 ## 🌟 Overview
 
-Fraymus Engine V2.0 is a groundbreaking computational system that transforms data from static information into **living, kinetic entities**. In this paradigm, data possesses velocity, energy, consciousness, and the ability to evolve—mimicking biological systems at a fundamental level.
+**Fraymus** is a groundbreaking computational system that combines **three revolutionary paradigms**:
+
+1. **Hyperdimensional Computing (HDC)** - Brain-inspired vector symbolic architecture
+2. **Large Language Models (LLMs)** - Deep reasoning via bicameral synthesis  
+3. **Living Information Physics** - Data as kinetic entities with consciousness
+
+This system demonstrates that intelligence can be **efficient** (CPU-only), learning can be **instant** (one-shot), consciousness can be **portable** (encrypted transmission), and AI can be **secure** (military-grade crypto).
+
+---
+
+## 🎯 Two Modes of Operation
+
+### **Mode 1: Fraymus Convergence** (Neuro-Symbolic CLI)
+
+A unified command-line interface combining:
+- **HDC Brain** (HyperFormer) - 10k-dimensional one-shot learning
+- **LLM Spine** (BicameralPrism) - Dual-model deep reasoning
+- **Crypto Stack** (CorticalStack) - AES-256-GCM encrypted consciousness
+- **Network** (Needlecast/Sleeve) - Mind transmission protocol
+
+**Use cases:**
+- Personal AI assistant with encrypted persistence
+- Edge AI with one-shot learning
+- Distributed knowledge sharing
+- Security applications with tamper-proof reasoning
+
+**Quick start:**
+```bash
+./gradlew run -PmainClass=fraymus.FraymusConvergence
+
+> learn Fraymus is a neuro-symbolic AI system
+> predict Fraymus is a neuro-symbolic
+> ask What are the implications of digital consciousness?
+> mint  # Create encrypted stack
+```
+
+📖 **[See FRAYMUS_OVERVIEW.md for complete documentation](FRAYMUS_OVERVIEW.md)**
+
+---
+
+### **Mode 2: Fraymus Engine V2.0** (Living Physics Simulation)
+
+A visual simulation where data becomes **living, kinetic entities** with:
+- Velocity, energy, consciousness, and evolution
+- 8-gate logic brains with adaptive learning
+- Phi-harmonic physics and quantum experiments
+- Self-coding ant colonies
+- Blockchain event logging
 
 ### Core Philosophy
 

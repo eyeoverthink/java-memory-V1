@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FRAYMUS GENESIS // GEN 181 (Neural Stream)</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #050505; font-family: 'Courier New', monospace; color: #E0E0E0; user-select: none; }
+    #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+    #header {
+      position: absolute; top: 0; width: 100%; height: 60px;
+      background: linear-gradient(to bottom, rgba(0,20,40,0.9), transparent);
+      border-bottom: 1px solid #0088FF;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+      box-sizing: border-box;
+    }
+    .title { font-size: 18px; font-weight: bold; color: #00FFFF; letter-spacing: 4px; text-shadow: 0 0 10px #00FFFF; }
+    .sub { font-size: 11px; color: #00FFFF; opacity: 0.95; }
+
+    #stats {
+      position: absolute; top: 70px; left: 20px; width: 310px;
+      background: rgba(0, 10, 20, 0.82); border: 1px solid #0088FF;
+      padding: 15px; pointer-events: auto;
+      box-sizing: border-box;
+    }
+    .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; }
+    .val { color: #00FFFF; font-weight: bold; }
+    .mini { margin-top: 10px; font-size: 10px; color: #888; line-height: 1.3; }
+
+    #controls {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 12px; pointer-events: auto; flex-wrap: wrap; justify-content: center;
+    }
+    .btn {
+      background: #000; border: 1px solid #004488; color: #0088FF;
+      padding: 10px 16px; cursor: pointer; text-transform: uppercase; font-weight: bold; transition: 0.2s;
+      letter-spacing: 1px;
+    }
+    .btn:hover { border-color: #00FFFF; color: #00FFFF; box-shadow: 0 0 15px #00FFFF; }
+
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+
+<div id="hud">
+  <div id="header">
+    <div class="title">FRAYMUS // GENESIS</div>
+    <div class="sub">NEURAL STREAM • PERCEIVE → DECIDE → ACT</div>
+  </div>
+
+  <div id="stats">
+    <div style="border-bottom:1px dashed #0088FF; margin-bottom:10px; color:#FFF;">EVOLUTIONARY TELEMETRY</div>
+    <div class="stat-row"><span>GENERATION MAX:</span> <span class="val" id="gen">1</span></div>
+    <div class="stat-row"><span>POPULATION:</span> <span class="val" id="pop">0</span></div>
+    <div class="stat-row"><span>AVG SPEED (TAILS):</span> <span class="val" id="avg-spd">0.00</span></div>
+    <div class="stat-row"><span>AVG SENSE (HALOS):</span> <span class="val" id="avg-sen">0.00</span></div>
+    <div class="stat-row"><span>FPS:</span> <span class="val" id="fps">0</span></div>
+    <div class="mini">
+      * Bonds fade + only draw shortest toroidal line.<br/>
+      * Extinction safely resets (no recursive init spam).<br/>
+      * Brain loop: Perceive → Decide → Act (tool-ready).
+    </div>
+  </div>
+
+  <div id="controls">
+    <button class="btn" id="btnMeteor">METEOR EVENT</button>
+    <button class="btn" id="btnBoost">BOOST STARLIGHT</button>
+    <button class="btn" id="btnBonds">TOGGLE BONDS</button>
+    <button class="btn" id="btnPause">PAUSE</button>
+    <button class="btn" id="btnReset">RESET</button>
+  </div>
+</div>
+
+<canvas id="simCanvas"></canvas>
+
+<script>
+/* @ts-check */
+(() => {
+  /**
+   * FRAYMUS GENESIS // GEN 181 (Upgraded)
+   * Key upgrades:
+   * - Simulation + Organism structure (clean brain loop)
+   * - Toroidal shortest-path steering (no edge stupidity)
+   * - Safe math (no NaN mag=0)
+   * - Lower DOM churn (telemetry updates throttled)
+   * - Bonds are O(1) validity via alive flag (no includes())
+   * - Extinction reset is controlled (no runaway init recursion)
+   */
+
+  const PHI = 1.618033988749895;
+
+  const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("simCanvas"));
+  const ctx = canvas.getContext("2d", { alpha: false });
+  if (!ctx) throw new Error("Canvas 2D context unavailable.");
+
+  const $ = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+
+  const ui = {
+    gen: /** @type {HTMLSpanElement} */ ($("gen")),
+    pop: /** @type {HTMLSpanElement} */ ($("pop")),
+    avgSpd: /** @type {HTMLSpanElement} */ ($("avg-spd")),
+    avgSen: /** @type {HTMLSpanElement} */ ($("avg-sen")),
+    fps: /** @type {HTMLSpanElement} */ ($("fps")),
+    btnMeteor: /** @type {HTMLButtonElement} */ ($("btnMeteor")),
+    btnBoost: /** @type {HTMLButtonElement} */ ($("btnBoost")),
+    btnBonds: /** @type {HTMLButtonElement} */ ($("btnBonds")),
+    btnPause: /** @type {HTMLButtonElement} */ ($("btnPause")),
+    btnReset: /** @type {HTMLButtonElement} */ ($("btnReset")),
+  };
+
+  /** Small vector helpers (fast + readable) */
+  const V = {
+    len2(x, y) { return x*x + y*y; },
+    len(x, y) { return Math.sqrt(x*x + y*y); },
+    clamp(v, a, b) { return v < a ? a : v > b ? b : v; },
+    rand(a, b) { return a + Math.random() * (b - a); },
+  };
+
+  /** Toroidal wrap helpers */
+  function wrap01(x, max) {
+    // (x % max + max) % max but faster for typical ranges
+    if (x < 0) return x + max;
+    if (x >= max) return x - max;
+    return x;
+  }
+  function wrapDelta(d, max) {
+    // shortest signed delta on a torus
+    if (d >  max / 2) return d - max;
+    if (d < -max / 2) return d + max;
+    return d;
+  }
+  function torusDist2(ax, ay, bx, by, w, h) {
+    const dx = wrapDelta(bx - ax, w);
+    const dy = wrapDelta(by - ay, h);
+    return dx*dx + dy*dy;
+  }
+
+  /** @typedef {{speed:number, sense:number, size:number}} DNA */
+  /** @typedef {{x:number, y:number, phase:number}} Food */
+  /** @typedef {{p1: Organism, p2: Organism, alpha:number}} Bond */
+
+  const CONFIG = {
+    seedPopulation: 18,
+    foodSpawnRate: 0.075,         // per frame-ish, scaled by dt
+    foodPulseSpeed: 0.11,
+    foodEnergy: 40,
+    reproThreshold: 180,
+    reproCost: 70,
+    baseEnergy: 100,
+    bondFade: 0.018 * PHI,
+    bondMaxDrawDist: 220,
+    bgFade: 0.20,
+    wander: 0.06,
+    steer: 0.28,
+    velLimit: 1.05,
+    // DNA constraints (prevents broken evolution)
+    dna: {
+      speed: { min: 0.6, max: 6.0 },
+      sense: { min: 20,  max: 240 },
+      size:  { min: 2.0, max: 10.0 }
+    },
+    mutationRate: 0.15,
+    telemetryEvery: 8,            // frames
+    extinctionCooldownMs: 800,
+  };
+
+  class Organism {
+    static nextId = 1;
+
+    /** @param {number} x @param {number} y @param {DNA=} dna @param {number=} parentGen */
+    constructor(x, y, dna, parentGen) {
+      this.id = Organism.nextId++;
+      this.alive = true;
+
+      this.pos = { x, y };
+      this.vel = { x: V.rand(-1, 1), y: V.rand(-1, 1) };
+
+      /** @type {DNA} */
+      this.dna = dna || {
+        speed: 2 + V.rand(-0.5, 0.5),
+        sense: 60 + V.rand(-20, 20),
+        size:  4 + V.rand(-0.5, 0.5)
+      };
+
+      this.dna.speed = V.clamp(this.dna.speed, CONFIG.dna.speed.min, CONFIG.dna.speed.max);
+      this.dna.sense = V.clamp(this.dna.sense, CONFIG.dna.sense.min, CONFIG.dna.sense.max);
+      this.dna.size  = V.clamp(this.dna.size,  CONFIG.dna.size.min,  CONFIG.dna.size.max);
+
+      this.gen = (parentGen ? parentGen + 1 : 1);
+      this.energy = CONFIG.baseEnergy;
+
+      this.color = `hsl(${180 + (this.dna.speed * 28)}, 100%, 55%)`;
+      /** @type {{x:number,y:number}[]} */
+      this.history = [];
+    }
+
+    /** Perceive → Decide → Act in one tick */
+    /** @param {Simulation} sim @param {number} dt */
+    step(sim, dt) {
+      // --- PERCEIVE ---
+      const target = this.findClosestFood(sim);
+
+      // --- DECIDE ---
+      // steering = seek(target) + wander
+      let ax = 0, ay = 0;
+
+      if (target) {
+        const dx = wrapDelta(target.x - this.pos.x, sim.w);
+        const dy = wrapDelta(target.y - this.pos.y, sim.h);
+        const mag = Math.sqrt(dx*dx + dy*dy) || 1; // avoid NaN
+        ax += (dx / mag) * CONFIG.steer;
+        ay += (dy / mag) * CONFIG.steer;
+      }
+
+      // wander (keeps evolution from freezing)
+      ax += V.rand(-CONFIG.wander, CONFIG.wander);
+      ay += V.rand(-CONFIG.wander, CONFIG.wander);
+
+      // --- ACT ---
+      this.vel.x += ax;
+      this.vel.y += ay;
+
+      // normalize/limit velocity
+      const s = Math.sqrt(this.vel.x*this.vel.x + this.vel.y*this.vel.y) || 1;
+      if (s > CONFIG.velLimit) {
+        this.vel.x = (this.vel.x / s) * CONFIG.velLimit;
+        this.vel.y = (this.vel.y / s) * CONFIG.velLimit;
+      }
+
+      // integrate position
+      const speedScale = (this.dna.speed * 0.42);
+      this.pos.x = wrap01(this.pos.x + this.vel.x * speedScale * dt, sim.w);
+      this.pos.y = wrap01(this.pos.y + this.vel.y * speedScale * dt, sim.h);
+
+      // tail history (length tied to speed)
+      this.history.push({ x: this.pos.x, y: this.pos.y });
+      const maxTail = Math.max(6, Math.floor(this.dna.speed * 4));
+      if (this.history.length > maxTail) this.history.shift();
+
+      // energy cost (speed + size)
+      this.energy -= (this.dna.speed * this.dna.size) * 0.028 * dt;
+
+      // eat if close enough
+      if (target) this.tryEat(sim, target);
+
+      // reproduce if enough energy
+      if (this.energy > CONFIG.reproThreshold) this.reproduce(sim);
+    }
+
+    /** @param {Simulation} sim @returns {Food|null} */
+    findClosestFood(sim) {
+      const sense2 = this.dna.sense * this.dna.sense;
+      let best = null;
+      let bestD2 = Infinity;
+
+      // If you later add spatial hashing, only this function needs to change.
+      for (let i = 0; i < sim.food.length; i++) {
+        const f = sim.food[i];
+        const d2 = torusDist2(this.pos.x, this.pos.y, f.x, f.y, sim.w, sim.h);
+        if (d2 < sense2 && d2 < bestD2) {
+          bestD2 = d2;
+          best = f;
+        }
+      }
+      return best;
+    }
+
+    /** @param {Simulation} sim @param {Food} f */
+    tryEat(sim, f) {
+      const eatRadius = (this.dna.size + 6);
+      const d2 = torusDist2(this.pos.x, this.pos.y, f.x, f.y, sim.w, sim.h);
+      if (d2 <= eatRadius * eatRadius) {
+        this.energy += CONFIG.foodEnergy;
+        // remove food (fast)
+        const idx = sim.food.indexOf(f);
+        if (idx >= 0) sim.food.splice(idx, 1);
+      }
+    }
+
+    /** @param {Simulation} sim */
+    reproduce(sim) {
+      this.energy -= CONFIG.reproCost;
+
+      const m = CONFIG.mutationRate;
+
+      /** @type {DNA} */
+      const childDNA = {
+        speed: this.dna.speed + V.rand(-m, m),
+        sense: this.dna.sense + V.rand(-m*22, m*22),
+        size:  this.dna.size  + V.rand(-m, m),
+      };
+
+      // clamp so evolution stays sane
+      childDNA.speed = V.clamp(childDNA.speed, CONFIG.dna.speed.min, CONFIG.dna.speed.max);
+      childDNA.sense = V.clamp(childDNA.sense, CONFIG.dna.sense.min, CONFIG.dna.sense.max);
+      childDNA.size  = V.clamp(childDNA.size,  CONFIG.dna.size.min,  CONFIG.dna.size.max);
+
+      const child = new Organism(this.pos.x, this.pos.y, childDNA, this.gen);
+      sim.addOrganism(child);
+
+      sim.bonds.push({ p1: this, p2: child, alpha: 1.0 });
+    }
+
+    /** @param {CanvasRenderingContext2D} c @param {Simulation} sim */
+    draw(c, sim) {
+      // Tail
+      c.beginPath();
+      c.strokeStyle = this.color;
+      c.lineWidth = Math.max(1, this.dna.size * 0.45);
+      let started = false;
+
+      for (let i = this.history.length - 1; i >= 0; i--) {
+        const p = this.history[i];
+        // prevent ugly wrap jump lines
+        const dx = Math.abs(wrapDelta(p.x - this.pos.x, sim.w));
+        const dy = Math.abs(wrapDelta(p.y - this.pos.y, sim.h));
+        if (dx < 60 && dy < 60) {
+          if (!started) { c.moveTo(p.x, p.y); started = true; }
+          else c.lineTo(p.x, p.y);
+        }
+      }
+      if (started) c.stroke();
+
+      // Body
+      c.fillStyle = "#FFF";
+      c.beginPath();
+      c.arc(this.pos.x, this.pos.y, 2, 0, Math.PI * 2);
+      c.fill();
+
+      // Sense halo (only when meaningful)
+      if (this.dna.sense > 90) {
+        c.strokeStyle = `rgba(0, 255, 255, 0.10)`;
+        c.lineWidth = 1;
+        c.beginPath();
+        c.arc(this.pos.x, this.pos.y, this.dna.sense / 4.2, 0, Math.PI * 2);
+        c.stroke();
+      }
+    }
+  }
+
+  class Simulation {
+    constructor() {
+      this.w = 1;
+      this.h = 1;
+
+      /** @type {Organism[]} */
+      this.entities = [];
+      /** @type {Food[]} */
+      this.food = [];
+      /** @type {Bond[]} */
+      this.bonds = [];
+
+      this.maxGen = 1;
+      this.frame = 0;
+      this.showBonds = true;
+      this.paused = false;
+
+      this._lastTs = performance.now();
+      this._fpsAcc = 0;
+      this._fpsN = 0;
+      this._fps = 0;
+
+      this._extinctAt = 0;
+    }
+
+    resize() {
+      this.w = canvas.width = window.innerWidth;
+      this.h = canvas.height = window.innerHeight;
+    }
+
+    reset() {
+      this.entities.length = 0;
+      this.food.length = 0;
+      this.bonds.length = 0;
+      this.maxGen = 1;
+      this.frame = 0;
+      this._extinctAt = 0;
+
+      for (let i = 0; i < CONFIG.seedPopulation; i++) {
+        this.addOrganism(new Organism(Math.random() * this.w, Math.random() * this.h));
+      }
+      this.boostEntropy();
+    }
+
+    /** @param {Organism} o */
+    addOrganism(o) {
+      this.entities.push(o);
+      if (o.gen > this.maxGen) this.maxGen = o.gen;
+    }
+
+    boostEntropy() {
+      for (let i = 0; i < 55; i++) {
+        this.food.push({ x: Math.random() * this.w, y: Math.random() * this.h, phase: Math.random() * Math.PI * 2 });
+      }
+    }
+
+    meteor() {
+      // kill ~80% but keep system alive
+      const survivors = [];
+      for (let i = 0; i < this.entities.length; i++) {
+        const e = this.entities[i];
+        if (Math.random() > 0.8) survivors.push(e);
+        else e.alive = false;
+      }
+      this.entities = survivors;
+      this.bonds.length = 0;
+    }
+
+    toggleBonds() { this.showBonds = !this.showBonds; }
+    togglePause() { this.paused = !this.paused; }
+
+    /** @param {number} ts */
+    tick(ts) {
+      const rawDtMs = ts - this._lastTs;
+      this._lastTs = ts;
+
+      // stable dt (clamp prevents big time jumps)
+      const dt = Math.min(2.0, Math.max(0.5, rawDtMs / 16.6667));
+
+      if (!this.paused) {
+        this.step(dt);
+        this.render(dt);
+      } else {
+        // subtle paused overlay
+        ctx.fillStyle = "rgba(5, 5, 10, 0.08)";
+        ctx.fillRect(0, 0, this.w, this.h);
+        ctx.fillStyle = "#00FFFF";
+        ctx.font = "bold 14px Courier New, monospace";
+        ctx.fillText("PAUSED", 20, this.h - 20);
+      }
+
+      requestAnimationFrame((t) => this.tick(t));
+    }
+
+    /** @param {number} dt */
+    step(dt) {
+      this.frame++;
+
+      // spawn food using dt, phi flavored
+      const spawnChance = CONFIG.foodSpawnRate * PHI * dt;
+      if (Math.random() < spawnChance) {
+        this.food.push({ x: Math.random() * this.w, y: Math.random() * this.h, phase: Math.random() * Math.PI * 2 });
+      }
+
+      // step organisms (backwards to allow removal)
+      let avgSpd = 0, avgSen = 0;
+
+      for (let i = this.entities.length - 1; i >= 0; i--) {
+        const e = this.entities[i];
+        e.step(this, dt);
+        avgSpd += e.dna.speed;
+        avgSen += e.dna.sense;
+
+        if (e.energy <= 0) {
+          e.alive = false;
+          this.entities.splice(i, 1);
+        }
+      }
+
+      // extinction handling (controlled)
+      if (this.entities.length === 0) {
+        if (!this._extinctAt) this._extinctAt = performance.now();
+        const elapsed = performance.now() - this._extinctAt;
+        if (elapsed > CONFIG.extinctionCooldownMs) this.reset();
+      } else {
+        this._extinctAt = 0;
+      }
+
+      // telemetry throttled
+      if (this.frame % CONFIG.telemetryEvery === 0) {
+        const n = Math.max(1, this.entities.length);
+        ui.gen.textContent = String(this.maxGen);
+        ui.pop.textContent = String(this.entities.length);
+        ui.avgSpd.textContent = (avgSpd / n).toFixed(2);
+        ui.avgSen.textContent = (avgSen / n).toFixed(2);
+      }
+
+      // FPS calc
+      this._fpsAcc += dt;
+      this._fpsN++;
+      if (this._fpsN >= 20) {
+        // dt is ~frames in 60hz units, so fps approx:
+        const avgDt = this._fpsAcc / this._fpsN;  // ~1 at 60fps
+        this._fps = Math.round(60 / avgDt);
+        ui.fps.textContent = String(this._fps);
+        this._fpsAcc = 0;
+        this._fpsN = 0;
+      }
+    }
+
+    /** @param {number} dt */
+    render(dt) {
+      // background fade
+      ctx.fillStyle = `rgba(5, 5, 10, ${CONFIG.bgFade})`;
+      ctx.fillRect(0, 0, this.w, this.h);
+
+      // draw food (pulsing stars)
+      const t = this.frame * CONFIG.foodPulseSpeed;
+      for (let i = 0; i < this.food.length; i++) {
+        const f = this.food[i];
+        const pulse = 2.0 + Math.sin(t + f.phase);
+        const alpha = 0.50 + 0.18 * Math.sin(t + f.phase);
+
+        ctx.fillStyle = `rgba(255, 255, 200, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // glow
+        ctx.fillStyle = "rgba(255, 200, 50, 0.10)";
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, pulse * 3.0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // draw organisms
+      for (let i = 0; i < this.entities.length; i++) {
+        this.entities[i].draw(ctx, this);
+      }
+
+      // bonds (lineage)
+      if (this.showBonds && this.bonds.length) {
+        for (let i = this.bonds.length - 1; i >= 0; i--) {
+          const b = this.bonds[i];
+          // O(1) validity check
+          if (!b.p1.alive || !b.p2.alive) {
+            this.bonds.splice(i, 1);
+            continue;
+          }
+
+          // only draw if close enough (toroidal)
+          const d2 = torusDist2(b.p1.pos.x, b.p1.pos.y, b.p2.pos.x, b.p2.pos.y, this.w, this.h);
+          if (d2 < CONFIG.bondMaxDrawDist * CONFIG.bondMaxDrawDist) {
+            const dx = wrapDelta(b.p2.pos.x - b.p1.pos.x, this.w);
+            const dy = wrapDelta(b.p2.pos.y - b.p1.pos.y, this.h);
+
+            ctx.strokeStyle = `rgba(255,255,255,${b.alpha})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(b.p1.pos.x, b.p1.pos.y);
+            ctx.lineTo(b.p1.pos.x + dx, b.p1.pos.y + dy);
+            ctx.stroke();
+          }
+
+          b.alpha -= CONFIG.bondFade;
+          if (b.alpha <= 0) this.bonds.splice(i, 1);
+        }
+      }
+
+      // extinction overlay
+      if (this.entities.length === 0) {
+        ctx.fillStyle = "#00FFFF";
+        ctx.font = "bold 14px Courier New, monospace";
+        ctx.fillText("EXTINCTION • REBOOTING…", this.w / 2 - 120, this.h / 2);
+      }
+    }
+  }
+
+  // --- Boot ---
+  const sim = new Simulation();
+  sim.resize();
+  sim.reset();
+
+  // --- Controls (no inline onclick) ---
+  ui.btnMeteor.addEventListener("click", () => sim.meteor());
+  ui.btnBoost.addEventListener("click", () => sim.boostEntropy());
+  ui.btnBonds.addEventListener("click", () => sim.toggleBonds());
+  ui.btnPause.addEventListener("click", () => {
+    sim.togglePause();
+    ui.btnPause.textContent = sim.paused ? "RESUME" : "PAUSE";
+  });
+  ui.btnReset.addEventListener("click", () => sim.reset());
+
+  window.addEventListener("resize", () => sim.resize());
+
+  requestAnimationFrame((t) => sim.tick(t));
+})();
+</script>
+</body>
+</html>

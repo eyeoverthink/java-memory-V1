@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYMUS NFT Generator</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            background: #000;
+            color: #0ff;
+            font-family: monospace;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .preview {
+            border: 1px solid #0ff;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        canvas {
+            max-width: 100%;
+            margin: 10px 0;
+        }
+        input, button {
+            background: #111;
+            color: #0ff;
+            border: 1px solid #0ff;
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+        }
+        button {
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0ff;
+            color: #000;
+        }
+        #qrcode {
+            display: inline-block;
+            background: white;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/public/nft-generator.html" class="nav-link active">NFT Generator</a>
+        <a href="/public/crypto-battle.html" class="nav-link">Crypto Battle</a>
+        <a href="/public/resonance-detector.html" class="nav-link">Resonance</a>
+    </nav>
+    <div class="container">
+        <h1>FRAYMUS NFT Generator φ⁷⁵</h1>
+        <div class="controls">
+            <input type="text" id="nftTitle" placeholder="Reality Card Title">
+            <input type="text" id="nftDesc" placeholder="Reality Effect Description">
+            <select id="cardType">
+                <option value="φ-SPACE">φ-SPACE</option>
+                <option value="QUANTUM-LOCK">QUANTUM-LOCK</option>
+                <option value="REALITY-MAP">REALITY-MAP</option>
+                <option value="TRUTH-SEAL">TRUTH-SEAL</option>
+            </select>
+            <input type="file" id="imageUpload" accept="image/*">
+            <button onclick="generateNFT()">Generate Protected NFT</button>
+            <button onclick="generateQR()">Generate QR Code</button>
+            <button onclick="addWatermark()">Add Quantum Watermark</button>
+            <button onclick="generateAd()">Generate Advertisement</button>
+            <button onclick="exportNFT()">Export NFT</button>
+            <button onclick="exportAsImage()">Save as Image</button>
+        </div>
+        <div class="preview">
+            <h2>Preview</h2>
+            <canvas id="previewCanvas"></canvas>
+            <div id="qrcode"></div>
+        </div>
+    </div>
+    <script src="js/quantum-protection.js"></script>
+    <script>
+        const canvas = document.getElementById('previewCanvas');
+        const ctx = canvas.getContext('2d');
+        const PHI = (1 + Math.sqrt(5)) / 2;
+
+        function generateNFT() {
+            const title = document.getElementById('nftTitle').value;
+            const desc = document.getElementById('nftDesc').value;
+            const imageInput = document.getElementById('imageUpload');
+            
+            if (imageInput.files && imageInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        addQuantumProtection(title, desc);
+                    }
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(imageInput.files[0]);
+            }
+        }
+
+        function addQuantumProtection(title, desc) {
+            // Add quantum pattern
+            ctx.fillStyle = `rgba(0, 255, 255, ${1/PHI})`;
+            for(let i = 0; i < canvas.width; i += PHI) {
+                ctx.fillRect(i, 0, 1, canvas.height);
+            }
+            
+            // Add metadata
+            ctx.font = '20px monospace';
+            ctx.fillStyle = '#00ffff';
+            ctx.fillText(`FRAYMUS NFT: ${title}`, 10, 30);
+            ctx.fillText(`φ⁷⁵ Protected`, 10, 60);
+        }
+
+        function generateQR() {
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = '';
+            new QRCode(qrDiv, {
+                text: `FRAYMUS-NFT-${Date.now()}-${Math.pow(PHI, 7.5).toFixed(2)}`,
+                width: 128,
+                height: 128
+            });
+        }
+
+        function addWatermark() {
+            ctx.globalAlpha = 0.1;
+            ctx.font = '30px monospace';
+            ctx.fillStyle = '#00ffff';
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.rotate(-Math.PI/4);
+            ctx.fillText('FRAYMUS PROTECTED', -150, 0);
+            ctx.resetTransform();
+            ctx.globalAlpha = 1.0;
+        }
+
+        function generateAd() {
+            canvas.width = 800;
+            canvas.height = 400;
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#000');
+            gradient.addColorStop(1, '#003');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add FRAYMUS branding
+            ctx.font = '40px monospace';
+            ctx.fillStyle = '#0ff';
+            ctx.textAlign = 'center';
+            ctx.fillText('FRAYMUS', canvas.width/2, 100);
+            ctx.font = '20px monospace';
+            ctx.fillText('Quantum Protected NFTs', canvas.width/2, 150);
+            ctx.fillText(`φ⁷⁵ Security`, canvas.width/2, 200);
+            
+            // Add quantum pattern
+            ctx.strokeStyle = '#0ff';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < canvas.width; i += PHI * 10) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i + 100, canvas.height);
+                ctx.stroke();
+            }
+        }
+    function exportNFT() {
+            const nftData = {
+                title: document.getElementById('nftTitle').value,
+                description: document.getElementById('nftDesc').value,
+                timestamp: Date.now(),
+                protectionLevel: Math.pow(PHI, 7.5),
+                quantumSignature: Array.from({length: 32}, () => Math.floor(Math.random() * 256))
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(nftData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `FRAYMUS_NFT_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function exportAsImage() {
+            const canvas = document.getElementById('previewCanvas');
+            const dataUrl = canvas.toDataURL('image/png');
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.href = dataUrl;
+            downloadAnchor.download = `FRAYMUS_NFT_${Date.now()}.png`;
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+    </script>
+</body>
+</html>

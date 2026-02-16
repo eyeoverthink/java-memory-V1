@@ -1,0 +1,64 @@
+# Build outputs
+build/
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+.vscode/
+.windsurf/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+temp.c
+*.tmp
+*.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Archives
+*.zip
+ollama-main.zip
+ollama-main/
+
+# Backups
+*_BACKUP_*.zip
+
+# Gradle
+gradle.properties
+.gradle/
+
+# Hydra
+.hydra_fragments/
+
+# Large binary assets (if any)
+*.iso
+*.bin
+*.exe

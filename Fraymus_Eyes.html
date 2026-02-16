@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS EYES // GEN 176</title>
+    <style>
+        /* --- THE PLATINUM AESTHETIC --- */
+        :root { --platinum: #E0E0E0; --obsidian: #050505; --amber: #FFB000; --cyan: #00F3FF; --glass: rgba(10, 10, 10, 0.9); }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: var(--platinum); user-select: none; }
+
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        /* HEADER */
+        #header { height: 50px; background: var(--glass); border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; pointer-events: auto; }
+        .logo { font-weight: bold; letter-spacing: 2px; color: #FFF; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        #date-display { font-size: 14px; color: var(--cyan); font-weight: bold; }
+
+        /* FOOTER (TIME CONTROL) */
+        #footer { height: 60px; background: var(--glass); border-top: 1px solid #333; display: flex; align-items: center; padding: 0 20px; pointer-events: auto; gap: 20px; }
+        .time-btn { background: transparent; border: 1px solid #555; color: #888; padding: 5px 15px; cursor: pointer; text-transform: uppercase; font-size: 10px; transition: 0.2s; }
+        .time-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+        .time-btn.active { background: rgba(0, 243, 255, 0.2); border-color: var(--cyan); color: var(--cyan); }
+        
+        #time-slider-container { flex-grow: 1; height: 4px; background: #333; position: relative; cursor: ew-resize; }
+        #time-slider-fill { height: 100%; background: var(--cyan); width: 50%; transition: width 0.1s; }
+        #time-knob { width: 10px; height: 20px; background: #FFF; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); box-shadow: 0 0 10px var(--cyan); cursor: grab; }
+
+        /* SIDEBAR (CONTEXT) */
+        #sidebar { position: absolute; top: 70px; right: 20px; width: 280px; background: var(--glass); border: 1px solid #333; padding: 15px; pointer-events: auto; }
+        .panel-header { color: var(--amber); border-bottom: 1px dashed #555; margin-bottom: 10px; font-size: 12px; letter-spacing: 1px; }
+        .data-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px; }
+        .val { color: var(--cyan); font-weight: bold; }
+        .unit { color: #666; margin-left: 3px; }
+
+        #scanline { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0, 0, 0, 0.2) 50%); background-size: 100% 4px; pointer-events: none; z-index: 99; }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="header">
+            <span class="logo">FRAYMUS EYES // GEN 176</span>
+            <div id="date-display">2026-02-11 21:03:00</div>
+        </div>
+
+        <div id="sidebar">
+            <div class="panel-header">TARGET TELEMETRY</div>
+            <div id="telemetry">
+                <div class="data-row"><span>TARGET:</span> <span class="val" id="target-name">EARTH</span></div>
+                <div class="data-row"><span>DIST (SUN):</span> <span class="val" id="target-dist">1.00 AU</span></div>
+                <div class="data-row"><span>VELOCITY:</span> <span class="val" id="target-vel">29.78 km/s</span></div>
+                <div class="data-row"><span>POSITION X:</span> <span class="val" id="target-x">0.00</span></div>
+                <div class="data-row"><span>POSITION Z:</span> <span class="val" id="target-z">0.00</span></div>
+            </div>
+            <br>
+            <div class="panel-header">NAVIGATION</div>
+            <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                <button class="time-btn" onclick="focusBody('SUN')">SUN</button>
+                <button class="time-btn" onclick="focusBody('MERCURY')">MERCURY</button>
+                <button class="time-btn" onclick="focusBody('VENUS')">VENUS</button>
+                <button class="time-btn" onclick="focusBody('EARTH')">EARTH</button>
+                <button class="time-btn" onclick="focusBody('MARS')">MARS</button>
+                <button class="time-btn" onclick="focusBody('JUPITER')">JUPITER</button>
+                <button class="time-btn" onclick="focusBody('SATURN')">SATURN</button>
+                <button class="time-btn" onclick="focusBody('URANUS')">URANUS</button>
+                <button class="time-btn" onclick="focusBody('NEPTUNE')">NEPTUNE</button>
+            </div>
+            <br>
+            <div class="panel-header">TIME RANGE</div>
+            <div class="data-row"><span>START:</span> <span class="val">1900-01-01</span></div>
+            <div class="data-row"><span>END:</span> <span class="val">2100-12-31</span></div>
+        </div>
+
+        <div id="footer">
+            <button class="time-btn" onclick="setTimeSpeed(-1000)"><< REV</button>
+            <button class="time-btn" onclick="setTimeSpeed(-100)">< REV</button>
+            <button class="time-btn" onclick="setTimeSpeed(0)">PAUSE</button>
+            <button class="time-btn active" id="btn-now" onclick="setTimeSpeed(1); setRealTime()">NOW</button>
+            <button class="time-btn" onclick="setTimeSpeed(100)">FWD ></button>
+            <button class="time-btn" onclick="setTimeSpeed(1000)">WARP >></button>
+            
+            <div id="time-slider-container" onmousedown="startDrag(event)">
+                <div id="time-slider-fill"></div>
+                <div id="time-knob"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanline"></div>
+
+<script>
+/**
+ * 🧬 FRAYMUS EYES // LOGIC CORE
+ * Abstracted from NASA Eyes. 
+ * Key Logic: Time-Variable Keplerian Orbits.
+ */
+
+// --- GLOBAL STATE ---
+let scene, camera, renderer, controls;
+let simTime = new Date();
+let timeSpeed = 1; // 1 = Realtime, 100 = Fast
+let targetBody = 'EARTH';
+let bodies = {};
+let isDragging = false;
+
+// Time Range (200 years)
+const TIME_START = new Date('1900-01-01T00:00:00Z');
+const TIME_END = new Date('2100-12-31T23:59:59Z');
+const TIME_RANGE = TIME_END - TIME_START;
+
+// KEPLERIAN ELEMENTS (Simplified for standard epoch J2000)
+// a: semi-major axis (AU), e: eccentricity, i: inclination (deg), L: mean longitude, w: long. of perihelion, n: daily motion (deg/day)
+const ORBITS = {
+    MERCURY: { a:0.387, e:0.2056, i:7.00, L:252.25, w:77.46, n:4.092, color:0xA5A5A5, radius:0.5 },
+    VENUS:   { a:0.723, e:0.0068, i:3.39, L:181.98, w:131.53, n:1.602, color:0xE3BB76, radius:0.7 },
+    EARTH:   { a:1.000, e:0.0167, i:0.00, L:100.46, w:102.94, n:0.9856, color:0x00A2FF, radius:0.8 },
+    MARS:    { a:1.524, e:0.0934, i:1.85, L:355.45, w:336.04, n:0.524, color:0xFF4500, radius:0.6 },
+    JUPITER: { a:5.203, e:0.0484, i:1.30, L:34.40,  w:14.75,  n:0.083, color:0xD9A07E, radius:2.5 },
+    SATURN:  { a:9.537, e:0.0541, i:2.48, L:49.94,  w:92.43,  n:0.033, color:0xF4D03F, radius:2.2 },
+    URANUS:  { a:19.19, e:0.0471, i:0.77, L:313.23, w:170.96, n:0.011, color:0xD1F5F0, radius:1.5 },
+    NEPTUNE: { a:30.07, e:0.0086, i:1.77, L:304.88, w:44.97,  n:0.006, color:0x2E5D94, radius:1.5 }
+};
+
+// --- INIT ---
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
+    camera.position.set(0, 80, 150);
+    
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    // Stars
+    addStarfield();
+    
+    // Sun
+    const sunGeo = new THREE.SphereGeometry(5, 32, 32);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    scene.add(sun);
+    
+    // Sun Glow
+    const glowGeo = new THREE.SphereGeometry(7, 32, 32);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xFFAA00, transparent: true, opacity: 0.3 });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    scene.add(glow);
+    
+    bodies['SUN'] = { mesh: sun, orbit: null, data: null };
+    
+    // Light
+    const light = new THREE.PointLight(0xFFFFFF, 2, 2000);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x222222));
+
+    // Create Planets
+    Object.keys(ORBITS).forEach(name => {
+        createPlanet(name, ORBITS[name]);
+    });
+
+    // Default Target
+    focusBody('EARTH');
+    
+    animate();
+}
+
+function createPlanet(name, data) {
+    // Planet Mesh
+    const geo = new THREE.SphereGeometry(data.radius, 32, 32);
+    const mat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.7 });
+    const mesh = new THREE.Mesh(geo, mat);
+    scene.add(mesh);
+    
+    // Orbit Path (Visual)
+    const pts = [];
+    for(let i=0; i<=360; i++) {
+        const angle = i * (Math.PI/180);
+        // Simplified ellipse (ignoring inclination for visual)
+        const r = data.a * (1 - data.e*data.e) / (1 + data.e * Math.cos(angle));
+        const x = r * Math.cos(angle) * 50; // Scale 50x for view
+        const z = r * Math.sin(angle) * 50;
+        pts.push(new THREE.Vector3(x, 0, z));
+    }
+    const pathGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    const pathMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.5 });
+    const path = new THREE.Line(pathGeo, pathMat);
+    scene.add(path);
+
+    bodies[name] = { mesh: mesh, data: data, path: path };
+}
+
+function addStarfield() {
+    const geo = new THREE.BufferGeometry();
+    const pos = [];
+    const colors = [];
+    const c1 = new THREE.Color(0x88ccff);
+    const c2 = new THREE.Color(0xffbb88);
+    
+    for(let i=0; i<8000; i++) {
+        pos.push((Math.random()-0.5)*3000, (Math.random()-0.5)*3000, (Math.random()-0.5)*3000);
+        const c = Math.random() > 0.5 ? c1 : c2;
+        colors.push(c.r, c.g, c.b);
+    }
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({vertexColors: true, size: 1.5, transparent: true, opacity: 0.8});
+    scene.add(new THREE.Points(geo, mat));
+}
+
+// --- MATH CORE (LAZARUS LOGIC) ---
+function calculatePosition(data, daysSinceJ2000) {
+    // Mean Anomaly (M)
+    let M = data.n * daysSinceJ2000 + data.L - data.w;
+    // Normalize to 0-360
+    M = M % 360; if(M<0) M+=360;
+    
+    // Eccentric Anomaly (E) - Solve Kepler's equation iteratively
+    let E = M;
+    for(let iter=0; iter<5; iter++) {
+        E = M + (180/Math.PI) * data.e * Math.sin(E * Math.PI/180);
+    }
+    
+    // True Anomaly (v)
+    const radE = E * (Math.PI/180);
+    const v = 2 * Math.atan2(
+        Math.sqrt(1 + data.e) * Math.sin(radE/2),
+        Math.sqrt(1 - data.e) * Math.cos(radE/2)
+    ) * (180/Math.PI);
+                
+    // Radius (r)
+    const radv = v * (Math.PI/180);
+    const r = data.a * (1 - data.e*data.e) / (1 + data.e * Math.cos(radv));
+    
+    // Heliocentric coords (ignoring inclination for simplicity)
+    const radL = (v + data.w) * (Math.PI/180);
+    const x = r * Math.cos(radL);
+    const z = r * Math.sin(radL);
+    
+    return { x: x*50, z: z*50, r: r }; // Scale 50x for visualization
+}
+
+// --- SYSTEM ---
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    
+    // Update Time (only if not paused)
+    if(timeSpeed !== 0 && !isDragging) {
+        simTime.setSeconds(simTime.getSeconds() + timeSpeed);
+        updateSlider();
+    }
+    
+    updateDateDisplay();
+    
+    // J2000 Epoch (Jan 1, 2000, 12:00 TT)
+    const j2000 = new Date('2000-01-01T12:00:00Z');
+    const days = (simTime - j2000) / (1000 * 60 * 60 * 24);
+
+    // Update Positions
+    Object.keys(bodies).forEach(name => {
+        if(name === 'SUN') return;
+        const b = bodies[name];
+        const pos = calculatePosition(b.data, days);
+        b.mesh.position.set(pos.x, 0, pos.z);
+        
+        // Update telemetry if this is the target
+        if(name === targetBody) {
+            document.getElementById('target-dist').innerText = pos.r.toFixed(3) + ' AU';
+            document.getElementById('target-x').innerText = (pos.x/50).toFixed(3) + ' AU';
+            document.getElementById('target-z').innerText = (pos.z/50).toFixed(3) + ' AU';
+            
+            // Velocity approximation (v = 2πa/T, where T is orbital period)
+            const period = 365.25 / b.data.n; // days
+            const vel = (2 * Math.PI * b.data.a * 149.6e6) / (period * 86400); // km/s
+            document.getElementById('target-vel').innerText = vel.toFixed(2) + ' km/s';
+        }
+    });
+
+    // Camera Focus
+    if(targetBody && bodies[targetBody]) {
+        const p = bodies[targetBody].mesh.position;
+        controls.target.lerp(p, 0.05);
+    }
+    
+    renderer.render(scene, camera);
+}
+
+function updateDateDisplay() {
+    const str = simTime.toISOString().replace('T', ' ').split('.')[0];
+    document.getElementById('date-display').innerText = str;
+}
+
+function updateSlider() {
+    const progress = (simTime - TIME_START) / TIME_RANGE;
+    const percent = Math.max(0, Math.min(100, progress * 100));
+    document.getElementById('time-slider-fill').style.width = percent + '%';
+    document.getElementById('time-knob').style.left = percent + '%';
+}
+
+function focusBody(name) {
+    targetBody = name;
+    document.getElementById('target-name').innerText = name;
+    
+    if(name === 'SUN') {
+        controls.target.set(0, 0, 0);
+        camera.position.set(0, 80, 150);
+    }
+}
+
+function setRealTime() {
+    simTime = new Date();
+    updateSlider();
+    updateActiveButton('btn-now');
+}
+
+function setTimeSpeed(speed) {
+    timeSpeed = speed;
+    updateActiveButton(null);
+}
+
+function updateActiveButton(id) {
+    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+    if(id) document.getElementById(id).classList.add('active');
+}
+
+// --- TIME SLIDER INTERACTION ---
+function startDrag(e) {
+    isDragging = true;
+    updateTimeFromMouse(e);
+    
+    function onMove(e) {
+        if(isDragging) updateTimeFromMouse(e);
+    }
+    
+    function onUp() {
+        isDragging = false;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+    }
+    
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+}
+
+function updateTimeFromMouse(e) {
+    const slider = document.getElementById('time-slider-container');
+    const rect = slider.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = Math.max(0, Math.min(1, x / rect.width));
+    
+    simTime = new Date(TIME_START.getTime() + percent * TIME_RANGE);
+    updateSlider();
+    timeSpeed = 0; // Pause when scrubbing
+    updateActiveButton(null);
+}
+
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+});
+
+init();
+
+</script>
+</body>
+</html>

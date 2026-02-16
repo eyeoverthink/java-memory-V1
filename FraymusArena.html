@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS ARENA // LIVE NEURAL LINK</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #020202; 
+            font-family: 'Consolas', monospace; 
+        }
+        #hud { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            color: #00FF00; 
+            pointer-events: none; 
+            z-index: 100;
+        }
+        .monitor { 
+            background: rgba(0, 20, 0, 0.8); 
+            border: 1px solid #005500; 
+            padding: 10px; 
+            margin-bottom: 5px; 
+            width: 250px; 
+        }
+        .val { 
+            color: #FFF; 
+            font-weight: bold; 
+            float: right; 
+        }
+        #connection-status { 
+            color: #FF0000; 
+            font-weight: bold; 
+            letter-spacing: 2px; 
+            margin-bottom: 10px;
+        }
+        .organism-list {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+        .organism-item {
+            padding: 3px;
+            border-bottom: 1px solid #003300;
+        }
+        .organism-name {
+            color: #00FFFF;
+            font-weight: bold;
+        }
+        .stat {
+            color: #888;
+            font-size: 9px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="hud">
+    <div id="connection-status">⚠️ DISCONNECTED</div>
+    <div class="monitor">
+        <div>ACTIVE THREADS <span id="thread-count" class="val">0</span></div>
+        <div>GLOBAL ENTROPY <span id="global-entropy" class="val">0.0%</span></div>
+        <div>UPTIME <span id="uptime" class="val">0s</span></div>
+    </div>
+    <div class="monitor organism-list" id="organism-list">
+        <div style="color: #888; text-align: center;">No organisms detected</div>
+    </div>
+</div>
+
+<canvas id="arena"></canvas>
+
+<script>
+    /**
+     * 🧬 FRAYMUS ARENA (CLIENT)
+     * Renders Java Threads as Biological Organisms.
+     * 
+     * Color Mapping:
+     * - Blue/Cyan: Low entropy (calm, ordered code)
+     * - Red/Orange: High entropy (chaotic, stressed threads)
+     * 
+     * Size: Memory usage
+     * Speed: Momentum/activity level
+     */
+    
+    const canvas = document.getElementById('arena');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    // THE POPULATION (Your Java Threads)
+    let organisms = {}; 
+    let particles = [];
+    let startTime = Date.now();
+
+    // --- WEBSOCKET CONNECTION ---
+    const socket = new WebSocket("ws://localhost:8887");
+
+    socket.onopen = () => {
+        document.getElementById('connection-status').innerText = "🧬 NEURAL UPLINK ACTIVE";
+        document.getElementById('connection-status').style.color = "#00FFFF";
+        console.log("[ARENA] Connected to Fraymus Nerve Center");
+    };
+
+    socket.onclose = () => {
+        document.getElementById('connection-status').innerText = "⚠️ UPLINK LOST";
+        document.getElementById('connection-status').style.color = "#FF0000";
+        console.log("[ARENA] Disconnected from Nerve Center");
+    };
+
+    socket.onerror = (error) => {
+        console.error("[ARENA] WebSocket error:", error);
+    };
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        switch(data.type) {
+            case "ORGANISM_PULSE":
+                updateOrganism(data);
+                break;
+            case "ORGANISM_DEATH":
+                killOrganism(data.id, data.cause);
+                break;
+            case "SYSTEM_EVENT":
+                console.log(`[EVENT] ${data.event}: ${data.message}`);
+                break;
+            case "SYSTEM_INIT":
+                console.log(`[ARENA] ${data.message}`);
+                break;
+        }
+    };
+
+    function updateOrganism(data) {
+        let org = organisms[data.id];
+        
+        // BIRTH
+        if (!org) {
+            org = {
+                id: data.id,
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random()-0.5)*2, 
+                vy: (Math.random()-0.5)*2,
+                history: [],
+                entropy: 0,
+                momentum: 0,
+                size: 10,
+                ...data
+            };
+            organisms[data.id] = org;
+            console.log(`[BIRTH] ${data.id} spawned`);
+        }
+
+        // UPDATE DNA FROM JAVA
+        org.targetEntropy = data.entropy;
+        org.targetMomentum = data.momentum;
+        org.targetSize = Math.max(5, Math.min(30, data.size));
+        org.lastUpdate = Date.now();
+    }
+
+    function killOrganism(id, cause) {
+        let org = organisms[id];
+        if (org) {
+            explode(org.x, org.y, org.color);
+            delete organisms[id];
+            console.log(`[DEATH] ${id} - ${cause}`);
+        }
+    }
+
+    // --- PHYSICS ENGINE ---
+
+    function loop() {
+        // Fade Trails
+        ctx.fillStyle = "rgba(2, 2, 5, 0.15)";
+        ctx.fillRect(0, 0, width, height);
+
+        const now = Date.now();
+        let totalEntropy = 0;
+        let count = 0;
+
+        // RENDER THREADS
+        for (let id in organisms) {
+            let o = organisms[id];
+
+            // 1. DEATH CHECK (If Java stops sending updates for 3 seconds)
+            if (now - o.lastUpdate > 3000) {
+                explode(o.x, o.y, o.color || '#FF0000');
+                delete organisms[id];
+                console.log(`[TIMEOUT] ${id} stopped responding`);
+                continue;
+            }
+
+            // 2. SMOOTH DATA LERP (Gradual transitions)
+            o.entropy = lerp(o.entropy || 0, o.targetEntropy, 0.1);
+            o.momentum = lerp(o.momentum || 0, o.targetMomentum, 0.1);
+            o.size = lerp(o.size || 5, o.targetSize, 0.1);
+
+            totalEntropy += o.entropy;
+            count++;
+
+            // 3. COLOR LOGIC (The "Ghost" Visualization)
+            // Low Entropy = Cyan (Order). High Entropy = Red (Chaos).
+            let r = Math.min(255, o.entropy * 255 * 2); 
+            let g = Math.max(0, 255 - (o.entropy * 255));
+            let b = Math.max(0, 255 - (o.entropy * 255));
+            o.color = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+
+            // 4. MOVEMENT (Momentum based)
+            let speed = 1 + Math.abs(o.momentum * 3);
+            o.x += o.vx * speed;
+            o.y += o.vy * speed;
+
+            // Bounce
+            if(o.x < 0 || o.x > width) o.vx *= -1;
+            if(o.y < 0 || o.y > height) o.vy *= -1;
+
+            // Keep in bounds
+            o.x = Math.max(0, Math.min(width, o.x));
+            o.y = Math.max(0, Math.min(height, o.y));
+
+            // 5. DRAW
+            // Tail
+            o.history.push({x:o.x, y:o.y});
+            if(o.history.length > 20) o.history.shift();
+
+            ctx.beginPath();
+            ctx.strokeStyle = o.color;
+            ctx.lineWidth = o.size / 3;
+            if (o.history.length > 0) {
+                ctx.moveTo(o.history[0].x, o.history[0].y);
+                for(let p of o.history) ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+
+            // Head (white core)
+            ctx.fillStyle = "#FFF";
+            ctx.beginPath(); 
+            ctx.arc(o.x, o.y, o.size/2, 0, Math.PI*2); 
+            ctx.fill();
+
+            // Glow
+            ctx.strokeStyle = o.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(o.x, o.y, o.size/2 + 2, 0, Math.PI*2);
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = o.color;
+            ctx.font = "10px Consolas";
+            ctx.fillText(o.id.toUpperCase(), o.x + o.size, o.y - 5);
+            ctx.fillStyle = "#888";
+            ctx.font = "8px Consolas";
+            ctx.fillText(`E:${(o.entropy*100).toFixed(0)}% M:${(o.momentum*100).toFixed(0)}%`, o.x + o.size, o.y + 5);
+        }
+
+        // FX PARTICLES
+        updateParticles();
+
+        // UPDATE HUD
+        document.getElementById('thread-count').innerText = count;
+        let avgEntropy = count > 0 ? (totalEntropy / count * 100).toFixed(1) : 0;
+        document.getElementById('global-entropy').innerText = avgEntropy + '%';
+        
+        let uptime = Math.floor((now - startTime) / 1000);
+        document.getElementById('uptime').innerText = uptime + 's';
+
+        // Update organism list
+        updateOrganismList();
+
+        requestAnimationFrame(loop);
+    }
+
+    function updateOrganismList() {
+        const list = document.getElementById('organism-list');
+        if (Object.keys(organisms).length === 0) {
+            list.innerHTML = '<div style="color: #888; text-align: center;">No organisms detected</div>';
+            return;
+        }
+
+        let html = '';
+        for (let id in organisms) {
+            let o = organisms[id];
+            html += `<div class="organism-item">
+                <span class="organism-name">${id}</span><br>
+                <span class="stat">E: ${(o.entropy*100).toFixed(0)}% | M: ${(o.momentum*100).toFixed(0)}% | S: ${o.size.toFixed(1)}</span>
+            </div>`;
+        }
+        list.innerHTML = html;
+    }
+
+    function explode(x, y, color) {
+        for(let i=0; i<30; i++) {
+            particles.push({
+                x: x, y: y,
+                vx: (Math.random()-0.5)*15, 
+                vy: (Math.random()-0.5)*15,
+                life: 1.0, 
+                color: color || '#FF0000'
+            });
+        }
+    }
+
+    function updateParticles() {
+        for(let i=particles.length-1; i>=0; i--) {
+            let p = particles[i];
+            p.x += p.vx; 
+            p.y += p.vy;
+            p.vy += 0.2; // Gravity
+            p.life -= 0.02;
+            
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.fillRect(p.x, p.y, 3, 3);
+            ctx.globalAlpha = 1.0;
+            
+            if(p.life <= 0) particles.splice(i,1);
+        }
+    }
+
+    function lerp(start, end, amt) { 
+        return (1-amt)*start + amt*end; 
+    }
+
+    function resize() { 
+        width = canvas.width = window.innerWidth; 
+        height = canvas.height = window.innerHeight; 
+    }
+
+    window.addEventListener('resize', resize); 
+    resize(); 
+    loop();
+
+    // Heartbeat ping every 5 seconds
+    setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({type: "PING"}));
+        }
+    }, 5000);
+
+</script>
+</body>
+</html>

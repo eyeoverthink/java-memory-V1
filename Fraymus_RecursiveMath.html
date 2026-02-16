@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS RECURSIVE // GEN 183</title>
+    <style>
+        /* --- AESTHETIC: THE MATHEMATICAL VOID --- */
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Consolas', monospace; user-select: none; }
+        
+        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        /* HEADER */
+        #header {
+            position: absolute; top: 0; width: 100%; height: 60px;
+            background: linear-gradient(to bottom, rgba(20,0,40,0.9), transparent);
+            border-bottom: 1px solid #8800FF;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+        }
+        .title { font-size: 18px; font-weight: bold; color: #CC88FF; letter-spacing: 4px; text-shadow: 0 0 10px #AA00FF; }
+        
+        /* DATA PANEL */
+        #stats {
+            position: absolute; top: 70px; left: 20px; width: 280px;
+            background: rgba(10, 0, 20, 0.8); border: 1px solid #8800FF;
+            padding: 15px; pointer-events: auto; color: #E0E0E0;
+        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+        .val { color: #FF00FF; font-weight: bold; }
+        
+        /* CONTROLS */
+        #controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; pointer-events: auto;
+        }
+        .btn {
+            background: #110022; border: 1px solid #8800FF; color: #CC88FF;
+            padding: 10px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; transition: 0.2s;
+        }
+        .btn:hover { border-color: #FF00FF; color: #FF00FF; box-shadow: 0 0 15px #FF00FF; }
+        
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        <div id="header">
+            <div class="title">FRAYMUS // RECURSIVE</div>
+            <div style="font-size:11px; color:#CC88FF;">PROCESS: EMERGENT MATH</div>
+        </div>
+        
+        <div id="stats">
+            <div style="border-bottom:1px dashed #8800FF; margin-bottom:10px; color:#FFF;">SYSTEM COMPLEXITY</div>
+            <div class="stat-row"><span>NODES ACTIVE:</span> <span class="val" id="count">0</span></div>
+            <div class="stat-row"><span>HIGHEST VALUE:</span> <span class="val" id="max-val">0</span></div>
+            <div class="stat-row"><span>ABSTRACTIONS (φ/π):</span> <span class="val" id="abs-count">0</span></div>
+            <div class="stat-row"><span>MATH OPS/SEC:</span> <span class="val" id="ops">0</span></div>
+        </div>
+
+        <div id="controls">
+            <button class="btn" onclick="seedNumbers()">INJECT PRIMES</button>
+            <button class="btn" onclick="triggerReset()">ENTROPY RESET</button>
+        </div>
+    </div>
+
+    <canvas id="simCanvas"></canvas>
+
+<script>
+/**
+ * 🧬 FRAYMUS RECURSIVE // GEN 183
+ * Logic: Collision -> Combination -> Abstraction -> Evolution
+ */
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- CONFIG ---
+let width, height;
+let nodes = [];
+let particles = []; // Visual effects (floating text)
+let abstractions = 0;
+let opsPerSec = 0;
+let maxVal = 0;
+let frame = 0;
+
+// --- CLASSES ---
+
+class MathNode {
+    constructor(x, y, value, tier) {
+        this.pos = { x: x, y: y };
+        this.vel = { x: (Math.random()-0.5)*2, y: (Math.random()-0.5)*2 };
+        this.value = value; // The "Knowledge"
+        this.tier = tier || 1; // Complexity Layer (1=Int, 2=Float, 3=Abstract)
+        this.radius = 10 + (this.tier * 2);
+        this.color = this.getColor();
+        this.cooldown = 0; // Prevent instant re-merge
+    }
+
+    getColor() {
+        if (this.tier === 1) return "#00FFFF"; // Simple (Blue)
+        if (this.tier === 2) return "#00FF00"; // Complex (Green)
+        if (this.tier >= 3) return "#FF00FF"; // Abstract (Purple)
+        return "#FFF";
+    }
+
+    update() {
+        // Movement
+        this.pos.x += this.vel.x;
+        this.pos.y += this.vel.y;
+
+        // Wall Bounce
+        if (this.pos.x < 0 || this.pos.x > width) this.vel.x *= -1;
+        if (this.pos.y < 0 || this.pos.y > height) this.vel.y *= -1;
+
+        // Friction (Smarter nodes move slower, thinking)
+        if (this.tier > 2) {
+            this.vel.x *= 0.99;
+            this.vel.y *= 0.99;
+        }
+
+        if(this.cooldown > 0) this.cooldown--;
+
+        // COLLISION LOGIC (The Learning)
+        for (let other of nodes) {
+            if (other !== this && other.cooldown === 0 && this.cooldown === 0) {
+                let d = dist(this.pos, other.pos);
+                if (d < this.radius + other.radius) {
+                    this.combine(other);
+                    break; // Only one collision per frame
+                }
+            }
+        }
+    }
+
+    combine(other) {
+        // THE MATH: Create a new layer of knowledge
+        let newVal = this.value + other.value;
+        let newTier = Math.max(this.tier, other.tier);
+        let txt = `${Math.floor(this.value)}+${Math.floor(other.value)}`;
+
+        // MUTATION: Chance to multiply instead of add
+        if (Math.random() > 0.8) {
+            newVal = this.value * other.value;
+            newTier++;
+            txt = `${Math.floor(this.value)}×${Math.floor(other.value)}`;
+        }
+
+        // ABSTRACTION CHECK (The Eureka Moment)
+        // If value approaches Phi (scaled) or Pi (scaled), lock it.
+        // We use scaled values (e.g. 161 instead of 1.61) for visual simplicity
+        let isAbstract = false;
+        if (Math.abs(newVal - 314) < 10) { newVal = 314; txt="π"; isAbstract=true; }
+        if (Math.abs(newVal - 161) < 10) { newVal = 161; txt="φ"; isAbstract=true; }
+        
+        if (isAbstract) {
+            newTier = 5; // God Tier
+            abstractions++;
+            createParticle(this.pos.x, this.pos.y, "EUREKA!", "#FFD700", 20);
+        } else {
+            createParticle(this.pos.x, this.pos.y, txt, "#FFF", 12);
+        }
+
+        // Spawn Child (The Abstracted Version)
+        // Physics: Conservation of Momentum
+        let child = new MathNode(this.pos.x, this.pos.y, newVal, newTier);
+        child.vel.x = (this.vel.x + other.vel.x) / 2;
+        child.vel.y = (this.vel.y + other.vel.y) / 2;
+        child.cooldown = 50; // Birth sickness
+
+        // Remove parents (Synthesis complete)
+        nodes = nodes.filter(n => n !== this && n !== other);
+        nodes.push(child);
+        
+        opsPerSec++;
+        if (newVal > maxVal) maxVal = Math.floor(newVal);
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        // Glow for high tier
+        if (this.tier >= 3) {
+            ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+        }
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Draw Value
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "center";
+        let label = Math.floor(this.value);
+        if (this.value === 314) label = "π";
+        if (this.value === 161) label = "φ";
+        ctx.fillText(label, this.pos.x, this.pos.y + 4);
+    }
+}
+
+// --- VISUAL FX ---
+function createParticle(x, y, text, col, size) {
+    particles.push({x, y, text, col, size, life: 60, vy: -1});
+}
+
+// --- SYSTEM ---
+
+function init() {
+    resize();
+    seedNumbers();
+    loop();
+}
+
+function seedNumbers() {
+    for (let i = 0; i < 20; i++) {
+        // Start with simple integers
+        let val = Math.floor(Math.random() * 10) + 1;
+        nodes.push(new MathNode(Math.random()*width, Math.random()*height, val, 1));
+    }
+}
+
+function loop() {
+    // Trails
+    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+    ctx.fillRect(0, 0, width, height);
+
+    // Update Nodes
+    for (let i = nodes.length - 1; i >= 0; i--) {
+        if (nodes[i]) {
+            nodes[i].update();
+        }
+    }
+    
+    // Draw Nodes (separate pass to avoid mid-update issues)
+    for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i]) {
+            nodes[i].draw();
+        }
+    }
+
+    // Update Particles (Floating Text)
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += (Math.random()-0.5); // Jitter
+        p.y += p.vy;
+        p.life--;
+        
+        ctx.globalAlpha = p.life / 60;
+        ctx.fillStyle = p.col;
+        ctx.font = `bold ${p.size}px Consolas`;
+        ctx.textAlign = "center";
+        ctx.fillText(p.text, p.x, p.y);
+        ctx.globalAlpha = 1.0;
+
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    // Connect Lines (The Network)
+    ctx.strokeStyle = "rgba(100, 100, 255, 0.05)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+            if (dist(nodes[i].pos, nodes[j].pos) < 100) {
+                ctx.beginPath();
+                ctx.moveTo(nodes[i].pos.x, nodes[i].pos.y);
+                ctx.lineTo(nodes[j].pos.x, nodes[j].pos.y);
+                ctx.stroke();
+            }
+        }
+    }
+
+    // Telemetry
+    document.getElementById('count').innerText = nodes.length;
+    document.getElementById('max-val').innerText = maxVal;
+    document.getElementById('abs-count').innerText = abstractions;
+    document.getElementById('ops').innerText = opsPerSec;
+    if (frame % 60 === 0) opsPerSec = 0; // Reset per second
+
+    frame++;
+    requestAnimationFrame(loop);
+}
+
+// --- UTILS ---
+function triggerReset() {
+    nodes = [];
+    particles = [];
+    abstractions = 0;
+    maxVal = 0;
+    seedNumbers();
+}
+
+function dist(a, b) {
+    return Math.sqrt(Math.pow(a.x-b.x, 2) + Math.pow(a.y-b.y, 2));
+}
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+
+init();
+
+</script>
+</body>
+</html>

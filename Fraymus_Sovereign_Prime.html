@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 FRAYMUS PRIME: SOVEREIGN INTEGRATION</title>
+    <style>
+        /* --- CORE AESTHETICS (V5 BASE) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            background: radial-gradient(circle at center, #050505 0%, #0a0a12 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        /* --- LAYOUT GRID --- */
+        .container { max-width: 1400px; margin: 0 auto; display: grid; gap: 20px; }
+        
+        /* --- HEADER --- */
+        .brain-header {
+            text-align: center; padding: 20px;
+            background: rgba(20, 20, 20, 0.8); border: 1px solid #4ecdc4; border-radius: 15px;
+            box-shadow: 0 0 30px rgba(78, 205, 196, 0.1);
+        }
+        h1 { font-size: 2em; letter-spacing: 2px; color: #fff; text-shadow: 0 0 10px rgba(78, 205, 196, 0.8); }
+        .sub-header { color: #4ecdc4; font-family: monospace; }
+
+        /* --- METRICS --- */
+        .metrics-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;
+        }
+        .metric-card {
+            background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 8px; padding: 10px; text-align: center;
+        }
+        .metric-val { font-size: 1.5em; font-weight: bold; color: #4ecdc4; font-family: monospace; }
+        .metric-lbl { font-size: 0.8em; color: #888; text-transform: uppercase; }
+
+        /* --- VISUALIZATION AREA --- */
+        .vis-container {
+            position: relative; height: 300px; background: #000; border: 2px solid #333; border-radius: 10px; overflow: hidden;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* --- TEAMS (LOGIC CONTROLS) --- */
+        .teams-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .team-panel {
+            padding: 20px; border-radius: 10px; background: rgba(10, 10, 10, 0.8);
+            border-left: 5px solid #fff;
+        }
+        .blue-team { border-color: #44aaff; }
+        .red-team { border-color: #ff4444; }
+        
+        .panel-title { font-weight: bold; margin-bottom: 15px; font-family: monospace; font-size: 1.2em; display: flex; align-items: center; gap: 10px; }
+        .blue-team .panel-title { color: #44aaff; }
+        .red-team .panel-title { color: #ff4444; }
+
+        input {
+            width: 100%; background: #111; border: 1px solid #444; color: #fff;
+            padding: 10px; margin-bottom: 10px; font-family: monospace;
+        }
+        input:focus { border-color: #fff; outline: none; }
+
+        button {
+            width: 100%; padding: 12px; border: none; font-weight: bold; cursor: pointer;
+            font-family: monospace; text-transform: uppercase; transition: 0.2s;
+        }
+        .btn-blue { background: linear-gradient(90deg, #2266aa, #44aaff); color: #fff; }
+        .btn-red { background: linear-gradient(90deg, #aa2222, #ff4444); color: #fff; }
+        .btn-blue:hover, .btn-red:hover { filter: brightness(1.2); letter-spacing: 2px; }
+
+        /* --- LOGS --- */
+        .log-area {
+            background: #000; border: 1px solid #4ecdc4; border-radius: 10px;
+            height: 200px; padding: 15px; overflow-y: auto; font-family: monospace; font-size: 0.9em;
+        }
+        .log-entry { margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #222; }
+        .log-time { color: #666; margin-right: 10px; }
+        .log-msg { color: #ccc; }
+        .log-success { color: #00ff00; }
+        .log-warn { color: #ffaa00; }
+        .log-fail { color: #ff4444; }
+        .log-purple { color: #d044ff; font-weight: bold; }
+
+        /* --- ANIMATIONS --- */
+        .loading {
+            display: inline-block; width: 10px; height: 10px; border: 2px solid #fff;
+            border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 800px) { .teams-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="brain-header">
+        <h1>🧠 FRAYMUS PRIME</h1>
+        <div class="sub-header">SOVEREIGN IDENTITY // DUAL-CORE CRYPTO // NEURAL INTERFACE</div>
+    </div>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-val" id="m_evo">1.00</div>
+            <div class="metric-lbl">Evolution</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-val" id="m_solved">0</div>
+            <div class="metric-lbl">Entities Solved</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-val" id="m_synapse">ACTIVE</div>
+            <div class="metric-lbl">Synapse Status</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-val" id="m_coherence">100%</div>
+            <div class="metric-lbl">Quantum Coherence</div>
+        </div>
+    </div>
+
+    <div class="vis-container">
+        <canvas id="brainCanvas"></canvas>
+    </div>
+
+    <div class="teams-grid">
+        
+        <div class="team-panel blue-team">
+            <div class="panel-title">🛡️ BLUE TEAM: IDENTITY GEN</div>
+            <input type="text" id="blueUser" placeholder="Username (e.g. Admin)">
+            <input type="password" id="bluePass" placeholder="Password (e.g. SovereignKey)">
+            <button class="btn-blue" onclick="system.runBlueTeam()">🔒 GENERATE LOCK</button>
+            <div id="blueOutput" style="margin-top: 10px; font-family: monospace; color: #44aaff; font-size: 0.8em; word-break: break-all;"></div>
+        </div>
+
+        <div class="team-panel red-team">
+            <div class="panel-title">⚔️ RED TEAM: QUANTUM BREAKER</div>
+            <input type="text" id="redInput" placeholder="Target N (Lock)" readonly>
+            <button class="btn-red" onclick="system.runRedTeam()">⚡ EXECUTE BREACH</button>
+            <div id="redOutput" style="margin-top: 10px; font-family: monospace; color: #ff4444; font-size: 0.8em;">_TARGET_LOCKED_</div>
+        </div>
+
+    </div>
+
+    <div class="log-area" id="systemLog">
+        <div class="log-entry"><span class="log-time">[INIT]</span> <span class="log-msg">System initialized. Neural Net Online.</span></div>
+    </div>
+
+</div>
+
+<script>
+/**
+ * 🧠 FRAYMUS INTEGRATED CORE
+ * Merges V5 Visuals with V7 Sovereign Logic
+ */
+class FraymusSystem {
+    constructor() {
+        // STATE
+        this.state = {
+            dnaA: null, dnaB: null,
+            primeA: null, primeB: null,
+            targetN: null,
+            foundFactor: null,
+            evolution: 1.0,
+            solved: 0
+        };
+
+        // CANVAS
+        this.canvas = document.getElementById('brainCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        // VISUALS
+        this.neurons = [];
+        this.initNeurons();
+        this.animate();
+
+        this.log("Fraymus Prime Online. Waiting for Entropy.");
+    }
+
+    resize() {
+        this.canvas.width = this.canvas.offsetWidth;
+        this.canvas.height = this.canvas.offsetHeight;
+    }
+
+    log(msg, type="log-msg") {
+        const logDiv = document.getElementById('systemLog');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        const time = new Date().toLocaleTimeString();
+        entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${type}">${msg}</span>`;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // ============================================
+    // 🛡️ BLUE TEAM: LOCK GENERATION
+    // ============================================
+    async runBlueTeam() {
+        const u = document.getElementById('blueUser').value;
+        const p = document.getElementById('bluePass').value;
+        if(!u || !p) return alert("Credentials required.");
+
+        this.log("Generating Identity Lock...", "log-warn");
+        
+        // 1. VISUAL: Chaos Genesis (Rule 30 Entropy)
+        await this.renderEntropy(u+p);
+
+        // 2. LOGIC: DNA Splicing
+        const mid = Math.floor(p.length/2);
+        const dnaA = u + p.slice(0, mid) + "_A";
+        const dnaB = u + p.slice(mid) + "_B";
+        
+        this.state.dnaA = dnaA;
+        this.state.dnaB = dnaB;
+
+        // 3. LOGIC: Hash to Primes
+        const p1 = await this.textToPrime(dnaA);
+        const p2 = await this.textToPrime(dnaB);
+        const N = p1 * p2;
+
+        this.state.targetN = N;
+        this.state.foundFactor = null; // Reset previous solves
+
+        // 4. UI UPDATE
+        document.getElementById('blueOutput').innerHTML = `<strong>LOCK:</strong> ${N}<br><span style="color:#888">Generated via SHA-256 mapping.</span>`;
+        document.getElementById('redInput').value = N.toString();
+        
+        this.log(`Lock Generated: ${N.toString().slice(0,10)}...`, "log-success");
+        this.log(`DNA A Encoded: ${dnaA}`);
+        this.log(`DNA B Encoded: ${dnaB}`);
+    }
+
+    // ============================================
+    // ⚔️ RED TEAM: BREAKING THE LOCK
+    // ============================================
+    async runRedTeam() {
+        const input = document.getElementById('redInput').value;
+        if(!input) return;
+
+        this.log("RED TEAM: Engaging Quantum Sieve (Pollard's Rho)...", "log-fail");
+        document.getElementById('redOutput').innerHTML = `<span class="loading"></span> TUNNELING...`;
+        
+        // Let UI breathe
+        await new Promise(r => setTimeout(r, 100));
+
+        const N = BigInt(input);
+        const start = performance.now();
+        
+        // LOGIC: Factorization
+        const factor = await this.pollardsRho(N);
+        const time = (performance.now() - start).toFixed(2);
+
+        if(factor) {
+            this.state.foundFactor = factor;
+            this.state.solved++;
+            this.state.evolution += 0.15;
+            
+            document.getElementById('m_solved').innerText = this.state.solved;
+            document.getElementById('m_evo').innerText = this.state.evolution.toFixed(2);
+            document.getElementById('redOutput').innerHTML = `<strong>BREACH SUCCESSFUL</strong><br>Factor: ${factor}`;
+            
+            this.log(`BREACH SUCCESSFUL in ${time}ms`, "log-fail");
+            this.log(`Factor Found: ${factor}`, "log-fail");
+
+            // AUTO-TRIGGER PURPLE TEAM
+            this.runPurpleTeam();
+        } else {
+            document.getElementById('redOutput').innerText = "FAILURE: Prime or too large.";
+            this.log("Breach Failed.", "log-warn");
+        }
+    }
+
+    // ============================================
+    // 🟣 PURPLE TEAM: ORIGIN VERIFICATION
+    // ============================================
+    async runPurpleTeam() {
+        this.log("PURPLE TEAM: Verifying Origin...", "log-purple");
+        
+        if(!this.state.foundFactor || !this.state.dnaA) {
+            this.log("Missing data for verification.", "log-warn");
+            return;
+        }
+
+        const found = this.state.foundFactor;
+        
+        // Re-calculate primes from DNA to verify match
+        const calcA = await this.textToPrime(this.state.dnaA);
+        const calcB = await this.textToPrime(this.state.dnaB);
+
+        if(found === calcA) {
+            this.log(`✅ IDENTITY VERIFIED: DNA Strand A`, "log-success");
+            this.log(`Origin: "${this.state.dnaA}"`, "log-purple");
+        } else if (found === calcB) {
+            this.log(`✅ IDENTITY VERIFIED: DNA Strand B`, "log-success");
+            this.log(`Origin: "${this.state.dnaB}"`, "log-purple");
+        } else {
+            this.log(`❌ CRITICAL MISMATCH. Factor does not match DNA.`, "log-fail");
+        }
+
+        // Trigger visual coherence
+        this.flashCoherence();
+    }
+
+    // ============================================
+    // 🧮 MATH ENGINE (V7 LOGIC)
+    // ============================================
+    async textToPrime(text) {
+        const msg = new TextEncoder().encode(text);
+        const buf = await crypto.subtle.digest('SHA-256', msg);
+        const hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+        // Scale to ~50 bits for JS compatibility in browser loop
+        const SCALE = 1125899906842624n; 
+        let p = (BigInt('0x'+hex) % SCALE) | 1n;
+        while(!this.isPrime(p)) p += 2n;
+        return p;
+    }
+
+    async pollardsRho(n) {
+        if (n % 2n === 0n) return 2n;
+        let x = 2n, y = 2n, d = 1n, c = 1n;
+        const f = (v) => (v*v + c) % n;
+        const gcd = (a, b) => { while (b > 0n) { let t = b; b = a % b; a = t; } return a; };
+        const abs = (v) => v < 0n ? -v : v;
+
+        // Batch processing to keep UI responsive
+        let cycles = 0;
+        const BATCH = 20000;
+        
+        while (d === 1n) {
+            x = f(x); y = f(f(y)); d = gcd(abs(x - y), n);
+            cycles++;
+            if(cycles % BATCH === 0) await new Promise(r => setTimeout(r, 0));
+            if(cycles > 5000000) return null; // Timeout
+        }
+        return d === n ? null : d;
+    }
+
+    isPrime(n) {
+        if (n < 2n) return false;
+        if (n % 2n === 0n) return n === 2n;
+        for (let i = 3n; i * i <= n; i += 2n) if (n % i === 0n) return false;
+        return true;
+    }
+
+    // ============================================
+    // 🎨 VISUAL ENGINE (V5 + ENTROPY)
+    // ============================================
+    initNeurons() {
+        const cx = this.canvas.width / 2;
+        const cy = this.canvas.height / 2;
+        for(let i=0; i<60; i++) {
+            this.neurons.push({
+                x: cx + (Math.random()-0.5)*this.canvas.width*0.8,
+                y: cy + (Math.random()-0.5)*this.canvas.height*0.8,
+                vx: (Math.random()-0.5)*0.5,
+                vy: (Math.random()-0.5)*0.5,
+                active: 0
+            });
+        }
+    }
+
+    async renderEntropy(seed) {
+        // Visual flash of Cellular Automata logic
+        const msg = new TextEncoder().encode(seed);
+        const buf = await crypto.subtle.digest('SHA-256', msg);
+        const hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+        let bin = ""; for(let c of hex) bin += parseInt(c,16).toString(2).padStart(4,'0');
+        
+        const ctx = this.ctx;
+        const w = this.canvas.width, h = this.canvas.height;
+        const cols = 200; 
+        const cellW = w/cols;
+        const rows = Math.floor(h/cellW);
+        
+        let cells = new Array(cols).fill(0).map((_,i)=>parseInt(bin[i%bin.length]));
+
+        ctx.fillStyle = "#000"; ctx.fillRect(0,0,w,h);
+        
+        // Draw one frame of CA
+        for(let y=0; y<rows; y++) {
+            let next = new Array(cols).fill(0);
+            for(let x=0; x<cols; x++) {
+                if(cells[x]) {
+                    ctx.fillStyle = Math.random()>0.8 ? "#ffffff" : "#4ecdc4";
+                    ctx.fillRect(x*cellW, y*cellW, cellW, cellW);
+                }
+                let l=cells[(x-1+cols)%cols], c=cells[x], r=cells[(x+1+cols)%cols];
+                next[x] = [0,1,1,1,1,0,0,0][7-parseInt(""+l+c+r,2)];
+            }
+            cells = next;
+            if(y%5===0) await new Promise(r=>setTimeout(r,0));
+        }
+    }
+
+    flashCoherence() {
+        // Boost neuron activity
+        this.neurons.forEach(n => n.active = 1.0);
+    }
+
+    animate() {
+        // Clear slightly for trail effect
+        this.ctx.fillStyle = "rgba(0,0,0,0.1)";
+        this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
+
+        // Draw Neurons
+        this.ctx.strokeStyle = "#4ecdc4";
+        this.ctx.lineWidth = 0.5;
+
+        // Connections
+        for(let i=0; i<this.neurons.length; i++) {
+            let n = this.neurons[i];
+            n.x += n.vx; n.y += n.vy;
+            
+            // Bounce
+            if(n.x < 0 || n.x > this.canvas.width) n.vx *= -1;
+            if(n.y < 0 || n.y > this.canvas.height) n.vy *= -1;
+
+            // Decay activity
+            n.active *= 0.95;
+            if(Math.random() > 0.99) n.active = 1.0;
+
+            // Draw Node
+            this.ctx.beginPath();
+            this.ctx.fillStyle = `rgba(78, 205, 196, ${0.3 + n.active})`;
+            this.ctx.arc(n.x, n.y, 2 + n.active*3, 0, Math.PI*2);
+            this.ctx.fill();
+
+            // Draw Synapses
+            for(let j=i+1; j<this.neurons.length; j++) {
+                let n2 = this.neurons[j];
+                let dist = Math.hypot(n.x-n2.x, n.y-n2.y);
+                if(dist < 100) {
+                    this.ctx.beginPath();
+                    this.ctx.strokeStyle = `rgba(78, 205, 196, ${(1 - dist/100) * (n.active || 0.1)})`;
+                    this.ctx.moveTo(n.x, n.y);
+                    this.ctx.lineTo(n2.x, n2.y);
+                    this.ctx.stroke();
+                }
+            }
+        }
+
+        requestAnimationFrame(() => this.animate());
+    }
+}
+
+const system = new FraymusSystem();
+</script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS GALAXY // GEN 168</title>
+    <style>
+        /* --- THE PLATINUM AESTHETIC (Gen 162) --- */
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', monospace; }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px; left: 20px;
+            width: 320px;
+            background: rgba(16, 16, 16, 0.9); /* Deep Obsidian */
+            border: 1px solid #E0E0E0; /* Platinum Border */
+            color: #FFB000; /* Amber */
+            padding: 15px;
+            pointer-events: none;
+            box-shadow: 0 0 25px rgba(0,0,0,1);
+            backdrop-filter: blur(5px);
+        }
+
+        h1 { margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #E0E0E0; padding-bottom: 5px; color: #FFF; letter-spacing: 2px; }
+
+        .metric { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; }
+        .value { color: #00FF00; text-shadow: 0 0 5px rgba(0,255,0,0.5); }
+        .label { color: #AAA; }
+
+        #scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        .sector-grid {
+            margin-top: 10px;
+            border: 1px solid #444;
+            height: 100px;
+            background:
+                linear-gradient(90deg, #333 1px, transparent 1px),
+                linear-gradient(#333 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+        }
+
+        #locator {
+            position: absolute;
+            width: 4px; height: 4px;
+            background: #FF0000;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            box-shadow: 0 0 5px #F00;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+<div id="ui-layer">
+    <h1>GALACTIC MAPPER</h1>
+    <div class="metric"><span class="label">TARGET:</span> <span class="value">MILKY WAY (BARRED)</span></div>
+    <div class="metric"><span class="label">STARS MAPPED:</span> <span class="value" id="star-count">0</span></div>
+    <div class="metric"><span class="label">DENSITY WAVE:</span> <span class="value">LOGARITHMIC φ</span></div>
+    <div class="metric"><span class="label">COORDINATES:</span> <span class="value" id="coords">0, 0, 0</span></div>
+
+    <div class="sector-grid">
+        <div id="locator"></div>
+    </div>
+
+    <div style="margin-top: 10px; font-size: 10px; color: #555; text-align: center;">
+        FRAYMUS KERNEL v3.0 // REALTIME RENDER
+    </div>
+</div>
+
+<div id="scanline"></div>
+
+<script>
+    /**
+     * 🌌 FRAYMUS GALACTIC ENGINE
+     * "Spiral Arms generated via Golden Ratio Logarithms."
+     */
+
+    // --- CONFIGURATION ---
+    const STAR_COUNT = 50000;
+    const GALAXY_SIZE = 500; // Light Years scale
+    const SPIRAL_ARMS = 2;   // Milky Way has 2 major arms (Perseus/Scutum-Centaurus)
+    const ARM_WIDTH = 0.5;   // Spread
+    const CORE_SIZE = 80;
+
+    // --- SCENE SETUP ---
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050505, 0.001);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 400, 500);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+
+    // --- GALAXY GENERATION ---
+    // Using Logarithmic Spirals: r = a * e^(b*theta)
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(STAR_COUNT * 3);
+    const colors = new Float32Array(STAR_COUNT * 3);
+    const sizes = new Float32Array(STAR_COUNT);
+
+    const colorInside = new THREE.Color(0xff6030); // Old Red/Orange stars in core
+    const colorOutside = new THREE.Color(0x1b3984); // Young Blue stars in arms
+
+    for(let i = 0; i < STAR_COUNT; i++) {
+        const i3 = i * 3;
+
+        // Radius (Distribution biased towards core)
+        const radius = Math.random() * GALAXY_SIZE;
+
+        // Spiral Angle
+        const spinAngle = radius * 5; // How tight the spiral winds
+        const branchAngle = (i % SPIRAL_ARMS) * ((2 * Math.PI) / SPIRAL_ARMS);
+
+        // Randomness (The Spread of the Arm)
+        // We use Gaussian-like distribution for realistic density
+        const randomX = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * (radius * 0.5);
+        const randomY = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * (radius * 0.5); // Thickness of disk
+        const randomZ = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * (radius * 0.5);
+
+        // Position Calculation
+        // x = r * cos(theta)
+        // z = r * sin(theta)
+        // theta = spin + branch + spread
+
+        positions[i3    ] = Math.cos(spinAngle + branchAngle) * radius + randomX;
+        positions[i3 + 1] = (randomY * (200/radius)); // Flatter at edges, bulge at core
+        positions[i3 + 2] = Math.sin(spinAngle + branchAngle) * radius + randomZ;
+
+        // Color Mixing
+        const mixedColor = colorInside.clone();
+        mixedColor.lerp(colorOutside, radius / GALAXY_SIZE);
+
+        colors[i3    ] = mixedColor.r;
+        colors[i3 + 1] = mixedColor.g;
+        colors[i3 + 2] = mixedColor.b;
+
+        // Variable Star Size
+        sizes[i] = Math.random() * 1.5;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1)); // Custom attribute for shader
+
+    // --- SHADER MATERIAL (Glowing Stars) ---
+    // Using PointsMaterial is faster but Shaders look better. Sticking to Points for compat.
+    const material = new THREE.PointsMaterial({
+        size: 2,
+        sizeAttenuation: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        vertexColors: true
+    });
+
+    const galaxy = new THREE.Points(geometry, material);
+    scene.add(galaxy);
+
+    // --- THE CORE (Supermassive Black Hole Glow) ---
+    const coreGeo = new THREE.SphereGeometry(15, 32, 32);
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+    // Add Glow Sprite
+    const spriteMaterial = new THREE.SpriteMaterial({
+        map: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/glow.png'),
+        color: 0xFFDDaa,
+        transparent: true,
+        blending: THREE.AdditiveBlending
+    });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(200, 200, 1.0);
+    scene.add(sprite);
+
+    // --- MAIN LOOP ---
+    const clock = new THREE.Clock();
+
+    function animate() {
+        const elapsedTime = clock.getElapsedTime();
+
+        // Rotate Galaxy (The Density Wave)
+        // Real galaxies rotate differently at different radii, but for visual proof we rotate the whole mesh
+        galaxy.rotation.y = elapsedTime * 0.05;
+
+        // Update Controls
+        controls.update();
+
+        // Render
+        renderer.render(scene, camera);
+
+        // Telemetry Update
+        updateTelemetry();
+
+        requestAnimationFrame(animate);
+    }
+
+    function updateTelemetry() {
+        // Star Count Animation
+        const currentCount = parseInt(document.getElementById('star-count').innerText.replace(/,/g, ''));
+        if (currentCount < STAR_COUNT) {
+            document.getElementById('star-count').innerText = (currentCount + 113).toLocaleString();
+        } else {
+            document.getElementById('star-count').innerText = STAR_COUNT.toLocaleString();
+        }
+
+        // Camera Coords
+        const x = Math.round(camera.position.x);
+        const y = Math.round(camera.position.y);
+        const z = Math.round(camera.position.z);
+        document.getElementById('coords').innerText = `${x}, ${y}, ${z}`;
+
+        // Locator Dot Logic
+        const lx = 50 + (camera.position.x / 10);
+        const ly = 50 + (camera.position.z / 10);
+        const dot = document.getElementById('locator');
+        dot.style.left = Math.min(Math.max(lx, 0), 100) + "%";
+        dot.style.top = Math.min(Math.max(ly, 0), 100) + "%";
+    }
+
+    // Handle Resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Boot
+    animate();
+
+</script>
+</body>
+</html>

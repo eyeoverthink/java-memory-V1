@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS TITAN // GEN 171</title>
+    <style>
+        /* --- THE TITAN AESTHETIC --- */
+        :root {
+            --platinum: #E0E0E0;
+            --obsidian: #050505;
+            --amber: #FFB000;
+            --cyan: #00F3FF;
+            --glass: rgba(5, 5, 5, 0.85);
+            --border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Courier New', monospace;
+            color: var(--platinum);
+            user-select: none;
+        }
+
+        /* --- UI LAYOUT --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at center, transparent 0%, #000 120%); /* Vignette */
+        }
+
+        /* HEADER */
+        #header {
+            height: 40px;
+            background: rgba(20, 20, 20, 0.9);
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .logo { font-weight: bold; letter-spacing: 2px; color: #FFF; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+
+        .btn-group { display: flex; gap: 10px; }
+
+        .sys-btn {
+            background: transparent;
+            color: #888;
+            border: 1px solid #333;
+            padding: 5px 20px;
+            font-family: inherit;
+            cursor: pointer;
+            font-size: 11px;
+            text-transform: uppercase;
+            transition: 0.3s;
+            letter-spacing: 1px;
+        }
+        .sys-btn:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+        .sys-btn.active { background: rgba(0, 243, 255, 0.1); border-color: var(--cyan); color: var(--cyan); font-weight: bold; box-shadow: 0 0 20px rgba(0, 243, 255, 0.4); }
+
+        /* SIDEBAR */
+        #sidebar {
+            position: absolute;
+            top: 60px; left: 20px;
+            width: 320px;
+            background: var(--glass);
+            border: var(--border);
+            padding: 20px;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .panel-header {
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            color: var(--amber);
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px rgba(255, 176, 0, 0.5);
+        }
+
+        .metric-row {
+            display: flex; justify-content: space-between;
+            font-size: 11px; margin-bottom: 6px;
+            border-bottom: 1px dashed rgba(255,255,255,0.05);
+            padding-bottom: 2px;
+        }
+        .label { color: #888; }
+        .value { color: var(--cyan); font-weight: bold; text-shadow: 0 0 5px rgba(0, 243, 255, 0.3); }
+
+        /* PLANET NAV */
+        #planet-nav {
+            display: none;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .planet-btn {
+            flex: 1 0 30%;
+            background: rgba(255,255,255,0.05); border: 1px solid #333; color: #AAA;
+            padding: 5px; cursor: pointer; font-family: inherit; font-size: 9px;
+            text-align: center; transition: 0.2s;
+        }
+        .planet-btn:hover { border-color: var(--platinum); color: #FFF; background: rgba(255,255,255,0.1); }
+
+        /* SCROLLING LOG */
+        #kernel-log {
+            margin-top: auto;
+            height: 100px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            padding: 5px;
+            font-size: 10px;
+            color: #555;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .log-entry { margin-bottom: 2px; }
+        .log-time { color: var(--amber); margin-right: 5px; }
+
+        /* SCANLINE & FX */
+        #scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        #toggle-box {
+            margin-top: 10px;
+            display: flex; gap: 10px;
+        }
+        .check-lbl { font-size: 10px; color: #888; display: flex; align-items: center; cursor: pointer; }
+        .check-lbl input { margin-right: 5px; }
+
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+</head>
+<body>
+
+<div id="ui-layer">
+    <div id="header">
+        <span class="logo">FRAYMUS TITAN // GEN 171</span>
+        <div class="btn-group">
+            <button class="sys-btn active" onclick="switchMode('GALAXY')" id="btn-galaxy">GALAXY</button>
+            <button class="sys-btn" onclick="switchMode('SOLAR')" id="btn-solar">SOLAR</button>
+            <button class="sys-btn" onclick="switchMode('SCANNER')" id="btn-scanner">SCANNER</button>
+        </div>
+        <span id="clock" style="font-size:12px; color:#888;">00:00:00</span>
+    </div>
+
+    <div id="sidebar">
+        <div id="panel-title" class="panel-header">SYSTEM READY</div>
+
+        <div id="telemetry-content">
+        </div>
+
+        <div id="planet-nav">
+        </div>
+
+        <div id="toggle-box" style="display:none;">
+            <label class="check-lbl"><input type="checkbox" id="chk-wire" onchange="toggleWireframe()"> WIREFRAME</label>
+            <label class="check-lbl"><input type="checkbox" id="chk-rot" checked> ROTATE</label>
+        </div>
+
+        <div id="kernel-log">
+            <div class="log-entry">Initializing FRAYMUS TITAN...</div>
+            <div class="log-entry">GPU: DETECTED. BLOOM: ACTIVE.</div>
+            <div class="log-entry">Waiting for user directive...</div>
+        </div>
+    </div>
+</div>
+
+<div id="scanline"></div>
+
+<script>
+    /**
+     * FRAYMUS TITAN EDITION
+     * Features: Unreal Bloom, Volumetric Sprites, Orbit Trails, Advanced Procedural Textures.
+     */
+
+    // --- CORE ---
+    let scene, camera, renderer, controls, composer;
+    let mode = "NONE";
+    let frameId;
+
+    // --- ASSETS ---
+    let galaxySystem;
+    let solarBodies = [];  
+    let scannerSystem = {};
+    let starField;
+
+    // --- CONFIG ---
+    const PHI = 1.6180339887;
+    const COLORS = {
+        sun: 0xFFD700,
+        mercury: 0xA5A5A5,
+        venus: 0xE3BB76,
+        earth: 0x00A2FF,
+        mars: 0xFF4500,
+        jupiter: 0xD9A07E,
+        saturn: 0xF4D03F,
+        uranus: 0x4FD0E7,
+        neptune: 0x2E5D94
+    };
+
+    // --- INIT ---
+    function init() {
+        // Scene
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.0002);
+
+        // Camera
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        document.body.appendChild(renderer.domElement);
+
+        // Controls
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // POST PROCESSING (The Glow)
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0;
+        bloomPass.strength = 1.2; // GLOW STRENGTH
+        bloomPass.radius = 0.5;
+
+        composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        // Lighting
+        const ambient = new THREE.AmbientLight(0x111111);
+        scene.add(ambient);
+
+        // Stars
+        createHyperStars();
+
+        // Event Listeners
+        window.addEventListener('resize', onResize);
+
+        // Boot
+        log("Kernel booted successfully.");
+        switchMode('GALAXY');
+        animate();
+    }
+
+    function createHyperStars() {
+        const geo = new THREE.BufferGeometry();
+        const count = 15000;
+        const pos = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+
+        const color1 = new THREE.Color(0x88ccff);
+        const color2 = new THREE.Color(0xffbb88);
+
+        for(let i=0; i<count; i++) {
+            const r = 2000 + Math.random() * 2000;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+
+            pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+            pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+            pos[i*3+2] = r * Math.cos(phi);
+
+            const c = Math.random() > 0.5 ? color1 : color2;
+            colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+            sizes[i] = Math.random() * 2;
+        }
+
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1)); // Shader ready
+
+        const mat = new THREE.PointsMaterial({
+            size: 2, vertexColors: true, transparent: true, opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        starField = new THREE.Points(geo, mat);
+        scene.add(starField);
+    }
+
+    // --- SWITCHING LOGIC ---
+    function switchMode(newMode) {
+        if (mode === newMode) return;
+        mode = newMode;
+        log(`Switching Context: ${mode}`);
+
+        // UI Update
+        document.querySelectorAll('.sys-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + mode.toLowerCase()).classList.add('active');
+
+        // Toggle Visibility
+        const pNav = document.getElementById('planet-nav');
+        const tBox = document.getElementById('toggle-box');
+
+        if (mode === 'SCANNER') {
+            pNav.style.display = 'flex';
+            tBox.style.display = 'flex';
+            populatePlanetNav();
+        } else {
+            pNav.style.display = 'none';
+            tBox.style.display = 'none';
+        }
+
+        // Cleanup & Init
+        cleanup();
+        if (mode === 'GALAXY') initGalaxy();
+        if (mode === 'SOLAR') initSolar();
+        if (mode === 'SCANNER') initScanner('EARTH');
+    }
+
+    function cleanup() {
+        if (galaxySystem) { scene.remove(galaxySystem); galaxySystem = null; }
+
+        solarBodies.forEach(b => {
+            scene.remove(b.mesh);
+            scene.remove(b.orbit);
+            scene.remove(b.trail);
+            if(b.labelSprite) scene.remove(b.labelSprite);
+        });
+        solarBodies = []; // Clear array
+
+        if (scannerSystem.mesh) {
+            scene.remove(scannerSystem.mesh);
+            scene.remove(scannerSystem.atm);
+            scene.remove(scannerSystem.ring);
+            scannerSystem = {};
+        }
+    }
+
+    // ======================================================
+    // MODE: GALAXY (Volumetric)
+    // ======================================================
+    function initGalaxy() {
+        document.getElementById('panel-title').innerText = "MACRO: MILKY WAY";
+        updateTelemetry(`
+            <div class="metric-row"><span class="label">TYPE:</span> <span class="value">SBc (Barred Spiral)</span></div>
+            <div class="metric-row"><span class="label">DIAMETER:</span> <span class="value">105,700 LY</span></div>
+            <div class="metric-row"><span class="label">SOLAR MASS:</span> <span class="value">1.5 x 10^12</span></div>
+            <div class="metric-row"><span class="label">CORE:</span> <span class="value">SAGITTARIUS A*</span></div>
+        `);
+
+        camera.position.set(0, 400, 700);
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.2;
+
+        const particles = 80000;
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(particles * 3);
+        const col = new Float32Array(particles * 3);
+
+        const cIn = new THREE.Color(0xffaa55);
+        const cOut = new THREE.Color(0x3366ff);
+
+        for(let i=0; i<particles; i++) {
+            const r = Math.random() * 400;
+            const spin = r * 3.5;
+            const branch = (i % 2) * Math.PI;
+
+            const randomness = Math.pow(Math.random(), 3) * (r < 50 ? 20 : 100);
+            const rx = (Math.random()-0.5) * randomness;
+            const ry = (Math.random()-0.5) * (randomness/2);
+            const rz = (Math.random()-0.5) * randomness;
+
+            pos[i*3] = Math.cos(spin + branch) * r + rx;
+            pos[i*3+1] = ry * (1 - r/500); // Flatten edges
+            pos[i*3+2] = Math.sin(spin + branch) * r + rz;
+
+            const mixed = cIn.clone().lerp(cOut, r/350);
+            col[i*3] = mixed.r; col[i*3+1] = mixed.g; col[i*3+2] = mixed.b;
+        }
+
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+
+        const mat = new THREE.PointsMaterial({
+            size: 1.5, vertexColors: true, blending: THREE.AdditiveBlending,
+            depthWrite: false, transparent: true, opacity: 0.8
+        });
+
+        galaxySystem = new THREE.Points(geo, mat);
+        scene.add(galaxySystem);
+
+        // Black Hole Center (Glow Sprite)
+        const cvs = document.createElement('canvas'); cvs.width=64; cvs.height=64;
+        const ctx = cvs.getContext('2d');
+        const grd = ctx.createRadialGradient(32,32,0,32,32,32);
+        grd.addColorStop(0, 'white'); grd.addColorStop(0.2, '#ffaa00'); grd.addColorStop(1, 'transparent');
+        ctx.fillStyle = grd; ctx.fillRect(0,0,64,64);
+
+        const spriteMat = new THREE.SpriteMaterial({
+            map: new THREE.CanvasTexture(cvs),
+            color: 0xffffff,
+            blending: THREE.AdditiveBlending
+        });
+        const core = new THREE.Sprite(spriteMat);
+        core.scale.set(100, 100, 1);
+        galaxySystem.add(core);
+    }
+
+    // ======================================================
+    // MODE: SOLAR (Trails & Orbits)
+    // ======================================================
+    function initSolar() {
+        document.getElementById('panel-title').innerText = "MESO: SOLAR SYSTEM";
+        updateTelemetry(`
+            <div class="metric-row"><span class="label">BODIES:</span> <span class="value">9 MAJOR</span></div>
+            <div class="metric-row"><span class="label">PHYSICS:</span> <span class="value">N-BODY + TRAILS</span></div>
+            <div class="metric-row"><span class="label">SCALE:</span> <span class="value">LOGARITHMIC VISUAL</span></div>
+        `);
+
+        camera.position.set(0, 200, 300);
+        controls.autoRotate = false;
+
+        // Sun Light
+        const sunLight = new THREE.PointLight(0xffffff, 2, 1000);
+        scene.add(sunLight);
+
+        const data = [
+            {k:"sun", r:10, d:0, s:0},
+            {k:"mercury", r:1.5, d:25, s:0.04},
+            {k:"venus", r:3, d:40, s:0.03},
+            {k:"earth", r:3.2, d:60, s:0.02, moon:true},
+            {k:"mars", r:2, d:80, s:0.018},
+            {k:"jupiter", r:8, d:130, s:0.008},
+            {k:"saturn", r:7, d:170, s:0.006, ring:true},
+            {k:"uranus", r:5, d:210, s:0.004},
+            {k:"neptune", r:5, d:250, s:0.003}
+        ];
+
+        data.forEach(p => {
+            const color = COLORS[p.k];
+
+            // Planet Mesh
+            const geo = new THREE.SphereGeometry(p.r, 32, 32);
+            const mat = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: p.d===0 ? 0xffaa00 : 0x000000,
+                emissiveIntensity: p.d===0 ? 1 : 0,
+                roughness: 0.7
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            scene.add(mesh);
+
+            // Text Label
+            const label = createLabel(p.k.toUpperCase());
+            scene.add(label);
+
+            // Ring (Saturn)
+            if(p.ring) {
+                const rGeo = new THREE.RingGeometry(p.r+2, p.r+6, 64);
+                const rMat = new THREE.MeshBasicMaterial({color:0xaa9966, side:THREE.DoubleSide, transparent:true, opacity:0.5});
+                const ring = new THREE.Mesh(rGeo, rMat);
+                ring.rotation.x = Math.PI/2;
+                mesh.add(ring);
+            }
+
+            // Orbit Trail Line
+            const trailGeo = new THREE.BufferGeometry();
+            const trailMax = 200;
+            const trailPos = new Float32Array(trailMax * 3);
+            trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+            const trailMat = new THREE.LineBasicMaterial({color: color, transparent:true, opacity:0.3});
+            const trail = new THREE.Line(trailGeo, trailMat);
+            scene.add(trail);
+
+            // Asteroid Belt (Between Mars/Jupiter)
+            if(p.k === 'mars') createAsteroidBelt();
+
+            solarBodies.push({
+                name: p.k, mesh: mesh, labelSprite: label, trail: trail,
+                trailArr: [], dist: p.d, angle: Math.random()*10, speed: p.s
+            });
+        });
+    }
+
+    function createAsteroidBelt() {
+        const pCount = 2000;
+        const pos = new Float32Array(pCount * 3);
+        for(let i=0; i<pCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const r = 100 + Math.random() * 15; // Between Mars(80) and Jupiter(130)
+            pos[i*3] = Math.cos(angle) * r;
+            pos[i*3+1] = (Math.random()-0.5) * 2;
+            pos[i*3+2] = Math.sin(angle) * r;
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        const mat = new THREE.PointsMaterial({color:0x666666, size:1});
+        const belt = new THREE.Points(geo, mat);
+        solarBodies.push({name:'belt', mesh:belt, trail:new THREE.Object3D(), orbit:new THREE.Object3D()}); // Dummy obj
+        scene.add(belt);
+    }
+
+    function createLabel(text) {
+        const cvs = document.createElement('canvas'); cvs.width=128; cvs.height=32;
+        const ctx = cvs.getContext('2d');
+        ctx.font = "bold 20px Courier New";
+        ctx.fillStyle = "rgba(0, 243, 255, 1)";
+        ctx.textAlign = "center";
+        ctx.fillText(text, 64, 22);
+        const tex = new THREE.CanvasTexture(cvs);
+        const mat = new THREE.SpriteMaterial({map: tex, transparent: true});
+        const sprite = new THREE.Sprite(mat);
+        sprite.scale.set(10, 2.5, 1);
+        return sprite;
+    }
+
+    // ======================================================
+    // MODE: SCANNER (Procedural Terrain)
+    // ======================================================
+    function initScanner(key) {
+        document.getElementById('panel-title').innerText = `MICRO: ${key}`;
+        camera.position.set(0, 0, 8);
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 2.0;
+
+        const col = COLORS[key.toLowerCase()];
+
+        // 1. Planet Mesh (High Res)
+        const tex = generateProceduralTexture(key, col);
+        const mat = new THREE.MeshStandardMaterial({
+            map: tex, roughness: 0.6, metalness: 0.1,
+            wireframe: document.getElementById('chk-wire').checked
+        });
+
+        scannerSystem.mesh = new THREE.Mesh(new THREE.SphereGeometry(2.5, 128, 128), mat);
+        scene.add(scannerSystem.mesh);
+
+        // 2. Atmosphere Glow
+        const atmMat = new THREE.MeshBasicMaterial({
+            color: col, transparent: true, opacity: 0.1, side: THREE.BackSide, blending: THREE.AdditiveBlending
+        });
+        scannerSystem.atm = new THREE.Mesh(new THREE.SphereGeometry(2.8, 64, 64), atmMat);
+        scene.add(scannerSystem.atm);
+
+        // 3. Ring?
+        if (key === 'SATURN') {
+            const rGeo = new THREE.RingGeometry(3.5, 5.5, 128);
+            const rMat = new THREE.MeshBasicMaterial({color:0xaa9966, side:THREE.DoubleSide, transparent:true, opacity:0.8});
+            scannerSystem.ring = new THREE.Mesh(rGeo, rMat);
+            scannerSystem.ring.rotation.x = Math.PI/2 - 0.2;
+            scene.add(scannerSystem.ring);
+        }
+
+        // Telemetry Update
+        updateTelemetry(`
+            <div class="metric-row"><span class="label">GRAVITY:</span> <span class="value">CALCULATING...</span></div>
+            <div class="metric-row"><span class="label">SURFACE:</span> <span class="value">PROCEDURAL MAP</span></div>
+            <div class="metric-row"><span class="label">ATMOSPHERE:</span> <span class="value">VOLUMETRIC</span></div>
+        `);
+
+        // Fake loading delay for data
+        setTimeout(() => {
+            updateTelemetry(`
+                <div class="metric-row"><span class="label">CLASS:</span> <span class="value">${key==='EARTH'?'TERRESTRIAL':'GAS GIANT'}</span></div>
+                <div class="metric-row"><span class="label">TEMP:</span> <span class="value">${Math.floor(Math.random()*200)-100}°C</span></div>
+                <div class="metric-row"><span class="label">PRESSURE:</span> <span class="value">${(Math.random()*10).toFixed(2)} Bar</span></div>
+                <div class="metric-row"><span class="label">COMPOSITION:</span> <span class="value">SPECTRAL ANALYSIS OK</span></div>
+            `);
+        }, 500);
+    }
+
+    function generateProceduralTexture(key, colorHex) {
+        const size = 1024;
+        const cvs = document.createElement('canvas'); cvs.width=size; cvs.height=size;
+        const ctx = cvs.getContext('2d');
+        const base = new THREE.Color(colorHex);
+
+        // Base Fill
+        ctx.fillStyle = `#${base.getHexString()}`;
+        ctx.fillRect(0,0,size,size);
+
+        // Noise Layers
+        for(let i=0; i<6000; i++) {
+            const x = Math.random()*size;
+            const y = Math.random()*size;
+            const r = Math.random()*10;
+            ctx.globalAlpha = Math.random()*0.1;
+            ctx.fillStyle = Math.random()>0.5 ? '#FFFFFF' : '#000000';
+
+            if (key === 'JUPITER' || key === 'SATURN') {
+                // Bands
+                ctx.fillRect(0, y, size, r*2);
+            } else if (key === 'EARTH') {
+                // Continentsish
+                ctx.fillStyle = '#228844';
+                ctx.beginPath(); ctx.arc(x,y,r*10,0,6.28); ctx.fill();
+            } else {
+                // Craters / Clouds
+                ctx.beginPath(); ctx.arc(x,y,r,0,6.28); ctx.fill();
+            }
+        }
+        return new THREE.CanvasTexture(cvs);
+    }
+
+    function toggleWireframe() {
+        if(scannerSystem.mesh) {
+            scannerSystem.mesh.material.wireframe = document.getElementById('chk-wire').checked;
+            log(`Visual Mode: ${scannerSystem.mesh.material.wireframe ? "WIREFRAME" : "SOLID"}`);
+        }
+    }
+
+    // --- UTILS ---
+    function populatePlanetNav() {
+        const c = document.getElementById('planet-nav');
+        c.innerHTML = '';
+        Object.keys(COLORS).forEach(k => {
+            if(k==='sun') return;
+            const btn = document.createElement('div');
+            btn.className = 'planet-btn';
+            btn.innerText = k.toUpperCase();
+            btn.onclick = () => { log(`Scanning Target: ${k.toUpperCase()}`); initScanner(k.toUpperCase()); };
+            c.appendChild(btn);
+        });
+    }
+
+    function updateTelemetry(html) {
+        document.getElementById('telemetry-content').innerHTML = html;
+    }
+
+    function log(msg) {
+        const d = new Date().toLocaleTimeString();
+        const l = document.getElementById('kernel-log');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span class="log-time">[${d}]</span> ${msg}`;
+        l.appendChild(entry);
+        l.scrollTop = l.scrollHeight;
+    }
+
+    function onResize() {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        composer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function updateClock() {
+        document.getElementById('clock').innerText = new Date().toISOString().split('T')[1].split('.')[0];
+    }
+
+    // --- LOOP ---
+    function animate() {
+        frameId = requestAnimationFrame(animate);
+        updateClock();
+        controls.update();
+
+        if (mode === 'SOLAR') {
+            solarBodies.forEach(b => {
+                if(b.name === 'belt') { b.mesh.rotation.y += 0.0005; return; }
+                if(b.name === 'sun') return;
+
+                // Orbit Logic
+                b.angle += b.speed;
+                b.mesh.position.x = Math.cos(b.angle) * b.dist;
+                b.mesh.position.z = Math.sin(b.angle) * b.dist;
+
+                // Label Follow
+                if(b.labelSprite) {
+                    b.labelSprite.position.copy(b.mesh.position);
+                    b.labelSprite.position.y += b.name==='saturn'?12:8;
+                }
+
+                // Trail Logic
+                b.trailArr.push(b.mesh.position.x, b.mesh.position.y, b.mesh.position.z);
+                if(b.trailArr.length > 300) b.trailArr.splice(0, 3);
+                b.trail.geometry.setAttribute('position', new THREE.Float32BufferAttribute(b.trailArr, 3));
+            });
+        }
+
+        if (mode === 'SCANNER' && scannerSystem.mesh && document.getElementById('chk-rot').checked) {
+            scannerSystem.mesh.rotation.y += 0.002;
+            scannerSystem.atm.rotation.y += 0.0025;
+        }
+
+        // Render via Composer (Bloom)
+        composer.render();
+    }
+
+    // Start
+    init();
+
+</script>
+</body>
+</html>

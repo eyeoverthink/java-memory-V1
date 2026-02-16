@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS INTELLIGENCE STATION</title>
+    <style>
+        :root {
+            --platinum: #E0E0E0;
+            --obsidian: #121212;
+            --amber: #FFB000;
+            --nasa-blue: #00A2FF;
+            --cia-green: #00FF41;
+            --alert-red: #FF3333;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+            font-family: 'Courier New', monospace;
+            user-select: none;
+        }
+
+        /* --- OS LAYER --- */
+        #desktop {
+            width: 100vw; height: 100vh;
+            background: #111;
+            position: relative;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* --- WINDOW SYSTEM --- */
+        .window {
+            position: absolute;
+            background: var(--obsidian);
+            border: 2px solid var(--platinum);
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            min-width: 400px;
+            min-height: 300px;
+        }
+
+        .title-bar {
+            background: var(--platinum);
+            color: #000;
+            padding: 5px 10px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content {
+            flex-grow: 1;
+            position: relative;
+            padding: 10px;
+        }
+
+        canvas {
+            background: #000;
+            border: 1px solid #333;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 20px; left: 20px;
+            color: var(--amber);
+            font-size: 11px;
+            pointer-events: none;
+            text-shadow: 0 1px 2px #000;
+        }
+
+        /* --- MATH NOTATION --- */
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            color: #FFF;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="desktop">
+
+    <div class="window" style="top: 50px; left: 50px; width: 500px; height: 400px; z-index: 10;">
+        <div class="title-bar">
+            <span>NASA_ORBIT.EXE [KALMAN FILTER]</span>
+            <span>[X]</span>
+        </div>
+        <div class="content">
+            <canvas id="nasaCanvas"></canvas>
+            <div class="overlay">
+                <div class="formula">K = P H^T (H P H^T + R)^-1</div>
+                <div>STATE ESTIMATION: ACTIVE</div>
+                <div style="color:var(--alert-red)">● NOISY DATA (SENSOR)</div>
+                <div style="color:var(--cia-green)">● ESTIMATED TRUTH (FILTER)</div>
+                <div style="color:white">● ACTUAL PHYSICS (HIDDEN)</div>
+                <br>
+                <div id="nasa-metrics">ERR: 0.00%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" style="top: 100px; left: 600px; width: 500px; height: 400px; z-index: 9;">
+        <div class="title-bar">
+            <span>CIA_LWE.EXE [LATTICE CRYPTO]</span>
+            <span>[X]</span>
+        </div>
+        <div class="content">
+            <canvas id="ciaCanvas"></canvas>
+            <div class="overlay">
+                <div class="formula">b = A*s + e (mod q)</div>
+                <div>LATTICE DIMENSION: 2D (SLICE)</div>
+                <div>NOISE VECTOR (e): GAUSSIAN</div>
+                <div>SECRET (s): [HIDDEN]</div>
+                <br>
+                <div id="cia-metrics">ENTROPY: 0.99</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- WINDOW DRAG LOGIC ---
+    document.querySelectorAll('.title-bar').forEach(bar => {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+        const win = bar.parentElement;
+
+        bar.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialLeft = win.offsetLeft;
+            initialTop = win.offsetTop;
+            win.style.zIndex = 100; // Bring to front
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            win.style.left = `${initialLeft + dx}px`;
+            win.style.top = `${initialTop + dy}px`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            win.style.zIndex = 10;
+        });
+    });
+
+    // ======================================================
+    // MODULE 1: NASA (The Kalman Filter)
+    // ======================================================
+    const nasaCanvas = document.getElementById('nasaCanvas');
+    const nCtx = nasaCanvas.getContext('2d');
+    let nWidth, nHeight;
+
+    // System State
+    let trueX, trueY, trueVX, trueVY; // The Reality
+    let estX, estY, estVX, estVY;     // The AI Estimate
+    let P = 1.0;                      // Error Covariance
+    const Q = 0.1;                    // Process Noise (Reality fluctuates)
+    const R = 20.0;                   // Measurement Noise (Sensors suck)
+    let K = 0;                        // Kalman Gain
+
+    function initNASA() {
+        nWidth = nasaCanvas.width = nasaCanvas.offsetWidth;
+        nHeight = nasaCanvas.height = nasaCanvas.offsetHeight;
+        trueX = nWidth/2; trueY = nHeight/2;
+        trueVX = 2; trueVY = 1.5;
+
+        // Initial Guess
+        estX = trueX; estY = trueY;
+    }
+
+    function updateNASA() {
+        // 1. PHYSICS UPDATE (True Reality)
+        trueX += trueVX;
+        trueY += trueVY;
+
+        // Wall Bounce
+        if(trueX < 0 || trueX > nWidth) trueVX *= -1;
+        if(trueY < 0 || trueY > nHeight) trueVY *= -1;
+
+        // 2. SENSOR READING (Noisy)
+        // Add random gaussian noise to the true position
+        let measX = trueX + (Math.random() - 0.5) * 50;
+        let measY = trueY + (Math.random() - 0.5) * 50;
+
+        // 3. KALMAN PREDICT STEP
+        // Estimate based on physics model
+        estX += trueVX;
+        estY += trueVY;
+        P = P + Q;
+
+        // 4. KALMAN UPDATE STEP
+        // Calculate Gain: How much do we trust the sensor vs our model?
+        K = P / (P + R);
+
+        // Correct the estimate
+        estX = estX + K * (measX - estX);
+        estY = estY + K * (measY - estY);
+
+        // Update Error Covariance
+        P = (1 - K) * P;
+
+        // 5. RENDER
+        // Fade trail
+        nCtx.fillStyle = "rgba(0,0,0,0.1)";
+        nCtx.fillRect(0,0,nWidth,nHeight);
+
+        // Draw Sensor Data (Red Noise)
+        nCtx.fillStyle = "#FF3333";
+        nCtx.fillRect(measX-2, measY-2, 4, 4);
+
+        // Draw True Path (White - usually hidden, shown for proof)
+        nCtx.fillStyle = "rgba(255,255,255,0.3)";
+        nCtx.beginPath(); nCtx.arc(trueX, trueY, 2, 0, Math.PI*2); nCtx.fill();
+
+        // Draw Kalman Estimate (Green)
+        nCtx.strokeStyle = "#00FF41";
+        nCtx.lineWidth = 2;
+        nCtx.beginPath(); nCtx.arc(estX, estY, 5, 0, Math.PI*2); nCtx.stroke();
+
+        // Update Telemetry
+        let err = Math.sqrt(Math.pow(trueX-estX, 2) + Math.pow(trueY-estY, 2));
+        document.getElementById('nasa-metrics').innerText = `FILTER ERR: ${err.toFixed(2)} px`;
+
+        requestAnimationFrame(updateNASA);
+    }
+
+    // ======================================================
+    // MODULE 2: CIA (Lattice Cryptography)
+    // ======================================================
+    const ciaCanvas = document.getElementById('ciaCanvas');
+    const cCtx = ciaCanvas.getContext('2d');
+    let cWidth, cHeight;
+    let latticePoints = [];
+    let secretPoint = null;
+
+    function initCIA() {
+        cWidth = ciaCanvas.width = ciaCanvas.offsetWidth;
+        cHeight = ciaCanvas.height = ciaCanvas.offsetHeight;
+
+        // Generate Lattice Basis Vectors
+        const v1 = {x: 40, y: 10};
+        const v2 = {x: 10, y: 40};
+
+        // Generate Grid
+        for(let i=-10; i<20; i++) {
+            for(let j=-10; j<20; j++) {
+                let px = (i * v1.x) + (j * v2.x);
+                let py = (i * v1.y) + (j * v2.y);
+                latticePoints.push({x: px, y: py});
+            }
+        }
+
+        // Pick a Secret Point (s)
+        secretPoint = latticePoints[Math.floor(latticePoints.length/2) + 5];
+    }
+
+    function updateCIA() {
+        // Clear
+        cCtx.fillStyle = "#000";
+        cCtx.fillRect(0, 0, cWidth, cHeight);
+
+        // Draw Lattice Grid (The Public Key structure)
+        cCtx.fillStyle = "#444";
+        for(let p of latticePoints) {
+            cCtx.beginPath();
+            cCtx.arc(p.x, p.y, 2, 0, Math.PI*2);
+            cCtx.fill();
+        }
+
+        // Draw "Learning With Errors" (LWE) Visualization
+        // We show a noisy target. The attacker sees the Red dot.
+        // The mathematics must resolve it to the nearest Lattice point (White dot).
+
+        let time = Date.now() * 0.002;
+
+        // The Noise (e) - Dynamic shifting error
+        let noiseX = Math.sin(time) * 15;
+        let noiseY = Math.cos(time) * 15;
+
+        // The Ciphertext (b = As + e)
+        let cipherX = secretPoint.x + noiseX;
+        let cipherY = secretPoint.y + noiseY;
+
+        // Draw Ciphertext (What the spy sees)
+        cCtx.strokeStyle = "#FF3333"; // Red Target
+        cCtx.beginPath();
+        cCtx.moveTo(cipherX-5, cipherY-5); cCtx.lineTo(cipherX+5, cipherY+5);
+        cCtx.moveTo(cipherX+5, cipherY-5); cCtx.lineTo(cipherX-5, cipherY+5);
+        cCtx.stroke();
+
+        // Draw Correction Vector (The Math solving the riddle)
+        cCtx.strokeStyle = "#00FF41";
+        cCtx.setLineDash([2, 2]);
+        cCtx.beginPath();
+        cCtx.moveTo(cipherX, cipherY);
+        cCtx.lineTo(secretPoint.x, secretPoint.y);
+        cCtx.stroke();
+        cCtx.setLineDash([]);
+
+        // Draw Secret (The Truth)
+        cCtx.fillStyle = "#FFF";
+        cCtx.beginPath(); cCtx.arc(secretPoint.x, secretPoint.y, 4, 0, Math.PI*2); cCtx.fill();
+
+        document.getElementById('cia-metrics').innerText = `NOISE VECTOR: [${noiseX.toFixed(1)}, ${noiseY.toFixed(1)}]`;
+
+        requestAnimationFrame(updateCIA);
+    }
+
+    // BOOT
+    setTimeout(() => {
+        initNASA();
+        updateNASA();
+        initCIA();
+        updateCIA();
+    }, 100);
+
+</script>
+</body>
+</html>

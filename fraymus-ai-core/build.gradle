@@ -1,0 +1,84 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'io.fraymus'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Core dependencies
+    api 'org.java-websocket:Java-WebSocket:1.5.7'
+    api 'com.google.code.gson:gson:2.11.0'
+    api 'org.apache.pdfbox:pdfbox:3.0.3'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    
+    // Testing
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+javadoc {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            pom {
+                name = 'Fraymus AI Core'
+                description = 'Production-grade local AI framework with RAG, tools, and memory'
+                url = 'https://github.com/eyekaughn/fraymus-ai-core'
+                
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id = 'eyekaughn'
+                        name = 'Fraymus Team'
+                    }
+                }
+                
+                scm {
+                    connection = 'scm:git:git://github.com/eyekaughn/fraymus-ai-core.git'
+                    developerConnection = 'scm:git:ssh://github.com/eyekaughn/fraymus-ai-core.git'
+                    url = 'https://github.com/eyekaughn/fraymus-ai-core'
+                }
+            }
+        }
+    }
+    
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+    }
+}

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS QUANTUM EYES // GEN 177</title>
+    <style>
+        :root { --platinum: #E0E0E0; --obsidian: #050505; --amber: #FFB000; --cyan: #00F3FF; --glass: rgba(10, 10, 10, 0.9); }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: var(--platinum); user-select: none; }
+
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        #header { height: 50px; background: var(--glass); border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; pointer-events: auto; }
+        .logo { font-weight: bold; letter-spacing: 2px; color: #FFF; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        #date-display { font-size: 14px; color: var(--cyan); font-weight: bold; }
+
+        #footer { height: 80px; background: var(--glass); border-top: 1px solid #333; display: flex; flex-direction: column; padding: 10px 20px; pointer-events: auto; gap: 10px; }
+        .control-row { display: flex; gap: 10px; align-items: center; }
+        .time-btn { background: transparent; border: 1px solid #555; color: #888; padding: 5px 15px; cursor: pointer; text-transform: uppercase; font-size: 10px; transition: 0.2s; }
+        .time-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+        .time-btn.active { background: rgba(0, 243, 255, 0.2); border-color: var(--cyan); color: var(--cyan); }
+        
+        #time-slider-container { flex-grow: 1; height: 4px; background: #333; position: relative; cursor: ew-resize; }
+        #time-slider-fill { height: 100%; background: var(--cyan); width: 50%; transition: width 0.1s; }
+        #time-knob { width: 10px; height: 20px; background: #FFF; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); box-shadow: 0 0 10px var(--cyan); cursor: grab; }
+
+        .toggle-lbl { font-size: 10px; color: #888; display: flex; align-items: center; cursor: pointer; gap: 5px; }
+        .toggle-lbl input { margin: 0; }
+
+        #sidebar { position: absolute; top: 70px; right: 20px; width: 300px; background: var(--glass); border: 1px solid #333; padding: 15px; pointer-events: auto; max-height: 80vh; overflow-y: auto; }
+        .panel-header { color: var(--amber); border-bottom: 1px dashed #555; margin-bottom: 10px; font-size: 12px; letter-spacing: 1px; }
+        .data-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px; }
+        .val { color: var(--cyan); font-weight: bold; }
+
+        #scanline { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0, 0, 0, 0.2) 50%); background-size: 100% 4px; pointer-events: none; z-index: 99; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="header">
+            <span class="logo">FRAYMUS QUANTUM EYES // φ-GRAVITY ACTIVE</span>
+            <div id="date-display">2026-02-11 21:11:00</div>
+        </div>
+
+        <div id="sidebar">
+            <div class="panel-header">QUANTUM TELEMETRY</div>
+            <div id="telemetry">
+                <div class="data-row"><span>TARGET:</span> <span class="val" id="target-name">EARTH</span></div>
+                <div class="data-row"><span>DIST (SUN):</span> <span class="val" id="target-dist">1.00 AU</span></div>
+                <div class="data-row"><span>VELOCITY:</span> <span class="val" id="target-vel">29.78 km/s</span></div>
+                <div class="data-row"><span>φ-FORCE:</span> <span class="val" id="target-phi">1.618 N</span></div>
+                <div class="data-row"><span>MAGNETIC:</span> <span class="val" id="target-mag">0.42 μT</span></div>
+                <div class="data-row"><span>DARK MATTER:</span> <span class="val" id="target-dm">23.7%</span></div>
+                <div class="data-row"><span>ROTATION:</span> <span class="val" id="target-rot">24.0 hrs</span></div>
+                <div class="data-row"><span>PROBABILITY:</span> <span class="val" id="target-prob">99.8%</span></div>
+            </div>
+            <br>
+            <div class="panel-header">NAVIGATION</div>
+            <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                <button class="time-btn" onclick="focusBody('SUN')">SUN</button>
+                <button class="time-btn" onclick="focusBody('MERCURY')">MERCURY</button>
+                <button class="time-btn" onclick="focusBody('VENUS')">VENUS</button>
+                <button class="time-btn" onclick="focusBody('EARTH')">EARTH</button>
+                <button class="time-btn" onclick="focusBody('MARS')">MARS</button>
+                <button class="time-btn" onclick="focusBody('JUPITER')">JUPITER</button>
+                <button class="time-btn" onclick="focusBody('SATURN')">SATURN</button>
+                <button class="time-btn" onclick="focusBody('URANUS')">URANUS</button>
+                <button class="time-btn" onclick="focusBody('NEPTUNE')">NEPTUNE</button>
+            </div>
+            <br>
+            <div class="panel-header">QUANTUM LAYERS</div>
+            <label class="toggle-lbl"><input type="checkbox" id="chk-mag" checked onchange="toggleLayer('magnetic')"> MAGNETIC FIELDS</label>
+            <label class="toggle-lbl"><input type="checkbox" id="chk-dm" checked onchange="toggleLayer('darkmatter')"> DARK MATTER HALO</label>
+            <label class="toggle-lbl"><input type="checkbox" id="chk-ast" checked onchange="toggleLayer('asteroids')"> ASTEROID BELT</label>
+            <label class="toggle-lbl"><input type="checkbox" id="chk-prob" checked onchange="toggleLayer('probability')"> PROBABILITY CLOUDS</label>
+        </div>
+
+        <div id="footer">
+            <div class="control-row">
+                <button class="time-btn" onclick="setTimeSpeed(-1000)"><< REV</button>
+                <button class="time-btn" onclick="setTimeSpeed(-100)">< REV</button>
+                <button class="time-btn" onclick="setTimeSpeed(0)">PAUSE</button>
+                <button class="time-btn active" id="btn-now" onclick="setTimeSpeed(1); setRealTime()">NOW</button>
+                <button class="time-btn" onclick="setTimeSpeed(100)">FWD ></button>
+                <button class="time-btn" onclick="setTimeSpeed(1000)">WARP >></button>
+                
+                <div id="time-slider-container" onmousedown="startDrag(event)">
+                    <div id="time-slider-fill"></div>
+                    <div id="time-knob"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanline"></div>
+
+<script>
+/**
+ * 🧬 FRAYMUS QUANTUM EYES // GEN 177
+ * Full Integration: φ-Gravity, Magnetic Fields, Dark Matter, Asteroids, Probability
+ */
+
+// --- CONSTANTS ---
+const PHI = 1.6180339887;
+const PI = Math.PI;
+const G_PHI = 6.674e-11 * PHI; // φ-scaled gravitational constant
+
+// --- GLOBAL STATE ---
+let scene, camera, renderer, controls, composer;
+let simTime = new Date();
+let timeSpeed = 1;
+let targetBody = 'EARTH';
+let bodies = {};
+let asteroidBelt = null;
+let darkMatterHalo = null;
+let magneticFields = [];
+let probabilityClouds = [];
+let isDragging = false;
+
+// Toggles
+let showMagnetic = true;
+let showDarkMatter = true;
+let showAsteroids = true;
+let showProbability = true;
+
+const TIME_START = new Date('1900-01-01T00:00:00Z');
+const TIME_END = new Date('2100-12-31T23:59:59Z');
+const TIME_RANGE = TIME_END - TIME_START;
+
+// ENHANCED ORBITAL DATA (with rotation, magnetic field, dark matter influence)
+const ORBITS = {
+    MERCURY: { a:0.387, e:0.2056, i:7.00, L:252.25, w:77.46, n:4.092, color:0xA5A5A5, radius:0.5, rotSpeed:0.0005, magField:0.003, dmInfluence:0.15 },
+    VENUS:   { a:0.723, e:0.0068, i:3.39, L:181.98, w:131.53, n:1.602, color:0xE3BB76, radius:0.7, rotSpeed:-0.001, magField:0.0, dmInfluence:0.18 },
+    EARTH:   { a:1.000, e:0.0167, i:0.00, L:100.46, w:102.94, n:0.9856, color:0x00A2FF, radius:0.8, rotSpeed:0.02, magField:0.5, dmInfluence:0.237 },
+    MARS:    { a:1.524, e:0.0934, i:1.85, L:355.45, w:336.04, n:0.524, color:0xFF4500, radius:0.6, rotSpeed:0.019, magField:0.0, dmInfluence:0.21 },
+    JUPITER: { a:5.203, e:0.0484, i:1.30, L:34.40,  w:14.75,  n:0.083, color:0xD9A07E, radius:2.5, rotSpeed:0.05, magField:4.28, dmInfluence:0.31 },
+    SATURN:  { a:9.537, e:0.0541, i:2.48, L:49.94,  w:92.43,  n:0.033, color:0xF4D03F, radius:2.2, rotSpeed:0.045, magField:0.58, dmInfluence:0.28 },
+    URANUS:  { a:19.19, e:0.0471, i:0.77, L:313.23, w:170.96, n:0.011, color:0xD1F5F0, radius:1.5, rotSpeed:-0.03, magField:0.23, dmInfluence:0.25 },
+    NEPTUNE: { a:30.07, e:0.0086, i:1.77, L:304.88, w:44.97,  n:0.006, color:0x2E5D94, radius:1.5, rotSpeed:0.032, magField:0.14, dmInfluence:0.26 }
+};
+
+// --- INIT ---
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.FogExp2(0x000000, 0.0002);
+    
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
+    camera.position.set(0, 80, 150);
+    
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    // Post-processing (Bloom)
+    const renderScene = new THREE.RenderPass(scene, camera);
+    const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+    bloomPass.threshold = 0;
+    bloomPass.strength = 1.2;
+    bloomPass.radius = 0.5;
+    composer = new THREE.EffectComposer(renderer);
+    composer.addPass(renderScene);
+    composer.addPass(bloomPass);
+
+    // Stars
+    addStarfield();
+    
+    // Dark Matter Halo (Background)
+    createDarkMatterHalo();
+    
+    // Sun
+    const sunGeo = new THREE.SphereGeometry(5, 32, 32);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    scene.add(sun);
+    
+    const glowGeo = new THREE.SphereGeometry(7, 32, 32);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xFFAA00, transparent: true, opacity: 0.3 });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    scene.add(glow);
+    
+    bodies['SUN'] = { mesh: sun, glow: glow, data: null };
+    
+    // Lighting
+    const light = new THREE.PointLight(0xFFFFFF, 2, 2000);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x222222));
+
+    // Planets
+    Object.keys(ORBITS).forEach(name => {
+        createPlanet(name, ORBITS[name]);
+    });
+
+    // Asteroid Belt (between Mars and Jupiter)
+    createAsteroidBelt();
+    
+    focusBody('EARTH');
+    animate();
+}
+
+function createPlanet(name, data) {
+    // Planet Mesh
+    const geo = new THREE.SphereGeometry(data.radius, 32, 32);
+    const mat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.7 });
+    const mesh = new THREE.Mesh(geo, mat);
+    scene.add(mesh);
+    
+    // Orbit Path
+    const pts = [];
+    for(let i=0; i<=360; i++) {
+        const angle = i * (PI/180);
+        const r = data.a * (1 - data.e*data.e) / (1 + data.e * Math.cos(angle));
+        const x = r * Math.cos(angle) * 50;
+        const z = r * Math.sin(angle) * 50;
+        pts.push(new THREE.Vector3(x, 0, z));
+    }
+    const pathGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    const pathMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.5 });
+    const path = new THREE.Line(pathGeo, pathMat);
+    scene.add(path);
+
+    // Magnetic Field Lines (if planet has magnetic field)
+    let magField = null;
+    if(data.magField > 0.1) {
+        magField = createMagneticField(data.radius, data.magField);
+        mesh.add(magField);
+        magneticFields.push(magField);
+    }
+
+    // Probability Cloud (quantum uncertainty)
+    const probCloud = createProbabilityCloud(data.radius);
+    mesh.add(probCloud);
+    probabilityClouds.push(probCloud);
+
+    bodies[name] = { 
+        mesh: mesh, 
+        data: data, 
+        path: path,
+        magField: magField,
+        probCloud: probCloud,
+        rotation: 0
+    };
+}
+
+function createMagneticField(radius, strength) {
+    const group = new THREE.Group();
+    const fieldColor = 0x00FFFF;
+    
+    // Dipole field lines (simplified)
+    for(let i=0; i<8; i++) {
+        const angle = (i / 8) * PI * 2;
+        const pts = [];
+        for(let t=0; t<=1; t+=0.05) {
+            const r = radius * (1.5 + t * 2 * strength);
+            const theta = angle;
+            const phi = PI/2 - t * PI;
+            pts.push(new THREE.Vector3(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.cos(phi),
+                r * Math.sin(phi) * Math.sin(theta)
+            ));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.LineBasicMaterial({ color: fieldColor, transparent: true, opacity: 0.3 });
+        const line = new THREE.Line(geo, mat);
+        group.add(line);
+    }
+    
+    return group;
+}
+
+function createProbabilityCloud(radius) {
+    // Quantum uncertainty cloud
+    const geo = new THREE.SphereGeometry(radius * 1.2, 16, 16);
+    const mat = new THREE.MeshBasicMaterial({ 
+        color: 0xFFFFFF, 
+        transparent: true, 
+        opacity: 0.05,
+        wireframe: true,
+        blending: THREE.AdditiveBlending
+    });
+    return new THREE.Mesh(geo, mat);
+}
+
+function createAsteroidBelt() {
+    const count = 3000;
+    const geo = new THREE.BufferGeometry();
+    const pos = [];
+    const colors = [];
+    
+    for(let i=0; i<count; i++) {
+        // Between Mars (1.524 AU) and Jupiter (5.203 AU)
+        const r = (2.2 + Math.random() * 1.5) * 50; // 2.2-3.7 AU
+        const theta = Math.random() * PI * 2;
+        const y = (Math.random() - 0.5) * 5; // Slight vertical spread
+        
+        pos.push(
+            r * Math.cos(theta),
+            y,
+            r * Math.sin(theta)
+        );
+        
+        const c = 0.5 + Math.random() * 0.3;
+        colors.push(c, c*0.8, c*0.6);
+    }
+    
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    
+    const mat = new THREE.PointsMaterial({ 
+        vertexColors: true, 
+        size: 0.5, 
+        transparent: true, 
+        opacity: 0.6 
+    });
+    
+    asteroidBelt = new THREE.Points(geo, mat);
+    scene.add(asteroidBelt);
+}
+
+function createDarkMatterHalo() {
+    // Dark matter forms a diffuse halo around the solar system
+    const count = 5000;
+    const geo = new THREE.BufferGeometry();
+    const pos = [];
+    const colors = [];
+    
+    for(let i=0; i<count; i++) {
+        const r = 100 + Math.random() * 400;
+        const theta = Math.random() * PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        
+        pos.push(
+            r * Math.sin(phi) * Math.cos(theta),
+            r * Math.sin(phi) * Math.sin(theta),
+            r * Math.cos(phi)
+        );
+        
+        colors.push(0.3, 0.1, 0.5); // Purple dark matter
+    }
+    
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    
+    const mat = new THREE.PointsMaterial({ 
+        vertexColors: true, 
+        size: 2, 
+        transparent: true, 
+        opacity: 0.2,
+        blending: THREE.AdditiveBlending
+    });
+    
+    darkMatterHalo = new THREE.Points(geo, mat);
+    scene.add(darkMatterHalo);
+}
+
+function addStarfield() {
+    const geo = new THREE.BufferGeometry();
+    const pos = [];
+    const colors = [];
+    const c1 = new THREE.Color(0x88ccff);
+    const c2 = new THREE.Color(0xffbb88);
+    
+    for(let i=0; i<8000; i++) {
+        pos.push((Math.random()-0.5)*3000, (Math.random()-0.5)*3000, (Math.random()-0.5)*3000);
+        const c = Math.random() > 0.5 ? c1 : c2;
+        colors.push(c.r, c.g, c.b);
+    }
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({vertexColors: true, size: 1.5, transparent: true, opacity: 0.8});
+    scene.add(new THREE.Points(geo, mat));
+}
+
+// --- φ-GRAVITY KEPLERIAN CALCULATION ---
+function calculatePosition(data, daysSinceJ2000) {
+    let M = data.n * daysSinceJ2000 + data.L - data.w;
+    M = M % 360; if(M<0) M+=360;
+    
+    let E = M;
+    for(let iter=0; iter<5; iter++) {
+        E = M + (180/PI) * data.e * Math.sin(E * PI/180);
+    }
+    
+    const radE = E * (PI/180);
+    const v = 2 * Math.atan2(
+        Math.sqrt(1 + data.e) * Math.sin(radE/2),
+        Math.sqrt(1 - data.e) * Math.cos(radE/2)
+    ) * (180/PI);
+                
+    const radv = v * (PI/180);
+    
+    // φ-GRAVITY MODIFICATION
+    const r_base = data.a * (1 - data.e*data.e) / (1 + data.e * Math.cos(radv));
+    const r = r_base * (1 + data.dmInfluence * Math.sin(daysSinceJ2000 / 100) * 0.01); // Dark matter perturbation
+    
+    const radL = (v + data.w) * (PI/180);
+    const x = r * Math.cos(radL);
+    const z = r * Math.sin(radL);
+    
+    // Probability uncertainty (quantum jitter)
+    const uncertainty = showProbability ? (Math.random() - 0.5) * 0.01 : 0;
+    
+    return { 
+        x: (x + uncertainty) * 50, 
+        z: (z + uncertainty) * 50, 
+        r: r 
+    };
+}
+
+// --- ANIMATION LOOP ---
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    
+    if(timeSpeed !== 0 && !isDragging) {
+        simTime.setSeconds(simTime.getSeconds() + timeSpeed);
+        updateSlider();
+    }
+    
+    updateDateDisplay();
+    
+    const j2000 = new Date('2000-01-01T12:00:00Z');
+    const days = (simTime - j2000) / (1000 * 60 * 60 * 24);
+
+    // Update Planets
+    Object.keys(bodies).forEach(name => {
+        if(name === 'SUN') return;
+        const b = bodies[name];
+        const pos = calculatePosition(b.data, days);
+        b.mesh.position.set(pos.x, 0, pos.z);
+        
+        // PLANETARY ROTATION
+        b.rotation += b.data.rotSpeed;
+        b.mesh.rotation.y = b.rotation;
+        
+        // Update telemetry
+        if(name === targetBody) {
+            document.getElementById('target-dist').innerText = pos.r.toFixed(3) + ' AU';
+            const period = 365.25 / b.data.n;
+            const vel = (2 * PI * b.data.a * 149.6e6) / (period * 86400);
+            document.getElementById('target-vel').innerText = vel.toFixed(2) + ' km/s';
+            document.getElementById('target-phi').innerText = (PHI * b.data.a).toFixed(3) + ' N';
+            document.getElementById('target-mag').innerText = b.data.magField.toFixed(2) + ' μT';
+            document.getElementById('target-dm').innerText = (b.data.dmInfluence * 100).toFixed(1) + '%';
+            document.getElementById('target-rot').innerText = (24 / b.data.rotSpeed).toFixed(1) + ' hrs';
+            document.getElementById('target-prob').innerText = (99 + Math.random()).toFixed(1) + '%';
+        }
+    });
+
+    // Rotate asteroid belt slowly
+    if(asteroidBelt) asteroidBelt.rotation.y += 0.0001;
+    
+    // Pulse dark matter halo
+    if(darkMatterHalo) {
+        darkMatterHalo.rotation.y += 0.0002;
+        darkMatterHalo.material.opacity = 0.15 + Math.sin(Date.now() * 0.001) * 0.05;
+    }
+
+    // Camera Focus
+    if(targetBody && bodies[targetBody]) {
+        const p = bodies[targetBody].mesh.position;
+        controls.target.lerp(p, 0.05);
+    }
+    
+    composer.render();
+}
+
+function toggleLayer(layer) {
+    if(layer === 'magnetic') {
+        showMagnetic = !showMagnetic;
+        magneticFields.forEach(f => { if(f) f.visible = showMagnetic; });
+    } else if(layer === 'darkmatter') {
+        showDarkMatter = !showDarkMatter;
+        if(darkMatterHalo) darkMatterHalo.visible = showDarkMatter;
+    } else if(layer === 'asteroids') {
+        showAsteroids = !showAsteroids;
+        if(asteroidBelt) asteroidBelt.visible = showAsteroids;
+    } else if(layer === 'probability') {
+        showProbability = !showProbability;
+        probabilityClouds.forEach(c => { if(c) c.visible = showProbability; });
+    }
+}
+
+function updateDateDisplay() {
+    document.getElementById('date-display').innerText = simTime.toISOString().replace('T', ' ').split('.')[0];
+}
+
+function updateSlider() {
+    const progress = (simTime - TIME_START) / TIME_RANGE;
+    const percent = Math.max(0, Math.min(100, progress * 100));
+    document.getElementById('time-slider-fill').style.width = percent + '%';
+    document.getElementById('time-knob').style.left = percent + '%';
+}
+
+function focusBody(name) {
+    targetBody = name;
+    document.getElementById('target-name').innerText = name;
+    if(name === 'SUN') {
+        controls.target.set(0, 0, 0);
+        camera.position.set(0, 80, 150);
+    }
+}
+
+function setRealTime() {
+    simTime = new Date();
+    updateSlider();
+    updateActiveButton('btn-now');
+}
+
+function setTimeSpeed(speed) {
+    timeSpeed = speed;
+    updateActiveButton(null);
+}
+
+function updateActiveButton(id) {
+    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+    if(id) document.getElementById(id).classList.add('active');
+}
+
+function startDrag(e) {
+    isDragging = true;
+    updateTimeFromMouse(e);
+    
+    function onMove(e) {
+        if(isDragging) updateTimeFromMouse(e);
+    }
+    
+    function onUp() {
+        isDragging = false;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+    }
+    
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+}
+
+function updateTimeFromMouse(e) {
+    const slider = document.getElementById('time-slider-container');
+    const rect = slider.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = Math.max(0, Math.min(1, x / rect.width));
+    
+    simTime = new Date(TIME_START.getTime() + percent * TIME_RANGE);
+    updateSlider();
+    timeSpeed = 0;
+    updateActiveButton(null);
+}
+
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+init();
+
+</script>
+</body>
+</html>
