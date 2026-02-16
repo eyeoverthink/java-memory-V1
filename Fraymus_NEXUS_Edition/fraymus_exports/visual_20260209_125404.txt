@@ -1,0 +1,5 @@
+VISUAL CAPTURE PLACEHOLDER
+Resolution: 1920x1080
+Timestamp: 2026-02-09T12:54:04.845100500
+
+[In full Portal implementation, this would be a PNG screenshot]

@@ -1,0 +1,13 @@
+=== TIME CAPSULE ===
+ID: c64b18ce
+Timestamp: 1770666579
+Time: 2026-02-09 11:49:39
+Type: Epiphany
+Parent: none
+
+=== STATE SNAPSHOT ===
+System state: thinking about quantum mechanics
+
+INSIGHT: Superposition is key!
+
+=== END CAPSULE ===

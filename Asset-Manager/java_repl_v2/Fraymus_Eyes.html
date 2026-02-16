@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS EYES // GEN 176</title>
+    <style>
+        /* --- THE PLATINUM AESTHETIC --- */
+        :root { --platinum: #E0E0E0; --obsidian: #050505; --amber: #FFB000; --cyan: #00F3FF; --glass: rgba(10, 10, 10, 0.9); }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: var(--platinum); user-select: none; }
+
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        /* HEADER */
+        #header { height: 50px; background: var(--glass); border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; pointer-events: auto; }
+        .logo { font-weight: bold; letter-spacing: 2px; color: #FFF; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        #date-display { font-size: 14px; color: var(--cyan); font-weight: bold; }
+
+        /* FOOTER (TIME CONTROL) */
+        #footer { height: 60px; background: var(--glass); border-top: 1px solid #333; display: flex; align-items: center; padding: 0 20px; pointer-events: auto; gap: 20px; }
+        .time-btn { background: transparent; border: 1px solid #555; color: #888; padding: 5px 15px; cursor: pointer; text-transform: uppercase; font-size: 10px; transition: all 0.2s; }
+        .time-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+        .time-btn.active { background: rgba(0, 243, 255, 0.2); border-color: var(--cyan); color: var(--cyan); }
+        
+        #time-slider-container { flex-grow: 1; height: 4px; background: #333; position: relative; cursor: ew-resize; }
+        #time-slider-fill { height: 100%; background: var(--cyan); width: 50%; transition: width 0.1s; }
+        #time-knob { width: 10px; height: 20px; background: #FFF; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); box-shadow: 0 0 10px var(--cyan); }
+
+        /* SIDEBAR (CONTEXT) */
+        #sidebar { position: absolute; top: 70px; right: 20px; width: 280px; background: var(--glass); border: 1px solid #333; padding: 15px; pointer-events: auto; }
+        .panel-header { color: var(--amber); border-bottom: 1px dashed #555; margin-bottom: 10px; font-size: 12px; padding-bottom: 5px; }
+        .data-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
+        .val { color: var(--cyan); }
+        .lbl { color: #888; }
+
+        /* FORMULA DISPLAY */
+        #formula { position: absolute; bottom: 80px; left: 20px; background: var(--glass); border: 1px solid #333; padding: 10px 15px; font-size: 11px; }
+        #formula .title { color: var(--amber); margin-bottom: 5px; }
+        #formula code { color: var(--cyan); }
+
+        /* SPEED INDICATOR */
+        #speed-indicator { position: absolute; top: 70px; left: 20px; background: var(--glass); border: 1px solid #333; padding: 10px 15px; font-size: 12px; }
+        #speed-indicator .speed-val { color: var(--cyan); font-size: 18px; font-weight: bold; }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="header">
+            <span class="logo">🌌 FRAYMUS EYES // GEN 176</span>
+            <div id="date-display">2026-02-11 21:03:00</div>
+        </div>
+
+        <div id="speed-indicator">
+            <div style="color:#888; font-size:10px;">TIME DILATION</div>
+            <span class="speed-val" id="speed-val">1×</span>
+            <span style="color:#555; font-size:10px;">REALTIME</span>
+        </div>
+
+        <div id="sidebar">
+            <div class="panel-header">📡 TARGET TELEMETRY</div>
+            <div id="telemetry">
+                <div class="data-row"><span class="lbl">TARGET:</span> <span class="val" id="target-name">EARTH</span></div>
+                <div class="data-row"><span class="lbl">DIST (SUN):</span> <span class="val" id="dist-sun">1.00 AU</span></div>
+                <div class="data-row"><span class="lbl">VELOCITY:</span> <span class="val" id="velocity">29.78 km/s</span></div>
+                <div class="data-row"><span class="lbl">ORBITAL PERIOD:</span> <span class="val" id="period">365.25 days</span></div>
+            </div>
+            <br>
+            <div class="panel-header">🎯 NAVIGATION</div>
+            <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                <button class="time-btn" onclick="focusBody('SUN')">☀ SUN</button>
+                <button class="time-btn" onclick="focusBody('MERCURY')">☿ MERCURY</button>
+                <button class="time-btn" onclick="focusBody('VENUS')">♀ VENUS</button>
+                <button class="time-btn active" onclick="focusBody('EARTH')">🌍 EARTH</button>
+                <button class="time-btn" onclick="focusBody('MARS')">🔴 MARS</button>
+                <button class="time-btn" onclick="focusBody('JUPITER')">🟠 JUPITER</button>
+                <button class="time-btn" onclick="focusBody('SATURN')">🪐 SATURN</button>
+                <button class="time-btn" onclick="focusBody('URANUS')">🔵 URANUS</button>
+                <button class="time-btn" onclick="focusBody('NEPTUNE')">🔷 NEPTUNE</button>
+            </div>
+            <br>
+            <div class="panel-header">📊 DISTANCES FROM EARTH</div>
+            <div id="distances"></div>
+        </div>
+
+        <div id="formula">
+            <div class="title">KEPLERIAN MECHANICS</div>
+            <code>M = n × t + L - ω</code><br>
+            <code>r = a(1-e²) / (1 + e×cos(v))</code>
+        </div>
+
+        <div id="footer">
+            <button class="time-btn" onclick="setSpeed(-100)">⏪ REV</button>
+            <button class="time-btn" onclick="setSpeed(-10)">◀ SLOW</button>
+            <button class="time-btn" onclick="setSpeed(0)">⏸ PAUSE</button>
+            <button class="time-btn active" id="btn-now" onclick="setSpeed(1); setRealTime()">▶ NOW</button>
+            <button class="time-btn" onclick="setSpeed(10)">▶▶ 10×</button>
+            <button class="time-btn" onclick="setSpeed(100)">⏩ 100×</button>
+            <button class="time-btn" onclick="setSpeed(1000)">🚀 WARP</button>
+            
+            <div id="time-slider-container" onmousedown="startSlider(event)">
+                <div id="time-slider-fill"></div>
+                <div id="time-knob"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+/**
+ * 🧬 FRAYMUS EYES // LOGIC CORE
+ * Abstracted from NASA Eyes. 
+ * 
+ * THREE PILLARS:
+ * 1. TIME ENGINE - Time dilation controller
+ * 2. SPATIAL HIERARCHY - OrbitalNode parent-child
+ * 3. DATA LAYER - Live Keplerian calculation
+ */
+
+// --- GLOBAL STATE ---
+let scene, camera, renderer, controls;
+let simTime = new Date();
+let timeSpeed = 1; // 1 = Realtime, 100 = Fast
+let targetBody = 'EARTH';
+let bodies = {};
+
+// KEPLERIAN ELEMENTS (J2000 Epoch - NASA JPL Data)
+// a: semi-major axis (AU), e: eccentricity, i: inclination (deg)
+// L: mean longitude (deg), w: longitude of perihelion (deg), n: daily motion (deg/day)
+const ORBITS = {
+    MERCURY: { a:0.387, e:0.2056, i:7.00,  L:252.25, w:77.46,  n:4.092,  color:0xB0B0B0, r:0.4, period:88 },
+    VENUS:   { a:0.723, e:0.0068, i:3.39,  L:181.98, w:131.53, n:1.602,  color:0xE3BB76, r:0.9, period:225 },
+    EARTH:   { a:1.000, e:0.0167, i:0.00,  L:100.46, w:102.94, n:0.9856, color:0x00A2FF, r:1.0, period:365 },
+    MARS:    { a:1.524, e:0.0934, i:1.85,  L:355.45, w:336.04, n:0.524,  color:0xFF4500, r:0.5, period:687 },
+    JUPITER: { a:5.203, e:0.0484, i:1.30,  L:34.40,  w:14.75,  n:0.083,  color:0xD9A07E, r:2.5, period:4333 },
+    SATURN:  { a:9.537, e:0.0541, i:2.48,  L:49.94,  w:92.43,  n:0.033,  color:0xF4D03F, r:2.2, period:10759, ring:true },
+    URANUS:  { a:19.19, e:0.0471, i:0.77,  L:313.23, w:170.96, n:0.011,  color:0x4FD0E7, r:1.8, period:30687 },
+    NEPTUNE: { a:30.07, e:0.0086, i:1.77,  L:304.88, w:44.97,  n:0.006,  color:0x2E5D94, r:1.7, period:60190 }
+};
+
+const SCALE = 40; // AU to scene units
+
+// --- INIT ---
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000005);
+    
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
+    camera.position.set(0, 80, 120);
+    
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 5;
+    controls.maxDistance = 500;
+
+    addStarfield();
+    createSun();
+    
+    // Create All Planets
+    Object.keys(ORBITS).forEach(name => {
+        createPlanet(name, ORBITS[name]);
+    });
+
+    focusBody('EARTH');
+    animate();
+}
+
+function createSun() {
+    // Sun Core
+    const sunGeo = new THREE.SphereGeometry(5, 64, 64);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    scene.add(sun);
+    
+    // Sun Glow
+    const glowGeo = new THREE.SphereGeometry(6, 32, 32);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xFFAA00, transparent: true, opacity: 0.3 });
+    sun.add(new THREE.Mesh(glowGeo, glowMat));
+    
+    // Corona
+    const coronaGeo = new THREE.SphereGeometry(8, 32, 32);
+    const coronaMat = new THREE.MeshBasicMaterial({ color: 0xFF8800, transparent: true, opacity: 0.1 });
+    sun.add(new THREE.Mesh(coronaGeo, coronaMat));
+    
+    bodies['SUN'] = { mesh: sun, orbit: null, data: { a:0, period:0 } };
+    
+    // Light Source
+    const light = new THREE.PointLight(0xFFFFFF, 2, 2000);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x181818));
+}
+
+function createPlanet(name, data) {
+    // Planet Mesh
+    const geo = new THREE.SphereGeometry(data.r, 32, 32);
+    const mat = new THREE.MeshStandardMaterial({ 
+        color: data.color, 
+        roughness: 0.8,
+        metalness: 0.1
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    scene.add(mesh);
+    
+    // Saturn's Ring
+    if (data.ring) {
+        const ringGeo = new THREE.RingGeometry(data.r + 1, data.r + 4, 64);
+        const ringMat = new THREE.MeshBasicMaterial({ 
+            color: 0xCCBB99, 
+            side: THREE.DoubleSide, 
+            transparent: true, 
+            opacity: 0.6 
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2.5;
+        mesh.add(ring);
+    }
+    
+    // Orbit Path (Elliptical)
+    const pts = [];
+    for(let i=0; i<=360; i+=2) {
+        const rad = i * (Math.PI/180);
+        const r = data.a * (1 - data.e*data.e) / (1 + data.e * Math.cos(rad));
+        const x = r * Math.cos(rad) * SCALE;
+        const z = r * Math.sin(rad) * SCALE;
+        pts.push(new THREE.Vector3(x, 0, z));
+    }
+    const pathGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    const pathMat = new THREE.LineBasicMaterial({ color: data.color, transparent: true, opacity: 0.25 });
+    const path = new THREE.Line(pathGeo, pathMat);
+    scene.add(path);
+
+    // Trail
+    const trailGeo = new THREE.BufferGeometry();
+    const trailMat = new THREE.LineBasicMaterial({ color: data.color, transparent: true, opacity: 0.5 });
+    const trail = new THREE.Line(trailGeo, trailMat);
+    scene.add(trail);
+
+    bodies[name] = { mesh: mesh, data: data, trail: trail, trailPts: [] };
+}
+
+function addStarfield() {
+    const geo = new THREE.BufferGeometry();
+    const pos = [];
+    for(let i=0; i<8000; i++) {
+        pos.push(
+            (Math.random()-0.5)*3000, 
+            (Math.random()-0.5)*3000, 
+            (Math.random()-0.5)*3000
+        );
+    }
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({color:0xFFFFFF, size:0.8});
+    scene.add(new THREE.Points(geo, mat));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MATH CORE: KEPLERIAN ORBITAL MECHANICS (THE LAZARUS LOGIC)
+// ═══════════════════════════════════════════════════════════════════
+
+function calculatePosition(data, daysSinceJ2000) {
+    // Step 1: Mean Anomaly (M)
+    // M = n * t + L - w (where n is daily motion, t is days since epoch)
+    let M = data.n * daysSinceJ2000 + data.L - data.w;
+    M = ((M % 360) + 360) % 360; // Normalize to 0-360
+    
+    // Step 2: Eccentric Anomaly (E) - Approximation via Kepler's equation
+    // Using series expansion for small eccentricity
+    const radM = M * (Math.PI/180);
+    const e = data.e;
+    
+    // True Anomaly approximation (good for e < 0.3)
+    const v = M + (180/Math.PI) * (
+        (2*e - 0.25*Math.pow(e,3)) * Math.sin(radM) +
+        (1.25*Math.pow(e,2)) * Math.sin(2*radM) +
+        (13/12)*Math.pow(e,3) * Math.sin(3*radM)
+    );
+                
+    // Step 3: Heliocentric Distance (r)
+    // r = a(1-e²) / (1 + e*cos(v))
+    const radv = v * (Math.PI/180);
+    const r = data.a * (1 - e*e) / (1 + e * Math.cos(radv));
+    
+    // Step 4: Heliocentric Coordinates
+    // Account for longitude of perihelion
+    const radL = (v + data.w) * (Math.PI/180);
+    const x = r * Math.cos(radL);
+    const y = r * Math.sin(radL);
+    
+    // Apply inclination (simplified - rotation around x-axis)
+    const radI = data.i * (Math.PI/180);
+    const z = y * Math.sin(radI);
+    const yFlat = y * Math.cos(radI);
+    
+    return { 
+        x: x * SCALE, 
+        y: z * SCALE * 0.5,  // Flatten for visibility
+        z: yFlat * SCALE,
+        r: r  // Return distance in AU
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ANIMATION LOOP
+// ═══════════════════════════════════════════════════════════════════
+
+let frameCount = 0;
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    
+    // Update Simulation Time
+    simTime.setSeconds(simTime.getSeconds() + timeSpeed);
+    document.getElementById('date-display').innerText = simTime.toISOString().replace('T', ' ').split('.')[0];
+    
+    // Calculate Days Since J2000 (Jan 1, 2000 12:00 TT)
+    const j2000 = new Date('2000-01-01T12:00:00Z');
+    const days = (simTime - j2000) / (1000 * 60 * 60 * 24);
+
+    // Update Planet Positions
+    Object.keys(bodies).forEach(name => {
+        if(name === 'SUN') return;
+        
+        const b = bodies[name];
+        const pos = calculatePosition(b.data, days);
+        b.mesh.position.set(pos.x, pos.y, pos.z);
+        b.currentDist = pos.r;
+        
+        // Update Trail
+        if (frameCount % 3 === 0) {
+            b.trailPts.push(new THREE.Vector3(pos.x, pos.y, pos.z));
+            if (b.trailPts.length > 100) b.trailPts.shift();
+            b.trail.geometry.setFromPoints(b.trailPts);
+        }
+        
+        // Rotate planet
+        b.mesh.rotation.y += 0.01;
+    });
+
+    // Camera Focus with Smooth Tracking
+    if(targetBody && bodies[targetBody]) {
+        const p = bodies[targetBody].mesh.position;
+        controls.target.lerp(p, 0.05);
+    }
+    
+    // Update UI
+    if (frameCount % 10 === 0) {
+        updateTelemetry();
+        updateDistances();
+    }
+    
+    // Time slider visual
+    const yearProgress = (simTime.getMonth() * 30 + simTime.getDate()) / 365;
+    document.getElementById('time-slider-fill').style.width = (yearProgress * 100) + '%';
+    document.getElementById('time-knob').style.left = (yearProgress * 100) + '%';
+    
+    renderer.render(scene, camera);
+    frameCount++;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// UI FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+
+function focusBody(name) {
+    targetBody = name;
+    
+    // Update button states
+    document.querySelectorAll('#sidebar .time-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.innerText.includes(name)) btn.classList.add('active');
+    });
+    
+    document.getElementById('target-name').innerText = name;
+    updateTelemetry();
+}
+
+function setSpeed(speed) {
+    timeSpeed = speed;
+    
+    // Update button states
+    document.querySelectorAll('#footer .time-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Update speed indicator
+    const indicator = document.getElementById('speed-val');
+    if (speed === 0) {
+        indicator.innerText = '⏸';
+        indicator.nextElementSibling.innerText = 'PAUSED';
+    } else if (speed === 1) {
+        indicator.innerText = '1×';
+        indicator.nextElementSibling.innerText = 'REALTIME';
+        document.getElementById('btn-now').classList.add('active');
+    } else if (speed < 0) {
+        indicator.innerText = speed + '×';
+        indicator.nextElementSibling.innerText = 'REVERSE';
+    } else {
+        indicator.innerText = speed + '×';
+        indicator.nextElementSibling.innerText = 'ACCELERATED';
+    }
+}
+
+function setRealTime() {
+    simTime = new Date();
+}
+
+function updateTelemetry() {
+    if (targetBody === 'SUN') {
+        document.getElementById('dist-sun').innerText = '0 AU';
+        document.getElementById('velocity').innerText = '0 km/s';
+        document.getElementById('period').innerText = '∞';
+        return;
+    }
+    
+    const b = bodies[targetBody];
+    if (!b) return;
+    
+    document.getElementById('dist-sun').innerText = (b.currentDist || b.data.a).toFixed(3) + ' AU';
+    
+    // Approximate orbital velocity: v ≈ 29.78 / sqrt(a) km/s
+    const vel = 29.78 / Math.sqrt(b.data.a);
+    document.getElementById('velocity').innerText = vel.toFixed(2) + ' km/s';
+    
+    document.getElementById('period').innerText = b.data.period + ' days';
+}
+
+function updateDistances() {
+    const earth = bodies['EARTH'];
+    if (!earth) return;
+    
+    let html = '';
+    Object.keys(bodies).forEach(name => {
+        if (name === 'EARTH' || name === 'SUN') return;
+        
+        const b = bodies[name];
+        const dist = earth.mesh.position.distanceTo(b.mesh.position) / SCALE;
+        html += `<div class="data-row"><span class="lbl">${name}:</span> <span class="val">${dist.toFixed(2)} AU</span></div>`;
+    });
+    
+    document.getElementById('distances').innerHTML = html;
+}
+
+// Time Slider Drag
+let isDragging = false;
+
+function startSlider(e) {
+    isDragging = true;
+    updateSlider(e);
+}
+
+document.addEventListener('mousemove', (e) => {
+    if (isDragging) updateSlider(e);
+});
+
+document.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+function updateSlider(e) {
+    const container = document.getElementById('time-slider-container');
+    const rect = container.getBoundingClientRect();
+    let pct = (e.clientX - rect.left) / rect.width;
+    pct = Math.max(0, Math.min(1, pct));
+    
+    // Map to year (0-365 days from Jan 1)
+    const dayOfYear = Math.floor(pct * 365);
+    simTime = new Date(simTime.getFullYear(), 0, dayOfYear + 1);
+}
+
+// Resize
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+});
+
+// BOOT
+init();
+console.log('🧬 FRAYMUS EYES // GEN 176');
+console.log('   NASA ABSTRACTION COMPLETE');
+console.log('   KEPLERIAN MECHANICS ACTIVE');
+
+</script>
+</body>
+</html>

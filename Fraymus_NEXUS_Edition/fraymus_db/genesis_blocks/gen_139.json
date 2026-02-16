@@ -1,0 +1,9 @@
+  {
+    "id": "GEN_139_1770678635728",
+    "generation": 139,
+    "timestamp": 1770678635728,
+    "circuitDNA": "OR-XOR-XOR-",
+    "circuitSize": 3,
+    "fitness": 0.75,
+    "parentId": "GEN_138"
+  }

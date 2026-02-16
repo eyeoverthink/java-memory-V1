@@ -1,0 +1,54 @@
+<<<<<<< HEAD
+*.class
+*.jar
+*.war
+*.ear
+*.log
+target/
+build/
+out/
+.idea/
+*.iml
+.DS_Store
+*.swp
+*.swo
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# Exclude bin directory (compiled output)
+bin/
+
+# Exclude problematic font directories with long paths
+src/main/java/fraymus/CODE_Generator_UI_Backup/Oracle-And-Sign-Maker/
+**/FONTS/
+**/Fonts-master/
+**/NerdFontsSymbolsOnly/
+**/*Hieroglyphs*/
+
+# Exclude large database files
+*.db
+
+# Exclude PDF files (large binary files)
+*.pdf
+
+# Exclude large JSON data files in knowledge bases
+**/knowledge_base copy/
+**/knowledge_base_2/
+**/learning_data/
+**/learning_docs/
+**/learning_materials/
+**/neural_patterns/
+**/physics_pdfs/
+**/data/
+**/versioned/
+=======
+"build/" 
+".gradle/" 
+".idea/" 
+".vscode/" 
+"*.class" 
+"*.jar" 
+".DS_Store" 
+>>>>>>> f510ed891a89777958327fdd5032b7e90282b355

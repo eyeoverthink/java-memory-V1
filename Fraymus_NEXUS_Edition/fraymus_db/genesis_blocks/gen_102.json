@@ -1,0 +1,9 @@
+  {
+    "id": "GEN_102_1770678635677",
+    "generation": 102,
+    "timestamp": 1770678635677,
+    "circuitDNA": "NOT-OR-OR-NAND-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_101"
+  }

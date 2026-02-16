@@ -1,0 +1,225 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'gemini.root'
+version = '1.0.0'
+
+repositories { 
+    mavenCentral() 
+}
+
+dependencies {
+    implementation 'org.java-websocket:Java-WebSocket:1.6.0'
+    implementation 'com.google.code.gson:gson:2.13.2'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.6'
+    implementation 'org.json:json:20240303'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+java {
+    toolchain { 
+        languageVersion = JavaLanguageVersion.of(17) 
+    }
+}
+
+application {
+    mainClass = 'fraynix.FraynixOS'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+// Allow running with: ./gradlew run --args="llama3"
+run {
+    standardInput = System.in
+    standardOutput = System.out
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.register('runGemini', JavaExec) {
+    group = 'application'
+    description = 'Run legacy gemini.root.SystemMain'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'gemini.root.SystemMain'
+    standardInput = System.in
+}
+
+tasks.register('runAgent', JavaExec) {
+    group = 'application'
+    description = 'Run offline FraynixAgent boot runner'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.fraymus.agent.AgentBoot'
+    standardInput = System.in
+}
+
+tasks.register('runPhoenix', JavaExec) {
+    group = 'application'
+    description = 'Run PhoenixBoot supervisor (restarts organism on crash)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.fraymus.PhoenixBoot'
+    standardInput = System.in
+}
+
+tasks.register('runDarwin', JavaExec) {
+    group = 'application'
+    description = 'Run DarwinianLoop evolutionary engine'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.fraymus.evolution.DarwinianLoop'
+    standardInput = System.in
+}
+
+tasks.register('runSystemZero', JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus language POC (compiler + VM)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.fraymus.SystemZero'
+    standardInput = System.in
+}
+
+tasks.register('runFraynixOrganism', JavaExec) {
+    group = 'application'
+    description = 'Run the Fraynix Organism (alias for fraynix.FraynixOS)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraynix.FraynixOS'
+    standardInput = System.in
+}
+
+tasks.register('runPlanetaryNode', JavaExec) {
+    group = 'application'
+    description = 'Run Planetary Cortex P2P node (semantic routing demo)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.net.PlanetaryNode'
+    standardInput = System.in
+}
+
+tasks.register('runPlanetaryBoot', JavaExec) {
+    group = 'application'
+    description = 'Run Planetary Cortex bootstrap CLI (genesis/join modes)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.PlanetaryBoot'
+    standardInput = System.in
+}
+
+tasks.register('runSingularity', JavaExec) {
+    group = 'application'
+    description = 'Run Ouroboros Protocol (self-mutating CPU demo)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.TheSingularity'
+    standardInput = System.in
+}
+
+tasks.register('runGenesis', JavaExec) {
+    group = 'application'
+    description = 'Run XOR-only HyperFormer transition learning demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusGenesis'
+    standardInput = System.in
+}
+
+tasks.register('runShell', JavaExec) {
+    group = 'application'
+    description = 'Run FraySH - Hyper-Dimensional Associative Shell'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.shell.FrayShell'
+    standardInput = System.in
+}
+
+tasks.register('runOmni', JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Omni - Neuro-Symbolic HoloGraph with transitive reasoning'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusOmni'
+    standardInput = System.in
+}
+
+tasks.register('runOmega', JavaExec) {
+    group = 'application'
+    description = 'Run The Omega Point - Retrocausal Recursive Autopoiesis'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusOmega'
+    standardInput = System.in
+}
+
+tasks.register('runForever', JavaExec) {
+    group = 'application'
+    description = 'Run The Eternal - Immortal AI with Lazarus Protocol (survives Ctrl+C)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.ForeverLoop'
+    standardInput = System.in
+}
+
+tasks.register('runCarbon', JavaExec) {
+    group = 'application'
+    description = 'Run Altered Carbon - DHF Protocol (mint/cast/host)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.AlteredCarbon'
+    standardInput = System.in
+}
+
+tasks.register('runFraymusOS', JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus OS - Phi-Harmonic Kernel (Sacred Geometry Scheduler)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusOS'
+    standardInput = System.in
+}
+
+tasks.register('runGodMode', JavaExec) {
+    group = 'application'
+    description = 'Run God Mode - Swarm Intelligence Aggregator (requires Ollama)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.god.GodMode'
+    standardInput = System.in
+}
+
+tasks.register('runPrime', JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Prime - Unified Neuro-Symbolic CLI (HDC + LLM + Needlecast)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusPrime'
+    standardInput = System.in
+}
+
+tasks.register('runMain', JavaExec) {
+    group = 'application'
+    description = 'Run God Protocol - Neuro-Quantum Organism (HyperCortex + OmegaPoint)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.Main'
+    standardInput = System.in
+}
+
+// Create fat jar with all dependencies
+jar {
+    archiveBaseName = 'fraymus-universal'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+            'Main-Class': 'fraynix.FraynixOS',
+            'Implementation-Title': 'Fraymus Universal',
+            'Implementation-Version': archiveVersion
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+// Alternative: shadow jar task for guaranteed fat jar
+task fatJar(type: Jar) {
+    archiveBaseName = 'fraymus-fat'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'fraynix.FraynixOS'
+    }
+    from sourceSets.main.output
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}

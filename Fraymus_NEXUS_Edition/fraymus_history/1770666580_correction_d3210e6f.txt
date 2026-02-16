@@ -1,0 +1,17 @@
+=== TIME CAPSULE ===
+ID: d3210e6f
+Timestamp: 1770666580
+Time: 2026-02-09 11:49:40
+Type: Correction
+Parent: none
+
+=== STATE SNAPSHOT ===
+OLD STATE:
+Old thought: Classical physics applies
+
+NEW STATE:
+New thought: Quantum effects dominate at small scales
+
+REASON: Scale matters - temporal correction needed
+
+=== END CAPSULE ===

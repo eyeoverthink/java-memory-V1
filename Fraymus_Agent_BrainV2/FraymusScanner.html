@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS SCANNER // GEN 169</title>
+    <style>
+        /* --- THE PLATINUM AESTHETIC --- */
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', monospace; }
+        
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+        
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            z-index: 10;
+        }
+
+        /* --- LEFT: NAVIGATION --- */
+        #nav-panel {
+            width: 200px;
+            background: rgba(10, 10, 10, 0.9);
+            border-right: 1px solid #E0E0E0;
+            padding-top: 20px;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            border-left: 2px solid transparent;
+            color: #888;
+            padding: 10px 20px;
+            text-align: left;
+            font-family: inherit;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .nav-btn:hover { color: #FFF; background: rgba(255,255,255,0.05); }
+        .nav-btn.active { color: #FFB000; border-left: 2px solid #FFB000; background: rgba(255,176,0,0.1); font-weight: bold; }
+
+        /* --- RIGHT: DATA STREAM --- */
+        #data-panel {
+            width: 300px;
+            background: rgba(10, 10, 10, 0.8);
+            border-left: 1px solid #E0E0E0;
+            margin-left: auto;
+            padding: 20px;
+            color: #00FF00;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            backdrop-filter: blur(4px);
+        }
+
+        h1 { margin: 0; font-size: 24px; color: #FFF; border-bottom: 2px solid #E0E0E0; padding-bottom: 5px; }
+        h2 { margin: 0; font-size: 12px; color: #888; letter-spacing: 2px; }
+
+        .metric-box { border: 1px solid #333; padding: 10px; background: rgba(0,0,0,0.5); }
+        .metric-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+        .label { color: #AAA; }
+        .value { color: #FFB000; font-weight: bold; }
+        .unit { color: #555; }
+
+        #scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* --- BOTTOM: LOG --- */
+        #log {
+            position: absolute; bottom: 20px; left: 220px;
+            color: #555; font-size: 10px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="nav-panel">
+            <div style="padding-left: 20px; margin-bottom: 20px; color:#FFF; font-weight:bold;">TARGET LIST</div>
+            <button class="nav-btn" onclick="loadPlanet('MERCURY')">MERCURY</button>
+            <button class="nav-btn" onclick="loadPlanet('VENUS')">VENUS</button>
+            <button class="nav-btn active" onclick="loadPlanet('EARTH')">EARTH</button>
+            <button class="nav-btn" onclick="loadPlanet('MARS')">MARS</button>
+            <button class="nav-btn" onclick="loadPlanet('JUPITER')">JUPITER</button>
+            <button class="nav-btn" onclick="loadPlanet('SATURN')">SATURN</button>
+            <button class="nav-btn" onclick="loadPlanet('URANUS')">URANUS</button>
+            <button class="nav-btn" onclick="loadPlanet('NEPTUNE')">NEPTUNE</button>
+            <button class="nav-btn" onclick="loadPlanet('PLUTO')">PLUTO [DWARF]</button>
+        </div>
+
+        <div id="data-panel">
+            <div>
+                <h1 id="p-name">EARTH</h1>
+                <h2 id="p-type">TERRESTRIAL / HABITABLE</h2>
+            </div>
+
+            <div class="metric-box">
+                <div style="color:#FFF; border-bottom:1px solid #444; margin-bottom:5px;">PHYSICAL DATA</div>
+                <div class="metric-row"><span class="label">GRAVITY:</span> <span><span class="value" id="p-grav">9.81</span> <span class="unit">m/s²</span></span></div>
+                <div class="metric-row"><span class="label">DIAMETER:</span> <span><span class="value" id="p-diam">12,742</span> <span class="unit">km</span></span></div>
+                <div class="metric-row"><span class="label">MASS:</span> <span><span class="value" id="p-mass">5.97</span> <span class="unit">×10²⁴ kg</span></span></div>
+            </div>
+
+            <div class="metric-box">
+                <div style="color:#FFF; border-bottom:1px solid #444; margin-bottom:5px;">ROTATION / ORBIT</div>
+                <div class="metric-row"><span class="label">DAY LENGTH:</span> <span><span class="value" id="p-day">24.0</span> <span class="unit">hours</span></span></div>
+                <div class="metric-row"><span class="label">YEAR LENGTH:</span> <span><span class="value" id="p-year">365.2</span> <span class="unit">days</span></span></div>
+                <div class="metric-row"><span class="label">AXIAL TILT:</span> <span><span class="value" id="p-tilt">23.5</span> <span class="unit">deg</span></span></div>
+            </div>
+
+            <div class="metric-box">
+                <div style="color:#FFF; border-bottom:1px solid #444; margin-bottom:5px;">ATMOSPHERE / CLIMATE</div>
+                <div class="metric-row"><span class="label">SURFACE TEMP:</span> <span><span class="value" id="p-temp">15</span> <span class="unit">°C (Mean)</span></span></div>
+                <div class="metric-row"><span class="label">PRESSURE:</span> <span><span class="value" id="p-press">1.0</span> <span class="unit">atm</span></span></div>
+                <div class="metric-row"><span class="label">COMPOSITION:</span> <span class="value" id="p-atm" style="font-size:9px;">N2, O2, Ar</span></div>
+            </div>
+
+            <div class="metric-box" style="margin-top: auto; border-color: #FFB000;">
+                <div style="color:#FFB000; font-weight:bold;">SCANNER STATUS</div>
+                <div class="metric-row"><span class="label">SENSOR:</span> <span class="value">ACTIVE</span></div>
+                <div class="metric-row"><span class="label">RES:</span> <span class="value">8K (SIM)</span></div>
+            </div>
+        </div>
+        
+        <div id="log">FRAYMUS KERNEL: ESTABLISHED LINK. RENDERING...</div>
+    </div>
+    
+    <div id="scanline"></div>
+
+<script>
+/**
+ * 🪐 FRAYMUS PLANETARY ENGINE
+ * "Procedural Generation. No Textures Required."
+ */
+
+// --- NASA DATA BANK ---
+const DB = {
+    "MERCURY": { type: "TERRESTRIAL", grav: 3.7, diam: 4879, mass: 0.33, day: 4222.6, year: 88, tilt: 0.03, temp: 167, press: 0, atm: "None (Trace)", color: "#A5A5A5", texType: "CRATER" },
+    "VENUS":   { type: "TERRESTRIAL", grav: 8.87, diam: 12104, mass: 4.87, day: 2802, year: 224.7, tilt: 177.3, temp: 464, press: 92, atm: "CO2, N2", color: "#E3BB76", texType: "CLOUD" },
+    "EARTH":   { type: "TERRESTRIAL", grav: 9.81, diam: 12742, mass: 5.97, day: 24, year: 365.2, tilt: 23.5, temp: 15, press: 1, atm: "N2, O2, Ar", color: "#2233FF", texType: "EARTH" },
+    "MARS":    { type: "TERRESTRIAL", grav: 3.71, diam: 6779, mass: 0.64, day: 24.6, year: 687, tilt: 25.2, temp: -65, press: 0.006, atm: "CO2, Ar, N2", color: "#C1440E", texType: "NOISE" },
+    "JUPITER": { type: "GAS GIANT", grav: 24.79, diam: 139820, mass: 1898, day: 9.9, year: 4333, tilt: 3.1, temp: -110, press: "Unknown", atm: "H2, He", color: "#D9A07E", texType: "STRIPE" },
+    "SATURN":  { type: "GAS GIANT", grav: 10.44, diam: 116460, mass: 568, day: 10.7, year: 10759, tilt: 26.7, temp: -140, press: "Unknown", atm: "H2, He", color: "#F4D03F", texType: "STRIPE", ring: true },
+    "URANUS":  { type: "ICE GIANT", grav: 8.69, diam: 50724, mass: 86.8, day: 17.2, year: 30687, tilt: 97.8, temp: -195, press: "Unknown", atm: "H2, He, CH4", color: "#D1F5F0", texType: "CLOUD" },
+    "NEPTUNE": { type: "ICE GIANT", grav: 11.15, diam: 49244, mass: 102, day: 16.1, year: 60190, tilt: 28.3, temp: -200, press: "Unknown", atm: "H2, He, CH4", color: "#2E5D94", texType: "CLOUD" },
+    "PLUTO":   { type: "DWARF PLANET", grav: 0.62, diam: 2376, mass: 0.013, day: 153.3, year: 90560, tilt: 122.5, temp: -225, press: 0.00001, atm: "N2, CH4", color: "#E0D5C6", texType: "NOISE" }
+};
+
+// --- THREE.JS SETUP ---
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Lighting
+const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+sunLight.position.set(5, 3, 5);
+scene.add(sunLight);
+scene.add(new THREE.AmbientLight(0x333333));
+
+// Starfield Background
+const starGeo = new THREE.BufferGeometry();
+const starPos = [];
+for(let i=0; i<3000; i++) {
+    starPos.push((Math.random()-0.5)*800, (Math.random()-0.5)*800, (Math.random()-0.5)*800);
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0x888888, size:0.7}));
+scene.add(stars);
+
+// --- GENESIS TEXTURE ENGINE ---
+// Generates textures on the fly using HTML5 Canvas
+function generateTexture(type, colorHex) {
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const color = new THREE.Color(colorHex);
+
+    // Fill Base
+    ctx.fillStyle = colorHex;
+    ctx.fillRect(0,0,size,size);
+
+    // Add Procedural Noise
+    for(let i=0; i<4000; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const r = Math.random() * 2 + 1;
+        ctx.globalAlpha = Math.random() * 0.2;
+        ctx.fillStyle = Math.random() > 0.5 ? '#FFFFFF' : '#000000';
+        
+        if (type === "STRIPE") {
+            // Horizontal bands for Gas Giants
+            ctx.fillRect(0, y, size, r * 10); 
+        } else if (type === "CRATER") {
+            ctx.beginPath(); ctx.arc(x,y,r*4,0,Math.PI*2); ctx.fill();
+        } else {
+            // Clouds/Noise
+            ctx.beginPath(); ctx.arc(x,y,r*10,0,Math.PI*2); ctx.fill();
+        }
+    }
+    
+    // Earth Special Logic
+    if (type === "EARTH") {
+        ctx.fillStyle = "#2E8B57"; // Green Continents
+        for(let i=0; i<15; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+            ctx.beginPath(); ctx.arc(x,y, Math.random()*80 + 20, 0, Math.PI*2); ctx.fill();
+        }
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    return tex;
+}
+
+// --- PLANET OBJECT ---
+let currentMesh = null;
+let currentRing = null;
+let currentAtmosphere = null;
+
+function renderPlanet(key) {
+    const data = DB[key];
+
+    // Cleanup
+    if (currentMesh) scene.remove(currentMesh);
+    if (currentRing) scene.remove(currentRing);
+    if (currentAtmosphere) scene.remove(currentAtmosphere);
+
+    // 1. Create Texture
+    const texture = generateTexture(data.texType, data.color);
+    
+    // 2. Create Geometry
+    const geometry = new THREE.SphereGeometry(2, 64, 64);
+    const material = new THREE.MeshStandardMaterial({ 
+        map: texture,
+        roughness: 0.8,
+        metalness: 0.1
+    });
+    
+    currentMesh = new THREE.Mesh(geometry, material);
+    scene.add(currentMesh);
+
+    // 3. Atmosphere Halo (Shader-like effect)
+    if (data.atm !== "None (Trace)") {
+        const atmGeo = new THREE.SphereGeometry(2.1, 64, 64);
+        const atmMat = new THREE.MeshBasicMaterial({
+            color: data.color,
+            transparent: true,
+            opacity: 0.15,
+            side: THREE.BackSide
+        });
+        currentAtmosphere = new THREE.Mesh(atmGeo, atmMat);
+        scene.add(currentAtmosphere);
+    }
+
+    // 4. Rings (Saturn)
+    if (data.ring) {
+        const ringGeo = new THREE.RingGeometry(2.5, 4.5, 64);
+        const ringMat = new THREE.MeshBasicMaterial({ 
+            color: 0xAA8866, 
+            side: THREE.DoubleSide,
+            transparent: true, 
+            opacity: 0.6 
+        });
+        // UV Mapping fix for rings
+        const pos = ringGeo.attributes.position;
+        const uv = ringGeo.attributes.uv;
+        for (let i=0; i<pos.count; i++) {
+            const x = pos.getX(i);
+            const y = pos.getY(i);
+            const r = Math.sqrt(x*x + y*y);
+            uv.setXY(i, (r-2.5)/2.0, 0); // Map radius to U coordinate
+        }
+        
+        currentRing = new THREE.Mesh(ringGeo, ringMat);
+        currentRing.rotation.x = Math.PI / 2;
+        currentRing.rotation.y = -0.2; // Tilt
+        scene.add(currentRing);
+    }
+
+    // Update Tilt
+    const tiltRad = (data.tilt * Math.PI) / 180;
+    currentMesh.rotation.z = tiltRad;
+
+    // Reset Camera
+    camera.position.set(0, 0, 6);
+}
+
+// --- UI LOGIC ---
+function loadPlanet(key) {
+    // 1. Update UI Buttons
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // 2. Update Text Data
+    const d = DB[key];
+    document.getElementById('p-name').innerText = key;
+    document.getElementById('p-type').innerText = d.type;
+    document.getElementById('p-grav').innerText = d.grav;
+    document.getElementById('p-diam').innerText = d.diam.toLocaleString();
+    document.getElementById('p-mass').innerText = d.mass;
+    document.getElementById('p-day').innerText = d.day;
+    document.getElementById('p-year').innerText = d.year;
+    document.getElementById('p-tilt').innerText = d.tilt;
+    document.getElementById('p-temp').innerText = d.temp;
+    document.getElementById('p-press').innerText = d.press;
+    document.getElementById('p-atm').innerText = d.atm;
+
+    // 3. Render 3D
+    renderPlanet(key);
+}
+
+// --- MAIN LOOP ---
+function animate() {
+    requestAnimationFrame(animate);
+    
+    if (currentMesh) {
+        // Rotation (Realtime is too slow, we scale it for visual confirmation)
+        currentMesh.rotation.y += 0.002;
+        if (currentAtmosphere) currentAtmosphere.rotation.y += 0.0025;
+        if (currentRing) currentRing.rotation.z -= 0.001;
+    }
+
+    renderer.render(scene, camera);
+}
+
+// Handle Resize
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+});
+
+// Boot
+loadPlanet('EARTH');
+animate();
+
+</script>
+</body>
+</html>

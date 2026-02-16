@@ -1,0 +1,1 @@
+{"id":"8-bit_cpu_fitness75_gen70000","goalName":"8-bit CPU","fitness":75,"generation":70000,"timestamp":1770769701535,"gateCount":3,"circuit":["XOR","NOT","NOT"]}

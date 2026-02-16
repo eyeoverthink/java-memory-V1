@@ -1,0 +1,7 @@
+:help
+:version
+:lex var x = 42;
+:parse x + y * 2
+:decide "Option A" "Option B" "Option C"
+phi
+exit

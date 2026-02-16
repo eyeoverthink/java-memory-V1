@@ -1,0 +1,30 @@
+modules = ["java-21", "java-graalvm22.3"]
+[agent]
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Fraymus Engine"
+
+[[workflows.workflow]]
+name = "Fraymus Engine"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "vnc"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /home/runner/workspace && export MESA_PATH=\"/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7\" && export LIBGLVND_PATH=\"/nix/store/7227amwg7k4sbl6mhglq17v5x5ki54ks-libglvnd-1.7.0\" && export LD_LIBRARY_PATH=\"$MESA_PATH/lib:$LIBGLVND_PATH/lib:$LD_LIBRARY_PATH\" && export LIBGL_DRIVERS_PATH=\"$MESA_PATH/lib/dri\" && export LIBGL_ALWAYS_SOFTWARE=1 && export MESA_GL_VERSION_OVERRIDE=3.3 && export MESA_GLSL_VERSION_OVERRIDE=330 && export GALLIUM_DRIVER=llvmpipe && export DISPLAY=:0 && gradle run --no-daemon 2>&1"
+
+[nix]
+channel = "stable-25_05"
+packages = ["unzip", "gradle", "mesa", "glfw", "xorg.libX11", "xorg.libXcursor", "xorg.libXrandr", "xorg.libXinerama", "xorg.libXi", "libglvnd", "xvfb-run", "xorg.xorgserver", "xorg.xf86videodummy"]

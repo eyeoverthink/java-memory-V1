@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""
+PhaseShift ANY FILE Demo
+Proves: Works on binary, images, PDFs, executables - ANY data of ANY size
+"""
+
+import hashlib
+import os
+from decimal import Decimal, getcontext
+
+getcontext().prec = 50
+
+SINGULARITY_ANGLE = Decimal('37.5217')
+PHI = Decimal('1.618033988749895')
+
+def generate_phase_stream(length):
+    stream = bytearray(length)
+    for i in range(length):
+        theta = (SINGULARITY_ANGLE * Decimal(i) * PHI)
+        stream[i] = int(theta % 256)
+    return stream
+
+def phase_lock(data):
+    wave = generate_phase_stream(len(data))
+    return bytearray((data[i] + wave[i]) % 256 for i in range(len(data)))
+
+def phase_unlock(data):
+    wave = generate_phase_stream(len(data))
+    return bytearray((data[i] - wave[i]) % 256 for i in range(len(data)))
+
+def sha256(data):
+    return hashlib.sha256(data).hexdigest()
+
+def test_file(filepath):
+    """Test PhaseShift on any file"""
+    print(f"\n{'='*60}")
+    print(f"TESTING: {filepath}")
+    print(f"{'='*60}")
+    
+    with open(filepath, "rb") as f:
+        original = bytearray(f.read())
+    
+    size_kb = len(original) / 1024
+    original_hash = sha256(original)
+    
+    print(f"[ORIGINAL] {len(original)} bytes ({size_kb:.2f} KB)")
+    print(f"  SHA-256: {original_hash}")
+    
+    # LOCK
+    locked = phase_lock(original)
+    locked_hash = sha256(locked)
+    print(f"[LOCKED]   {len(locked)} bytes")
+    print(f"  SHA-256: {locked_hash}")
+    
+    # UNLOCK
+    restored = phase_unlock(locked)
+    restored_hash = sha256(restored)
+    print(f"[RESTORED] {len(restored)} bytes")
+    print(f"  SHA-256: {restored_hash}")
+    
+    # VERIFY
+    match = original_hash == restored_hash
+    different = original_hash != locked_hash
+    print(f"\n  Original == Restored: {match} {'✅' if match else '❌'}")
+    print(f"  Original != Locked:   {different} {'✅' if different else '❌'}")
+    
+    return match and different
+
+# === TEST MULTIPLE FILES ===
+if __name__ == "__main__":
+    test_files = []
+    
+    # Find various file types in the repo
+    base = "."
+    for root, dirs, files in os.walk(base):
+        # Skip .git and __pycache__
+        dirs[:] = [d for d in dirs if d not in ['.git', '__pycache__', '.venv', 'node_modules']]
+        for f in files:
+            path = os.path.join(root, f)
+            try:
+                size = os.path.getsize(path)
+                if 100 < size < 500000:  # 100 bytes to 500KB
+                    ext = os.path.splitext(f)[1].lower()
+                    if ext in ['.py', '.html', '.json', '.png', '.jpg', '.pdf', '.txt', '.md', '.bat']:
+                        test_files.append((path, ext, size))
+            except:
+                pass
+    
+    # Pick diverse samples
+    samples = {}
+    for path, ext, size in test_files:
+        if ext not in samples or size > samples[ext][1]:
+            samples[ext] = (path, size)
+    
+    print("=" * 60)
+    print("PHASESHIFT - ANY FILE, ANY SIZE PROOF")
+    print(f"Singularity Angle: {SINGULARITY_ANGLE}°")
+    print("=" * 60)
+    
+    results = []
+    for ext, (path, size) in list(samples.items())[:8]:  # Test up to 8 different types
+        try:
+            success = test_file(path)
+            results.append((ext, path, success))
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            results.append((ext, path, False))
+    
+    print("\n" + "=" * 60)
+    print("SUMMARY")
+    print("=" * 60)
+    all_pass = True
+    for ext, path, success in results:
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"  {ext:6} {status} - {os.path.basename(path)}")
+        if not success:
+            all_pass = False
+    
+    if all_pass:
+        print(f"\n🏆 ALL FILES PASSED - PhaseShift works on ANY data type")
+    else:
+        print(f"\n⚠️ Some files failed")

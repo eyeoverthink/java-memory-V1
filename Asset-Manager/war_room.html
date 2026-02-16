@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS // WAR ROOM // GEN 190</title>
+    <style>
+        /* --- AESTHETIC: COMMAND CENTER --- */
+        body { margin: 0; background: #050505; font-family: 'Consolas', monospace; color: #00FF00; display: grid; grid-template-columns: 1fr 2fr 1fr; height: 100vh; overflow: hidden; }
+        
+        /* PANELS */
+        .panel { border: 1px solid #004400; background: #080808; display: flex; flex-direction: column; padding: 10px; position: relative; z-index: 1000; }
+        .header { background: #002200; padding: 5px; font-weight: bold; letter-spacing: 2px; border-bottom: 1px solid #00FF00; margin-bottom: 10px; }
+        
+        /* CODE EDITOR (READ ONLY) */
+        #code-display { flex-grow: 1; background: #000; color: #aaa; border: none; font-family: inherit; font-size: 11px; resize: none; padding: 10px; white-space: pre; overflow: auto; }
+        
+        /* VISUALIZER (CENTER) */
+        #vis-container { position: relative; background: #000; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* LOGS (RIGHT) */
+        #log-display { flex-grow: 1; font-size: 10px; overflow-y: auto; color: #008800; }
+        .log-entry { margin-bottom: 2px; border-bottom: 1px solid #111; }
+        .err { color: #FF0000; } .suc { color: #00FF00; }
+        
+        /* CONTROLS */
+        #ignite-btn { background: #00FF00; color: #000; border: none; padding: 10px; font-weight: bold; cursor: pointer; margin-top: auto; }
+        #ignite-btn:hover { background: #FFF; }
+        
+        /* STATUS HUD */
+        #hud { position: absolute; top: 10px; left: 10px; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+        <div class="header">SOURCE TARGET</div>
+        <textarea id="code-display" 
+            autocomplete="off" 
+            autocorrect="off" 
+            autocapitalize="off" 
+            spellcheck="false" 
+            data-lpignore="true">// PASTE VIRUS CODE HERE OR USE DEFAULT...</textarea>
+        <button id="ignite-btn" onclick="ignite()">IGNITE EVOLUTION</button>
+        <button id="inject-btn" onclick="injectVirus()" style="background: #FF0000; color: #FFF;">⚠️ INJECT VIRUS</button>
+    </div>
+
+    <div class="panel" style="padding:0; border:none;">
+        <div id="vis-container">
+            <div id="hud">
+                <div>GEN: <span id="gen-val">0</span></div>
+                <div>FITNESS: <span id="fit-val">0.0</span></div>
+                <div>STATUS: <span id="status-val">OFFLINE</span></div>
+            </div>
+            <canvas id="simCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="header">COMPILER LOGS</div>
+        <div id="log-display"></div>
+    </div>
+
+<script>
+    // --- VISUAL ENGINE ---
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let nodes = []; // {x, y, vx, vy, color, size}
+    
+    function resize() {
+        width = document.getElementById('vis-container').clientWidth;
+        height = document.getElementById('vis-container').clientHeight;
+        canvas.width = width; canvas.height = height;
+    }
+    window.addEventListener('resize', resize);
+    
+    // PARTICLE LOGIC
+    function updateVis(dataNodes) {
+        // If backend reports new nodes, spawn them
+        if(dataNodes.length > nodes.length) {
+            let type = dataNodes[dataNodes.length-1].type;
+            let col = (type === "ERR") ? "#FF0000" : "#00FF00";
+            // Spawn cluster
+            for(let i=0; i<5; i++) {
+                nodes.push({
+                    x: width/2, y: height/2,
+                    vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
+                    col: col, life: 100
+                });
+            }
+        }
+    }
+    
+    function loop() {
+        ctx.fillStyle = "rgba(0,0,0,0.1)";
+        ctx.fillRect(0,0,width,height);
+        
+        for(let i=nodes.length-1; i>=0; i--) {
+            let p = nodes[i];
+            p.x+=p.vx; p.y+=p.vy;
+            // Gravity to center
+            p.vx += (width/2 - p.x)*0.001;
+            p.vy += (height/2 - p.y)*0.001;
+            
+            ctx.fillStyle = p.col;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+            p.life--;
+            // Draw lines
+            for(let j=0; j<nodes.length; j++) {
+                let p2 = nodes[j];
+                let d = Math.sqrt((p.x-p2.x)**2 + (p.y-p2.y)**2);
+                if(d < 50) {
+                    ctx.strokeStyle = p.col;
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                }
+            }
+            if(p.life<=0) nodes.splice(i,1);
+        }
+        requestAnimationFrame(loop);
+    }
+    
+    // --- DATA LINK ---
+    let evolutionActive = false;
+    
+    async function sync() {
+        try {
+            let res = await fetch('http://localhost:8000/data');
+            let data = await res.json();
+            
+            // Only update code display if evolution is running (prevents erasing user input)
+            if (evolutionActive && data.code && data.code !== '// AWAITING INPUT') {
+                document.getElementById('code-display').value = data.code;
+            }
+            
+            document.getElementById('gen-val').innerText = data.generation;
+            document.getElementById('fit-val').innerText = data.fitness;
+            document.getElementById('status-val').innerText = data.status;
+            
+            let logHTML = "";
+            data.logs.slice().reverse().forEach(l => {
+                let c = l.includes("❌") ? "err" : l.includes("✅") ? "suc" : "";
+                logHTML += `<div class="log-entry ${c}">${l}</div>`;
+            });
+            document.getElementById('log-display').innerHTML = logHTML;
+            
+            updateVis(data.nodes);
+        } catch(e) {}
+    }
+    
+    async function ignite() {
+        const btn = document.getElementById('ignite-btn');
+        btn.disabled = true;
+        btn.textContent = 'CONNECTING...';
+        
+        try {
+            const response = await fetch('http://localhost:8000/ignite');
+            if (response.ok) {
+                evolutionActive = true;
+                btn.textContent = '⚡ EVOLUTION ACTIVE';
+                btn.style.background = '#00FF00';
+                console.log('✅ Evolution started');
+            } else {
+                throw new Error('Server returned error');
+            }
+        } catch(e) {
+            console.error('❌ IGNITE FAILED:', e);
+            btn.textContent = '❌ CONNECTION FAILED';
+            btn.style.background = '#FF0000';
+            btn.disabled = false;
+            alert('⚠️ BRIDGE NOT RUNNING\n\nRun: python bridge.py');
+        }
+    }
+    
+    async function injectVirus() {
+        const code = document.getElementById('code-display').value;
+        const btn = document.getElementById('inject-btn');
+        
+        if (!code || code.trim() === '// PASTE VIRUS CODE HERE OR USE DEFAULT...') {
+            alert('⚠️ NO VIRUS CODE DETECTED. PASTE MALICIOUS CODE FIRST.');
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = 'INJECTING...';
+        
+        try {
+            const response = await fetch('http://localhost:8000/inject', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code: code })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Injection failed');
+            }
+            
+            const result = await response.json();
+            console.log('🦠 VIRUS INJECTED:', result);
+            
+            // Visual feedback
+            evolutionActive = true;
+            btn.textContent = '🦠 VIRUS ACTIVE';
+            btn.style.background = '#00FF00';
+            
+        } catch(e) {
+            console.error('❌ INJECTION FAILED:', e);
+            btn.textContent = '❌ INJECTION FAILED';
+            btn.disabled = false;
+            alert('⚠️ BRIDGE NOT RUNNING\n\nRun: python bridge.py');
+        }
+    }
+    
+    // BOOT
+    resize();
+    loop();
+    setInterval(sync, 1000); // 1Hz Sync
+</script>
+</body>
+</html>

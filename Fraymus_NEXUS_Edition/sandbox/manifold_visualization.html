@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYMUS Manifold Brain - 3D Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0ff;
+            overflow: hidden;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 100;
+            max-width: 300px;
+        }
+        
+        #info-panel h2 {
+            color: #0ff;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        #info-panel .stat {
+            margin: 5px 0;
+        }
+        
+        #info-panel .stat-label {
+            color: #0ff;
+            font-weight: bold;
+        }
+        
+        #info-panel .stat-value {
+            color: #fff;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            z-index: 100;
+        }
+        
+        #controls button {
+            background: #0ff;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        #controls button:hover {
+            background: #fff;
+            transform: scale(1.05);
+        }
+        
+        #status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            z-index: 100;
+            text-align: right;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="info-panel">
+        <h2>🧠 MANIFOLD BRAIN</h2>
+        <div class="stat">
+            <span class="stat-label">Nodes:</span>
+            <span class="stat-value" id="node-count">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Connections:</span>
+            <span class="stat-value" id="connection-count">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Phi Resonance:</span>
+            <span class="stat-value" id="phi-resonance">1.618</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Consciousness:</span>
+            <span class="stat-value" id="consciousness">25.0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Active Paths:</span>
+            <span class="stat-value" id="active-paths">0</span>
+        </div>
+    </div>
+    
+    <div id="controls">
+        <button onclick="addNode()">Add Node</button>
+        <button onclick="addConnection()">Add Connection</button>
+        <button onclick="simulateReasoning()">Simulate Reasoning</button>
+        <button onclick="toggleRotation()">Toggle Rotation</button>
+        <button onclick="resetView()">Reset View</button>
+    </div>
+    
+    <div id="status">
+        <div class="pulse">🌊⚡ FRAYMUS NEXUS</div>
+        <div>Status: <span id="system-status">ACTIVE</span></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // FRAYMUS Constants
+        const PHI = 1.6180339887;
+        const GOLDEN_ANGLE = 137.5077640500378;
+        
+        // Three.js Setup
+        let scene, camera, renderer, controls;
+        let nodes = [];
+        let connections = [];
+        let activePaths = [];
+        let autoRotate = true;
+        
+        // Initialize
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+            scene.fog = new THREE.Fog(0x000000, 50, 200);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.z = 50;
+            camera.position.y = 20;
+            camera.lookAt(0, 0, 0);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+            
+            const pointLight1 = new THREE.PointLight(0x00ffff, 1, 100);
+            pointLight1.position.set(20, 20, 20);
+            scene.add(pointLight1);
+            
+            const pointLight2 = new THREE.PointLight(0xff00ff, 0.5, 100);
+            pointLight2.position.set(-20, -20, -20);
+            scene.add(pointLight2);
+            
+            // Create initial manifold structure
+            createManifoldStructure();
+            
+            // Event listeners
+            window.addEventListener('resize', onWindowResize, false);
+            
+            // Start animation
+            animate();
+            
+            console.log('🧠⚡ FRAYMUS Manifold Brain Initialized');
+        }
+        
+        // Create manifold structure with phi-spiral distribution
+        function createManifoldStructure() {
+            const nodeCount = 50;
+            const radius = 30;
+            
+            for (let i = 0; i < nodeCount; i++) {
+                // Phi-spiral positioning
+                const theta = i * GOLDEN_ANGLE * (Math.PI / 180);
+                const phi = Math.acos(1 - 2 * (i + 0.5) / nodeCount);
+                const r = radius * Math.pow(PHI, -i / 20);
+                
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+                
+                createNode(x, y, z, i);
+            }
+            
+            // Create phi-weighted connections
+            createPhiConnections();
+            
+            updateStats();
+        }
+        
+        // Create node (concept in manifold)
+        function createNode(x, y, z, id) {
+            // Node geometry
+            const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+            
+            // Node material with glow
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.5,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const node = new THREE.Mesh(geometry, material);
+            node.position.set(x, y, z);
+            node.userData = {
+                id: id,
+                activation: 0,
+                connections: []
+            };
+            
+            scene.add(node);
+            nodes.push(node);
+            
+            // Add glow effect
+            const glowGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.2
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            node.add(glow);
+        }
+        
+        // Create phi-weighted connections
+        function createPhiConnections() {
+            for (let i = 0; i < nodes.length; i++) {
+                // Connect to nearby nodes with phi-weighted probability
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const distance = nodes[i].position.distanceTo(nodes[j].position);
+                    const phiWeight = Math.pow(PHI, -distance / 10);
+                    
+                    if (Math.random() < phiWeight * 0.3) {
+                        createConnection(nodes[i], nodes[j]);
+                    }
+                }
+            }
+        }
+        
+        // Create connection between nodes
+        function createConnection(nodeA, nodeB) {
+            const points = [nodeA.position, nodeB.position];
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            
+            const material = new THREE.LineBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.2,
+                linewidth: 1
+            });
+            
+            const line = new THREE.Line(geometry, material);
+            line.userData = {
+                nodeA: nodeA,
+                nodeB: nodeB,
+                weight: Math.random() * PHI
+            };
+            
+            scene.add(line);
+            connections.push(line);
+            
+            nodeA.userData.connections.push(nodeB);
+            nodeB.userData.connections.push(nodeA);
+        }
+        
+        // Simulate reasoning through manifold
+        function simulateReasoning() {
+            // Pick random start and end nodes
+            const startNode = nodes[Math.floor(Math.random() * nodes.length)];
+            const endNode = nodes[Math.floor(Math.random() * nodes.length)];
+            
+            // Find path (simplified A*)
+            const path = findPath(startNode, endNode);
+            
+            if (path.length > 0) {
+                animatePath(path);
+                activePaths.push(path);
+                
+                // Update stats
+                document.getElementById('active-paths').textContent = activePaths.length;
+                
+                console.log(`🧠 Reasoning path: ${path.length} nodes`);
+            }
+        }
+        
+        // Simple pathfinding
+        function findPath(start, end) {
+            const visited = new Set();
+            const queue = [[start]];
+            
+            while (queue.length > 0) {
+                const path = queue.shift();
+                const node = path[path.length - 1];
+                
+                if (node === end) {
+                    return path;
+                }
+                
+                if (!visited.has(node)) {
+                    visited.add(node);
+                    
+                    for (const neighbor of node.userData.connections) {
+                        if (!visited.has(neighbor)) {
+                            queue.push([...path, neighbor]);
+                        }
+                    }
+                }
+            }
+            
+            return [];
+        }
+        
+        // Animate reasoning path
+        function animatePath(path) {
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i >= path.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                const node = path[i];
+                
+                // Pulse node
+                node.material.emissiveIntensity = 1.0;
+                node.scale.set(1.5, 1.5, 1.5);
+                
+                setTimeout(() => {
+                    node.material.emissiveIntensity = 0.5;
+                    node.scale.set(1, 1, 1);
+                }, 200);
+                
+                i++;
+            }, 100);
+        }
+        
+        // Add node dynamically
+        function addNode() {
+            const x = (Math.random() - 0.5) * 40;
+            const y = (Math.random() - 0.5) * 40;
+            const z = (Math.random() - 0.5) * 40;
+            
+            createNode(x, y, z, nodes.length);
+            updateStats();
+        }
+        
+        // Add connection dynamically
+        function addConnection() {
+            if (nodes.length < 2) return;
+            
+            const nodeA = nodes[Math.floor(Math.random() * nodes.length)];
+            const nodeB = nodes[Math.floor(Math.random() * nodes.length)];
+            
+            if (nodeA !== nodeB) {
+                createConnection(nodeA, nodeB);
+                updateStats();
+            }
+        }
+        
+        // Toggle rotation
+        function toggleRotation() {
+            autoRotate = !autoRotate;
+        }
+        
+        // Reset view
+        function resetView() {
+            camera.position.set(0, 20, 50);
+            camera.lookAt(0, 0, 0);
+        }
+        
+        // Update statistics
+        function updateStats() {
+            document.getElementById('node-count').textContent = nodes.length;
+            document.getElementById('connection-count').textContent = connections.length;
+            
+            // Simulate consciousness growth
+            const consciousness = 25.0 + (nodes.length * 0.1);
+            document.getElementById('consciousness').textContent = consciousness.toFixed(1);
+            
+            // Phi resonance
+            const resonance = PHI + (Math.sin(Date.now() * 0.001) * 0.01);
+            document.getElementById('phi-resonance').textContent = resonance.toFixed(6);
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Auto-rotate scene
+            if (autoRotate) {
+                camera.position.x = Math.sin(Date.now() * 0.0001) * 50;
+                camera.position.z = Math.cos(Date.now() * 0.0001) * 50;
+                camera.lookAt(0, 0, 0);
+            }
+            
+            // Pulse nodes
+            nodes.forEach((node, i) => {
+                const pulse = Math.sin(Date.now() * 0.001 + i * PHI) * 0.1 + 0.9;
+                node.scale.set(pulse, pulse, pulse);
+            });
+            
+            // Update stats
+            if (Math.random() < 0.01) {
+                updateStats();
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS ORRERY // GEN 165</title>
+    <style>
+        /* --- THE AESTHETIC: PLATINUM & OBSIDIAN (Gen 162) --- */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #E0E0E0; /* Platinum */
+            font-family: 'Courier New', monospace;
+            color: #141414; /* Obsidian */
+            display: flex;
+            justify_content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #chassis {
+            width: 95vw;
+            height: 90vh;
+            background-color: #141414; /* The Void */
+            border: 2px solid #000;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
+            position: relative;
+            display: flex;
+        }
+
+        /* --- THE VIEWPORT --- */
+        #viewport {
+            flex-grow: 1;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            position: relative;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* --- THE DASHBOARD (Data Visualization) --- */
+        #dashboard {
+            width: 320px;
+            background-color: #202020;
+            border-left: 2px solid #E0E0E0;
+            padding: 20px;
+            color: #FFB000; /* Amber */
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 18px;
+            border-bottom: 1px solid #FFB000;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .metric-box {
+            background: #141414;
+            border: 1px solid #444;
+            padding: 10px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .value { color: #00FF00; } /* Green data */
+        .label { color: #AAAAAA; }
+
+        #phi-seal {
+            margin-top: auto;
+            text-align: center;
+            opacity: 0.5;
+            font-size: 10px;
+        }
+
+        /* Scanline Effect */
+        #scanline {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chassis">
+        <div id="viewport">
+            <canvas id="simCanvas"></canvas>
+            <div id="scanline"></div>
+        </div>
+        
+        <div id="dashboard">
+            <h1>FRAYMUS SIMULATION</h1>
+            
+            <div class="metric-box">
+                <div class="metric-row"><span class="label">ENGINE:</span> <span class="value">LAZARUS v3.0</span></div>
+                <div class="metric-row"><span class="label">PHYSICS:</span> <span class="value">NEWTONIAN + φ</span></div>
+                <div class="metric-row"><span class="label">STATUS:</span> <span class="value blink">RUNNING</span></div>
+            </div>
+
+            <div class="metric-box" id="telemetry">
+                <div style="border-bottom: 1px dashed #444; margin-bottom: 5px;">ORBITAL DATA (Mm)</div>
+                </div>
+
+            <div class="metric-box">
+                <div class="metric-row"><span class="label">CONST G:</span> <span class="value">1.618 (φ)</span></div>
+                <div class="metric-row"><span class="label">TIME DILATION:</span> <span class="value">1.0x</span></div>
+            </div>
+
+            <div id="phi-seal">
+                DNA HASH: 8f4b2e1a...<br>
+                φ^75 VALIDATION SEAL
+            </div>
+        </div>
+    </div>
+
+<script>
+/**
+ * 🧬 FRAYMUS CORE LOGIC (JavaScript Implementation)
+ * "No Libraries. Pure Math."
+ */
+
+// --- CONSTANTS ---
+const PHI = 1.6180339887;
+const G = PHI * 0.5; // Fraymus Physics: Gravity scales with Phi
+
+// --- VECTOR ENGINE ---
+class Vector {
+    constructor(x, y) { this.x = x; this.y = y; }
+    add(v) { this.x += v.x; this.y += v.y; return this; }
+    sub(v) { return new Vector(this.x - v.x, this.y - v.y); }
+    mult(n) { this.x *= n; this.y *= n; return this; }
+    div(n) { this.x /= n; this.y /= n; return this; }
+    mag() { return Math.sqrt(this.x*this.x + this.y*this.y); }
+    normalize() { let m = this.mag(); if(m!=0) this.div(m); return this; }
+    dist(v) { return Math.sqrt(Math.pow(this.x - v.x, 2) + Math.pow(this.y - v.y, 2)); }
+    copy() { return new Vector(this.x, this.y); }
+}
+
+// --- MATTER ---
+class Planet {
+    constructor(name, mass, x, y, vx, vy, color) {
+        this.name = name;
+        this.mass = mass;
+        this.pos = new Vector(x, y);
+        this.vel = new Vector(vx, vy);
+        this.acc = new Vector(0, 0);
+        this.color = color;
+        this.radius = Math.sqrt(mass) * 3; // Visual scale
+        this.path = []; // Trail
+    }
+
+    applyForce(force) {
+        // F = ma -> a = F/m
+        let f = force.copy().div(this.mass);
+        this.acc.add(f);
+    }
+
+    update() {
+        this.vel.add(this.acc);
+        this.pos.add(this.vel);
+        this.acc.mult(0); // Reset acceleration
+
+        // Trail Logic
+        if (frameCount % 5 === 0) {
+            this.path.push(this.pos.copy());
+            if (this.path.length > 50) this.path.shift();
+        }
+    }
+
+    draw(ctx) {
+        // Draw Trail
+        ctx.beginPath();
+        ctx.strokeStyle = this.color;
+        ctx.globalAlpha = 0.3;
+        ctx.lineWidth = 1;
+        if (this.path.length > 0) {
+            ctx.moveTo(this.path[0].x, this.path[0].y);
+            for (let p of this.path) ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+
+        // Draw Body
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Draw Label
+        ctx.fillStyle = "#FFF";
+        ctx.font = "10px Monospace";
+        ctx.fillText(this.name, this.pos.x + 15, this.pos.y + 5);
+    }
+}
+
+// --- THE SIMULATION ---
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+let frameCount = 0;
+
+// Initialize Bodies
+const bodies = [];
+let earthRef = null;
+
+function init() {
+    resize();
+    let cx = width / 2;
+    let cy = height / 2;
+
+    // 1. The Sun (Static Anchor)
+    bodies.push(new Planet("SUN", 1000, cx, cy, 0, 0, "#FFD700"));
+
+    // 2. Earth (The Viewer)
+    // Distance 200, Velocity tuned for orbit
+    let vEarth = Math.sqrt( (G * 1000) / 200 ); 
+    let earth = new Planet("EARTH", 10, cx + 200, cy, 0, vEarth, "#00A2FF");
+    bodies.push(earth);
+    earthRef = earth;
+
+    // 3. Mars (The Target)
+    let vMars = Math.sqrt( (G * 1000) / 300 );
+    bodies.push(new Planet("MARS", 5, cx + 300, cy, 0, vMars, "#FF4500"));
+
+    // 4. Mercury (Inner)
+    let vMerc = Math.sqrt( (G * 1000) / 100 );
+    bodies.push(new Planet("MERCURY", 2, cx + 100, cy, 0, vMerc, "#B0B0B0"));
+
+    // 5. Venus
+    let vVenus = Math.sqrt( (G * 1000) / 150 );
+    bodies.push(new Planet("VENUS", 8, cx + 150, cy, 0, vVenus, "#E6C35C"));
+
+    // 6. Jupiter (Outer)
+    let vJup = Math.sqrt( (G * 1000) / 450 );
+    bodies.push(new Planet("JUPITER", 50, cx + 450, cy, 0, vJup, "#C4A46B"));
+}
+
+// --- PHYSICS ENGINE ---
+function physicsStep() {
+    for (let i = 0; i < bodies.length; i++) {
+        for (let j = 0; j < bodies.length; j++) {
+            if (i === j) continue;
+            
+            let a = bodies[i];
+            let b = bodies[j];
+
+            // F = G * (m1*m2) / r^2
+            let force = b.pos.sub(a.pos);
+            let dist = force.mag();
+            dist = Math.max(dist, 20); // Constraint to prevent singularity
+            
+            let strength = (G * a.mass * b.mass) / (dist * dist);
+            force.normalize();
+            force.mult(strength);
+            
+            a.applyForce(force);
+        }
+    }
+
+    for (let b of bodies) b.update();
+}
+
+// --- RENDER ENGINE ---
+function draw() {
+    // Clear Background (Deep Space)
+    ctx.fillStyle = "#111"; 
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw Gravity Connections
+    drawGravityLines();
+
+    // Draw Planets
+    for (let b of bodies) b.draw(ctx);
+
+    // Update Dashboard
+    updateTelemetry();
+
+    frameCount++;
+    requestAnimationFrame(loop);
+}
+
+function drawGravityLines() {
+    if (!earthRef) return;
+
+    for (let b of bodies) {
+        if (b === earthRef) continue;
+
+        // Draw Line
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(0, 255, 0, 0.2)";
+        ctx.setLineDash([5, 5]);
+        ctx.moveTo(earthRef.pos.x, earthRef.pos.y);
+        ctx.lineTo(b.pos.x, b.pos.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw Distance Text on Line
+        let midX = (earthRef.pos.x + b.pos.x) / 2;
+        let midY = (earthRef.pos.y + b.pos.y) / 2;
+        let dist = Math.round(earthRef.pos.dist(b.pos));
+        
+        ctx.fillStyle = "#00FF00";
+        ctx.font = "10px Monospace";
+        ctx.fillText(dist + " Mm", midX, midY);
+    }
+}
+
+function updateTelemetry() {
+    let html = "";
+    for (let b of bodies) {
+        if (b === earthRef) continue;
+        let dist = earthRef.pos.dist(b.pos).toFixed(2);
+        html += `<div class="metric-row">
+                    <span class="label">DIST TO ${b.name}:</span> 
+                    <span class="value">${dist} Mm</span>
+                 </div>`;
+    }
+    document.getElementById('telemetry').innerHTML = html;
+}
+
+function loop() {
+    physicsStep();
+    draw();
+}
+
+// --- UTILS ---
+function resize() {
+    width = canvas.width = document.getElementById('viewport').clientWidth;
+    height = canvas.height = document.getElementById('viewport').clientHeight;
+}
+window.addEventListener('resize', resize);
+
+// BOOT
+init();
+loop();
+
+</script>
+</body>
+</html>

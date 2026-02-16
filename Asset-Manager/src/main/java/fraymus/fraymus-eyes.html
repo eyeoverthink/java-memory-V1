@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraymus Eyes - Solar System Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border: 2px solid #0f0;
+            border-radius: 5px;
+            max-width: 300px;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border: 2px solid #0f0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        button {
+            background: #000;
+            color: #0f0;
+            border: 2px solid #0f0;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #0f0;
+            color: #000;
+        }
+        button.active {
+            background: #0f0;
+            color: #000;
+        }
+        h3 {
+            margin-top: 0;
+            color: #0f0;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #0f0;
+        }
+    </style>
+</head>
+<body>
+<div id="canvas-container"></div>
+
+<div id="controls">
+    <h3>⚡ FRAYMUS EYES ⚡</h3>
+
+    <label>Time Control:</label>
+    <input type="range" id="timeSlider" min="-3153600000" max="3153600000" value="0" step="86400000">
+    <div id="timeDisplay" style="text-align: center; margin-bottom: 10px;">Current Time</div>
+
+    <button id="playPause">▶ PLAY</button>
+    <button id="reset">⟲ RESET</button>
+
+    <label>Speed (×<span id="speedValue">1</span>):</label>
+    <input type="range" id="speedSlider" min="0" max="4" value="0" step="0.1">
+
+    <label>Track Planet:</label>
+    <div id="planetButtons"></div>
+</div>
+
+<div id="hud">
+    <div id="hudTime">Time: Loading...</div>
+    <div id="hudSpeed">Speed: 1×</div>
+    <div id="hudTarget">Target: Sun</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    // ═══════════════════════════════════════════════════════════════
+    // FRAYMUS EYES - Generation 176
+    // "The NASA Eyes Abstraction"
+    // ═══════════════════════════════════════════════════════════════
+    class OrbitalNode {
+        constructor(name, radius, color, orbitalElements, parent = null) {
+            this.name = name;
+            this.radius = radius;
+            this.parent = parent;
+            this.children = [];
+
+            // Keplerian Orbital Elements
+            this.a = orbitalElements.a || 0; // Semi-major axis (AU)
+            this.e = orbitalElements.e || 0; // Eccentricity
+            this.i = orbitalElements.i || 0; // Inclination (radians)
+            this.period = orbitalElements.period || 365; // Period (days)
+            this.epoch = orbitalElements.epoch || 0; // Starting time offset
+
+            // Three.js mesh
+            const geometry = new THREE.SphereGeometry(radius, 32, 32);
+            const material = new THREE.MeshBasicMaterial({ color: color });
+            this.mesh = new THREE.Mesh(geometry, material);
+
+            // Orbit path visualization
+            this.orbitLine = this.createOrbitLine();
+
+            if (parent) {
+                parent.children.push(this);
+                parent.mesh.add(this.mesh);
+                if (this.orbitLine) parent.mesh.add(this.orbitLine);
+            }
+        }
+
+        createOrbitLine() {
+            if (this.a === 0) return null;
+
+            const points = [];
+            const segments = 128;
+
+            for (let i = 0; i <= segments; i++) {
+                const M = (i / segments) * Math.PI * 2;
+                const r = this.a * (1 - this.e * this.e) / (1 + this.e * Math.cos(M));
+                const x = r * Math.cos(M);
+                const y = r * Math.sin(M) * Math.cos(this.i);
+                const z = r * Math.sin(M) * Math.sin(this.i);
+                points.push(new THREE.Vector3(x, y, z));
+            }
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({
+                color: 0x444444,
+                transparent: true,
+                opacity: 0.3
+            });
+            return new THREE.Line(geometry, material);
+        }
+
+        updateOrbitalPosition(time) {
+            if (this.a > 0) {
+                // Calculate mean anomaly from time
+                const daysSinceEpoch = (time - this.epoch) / 86400000; // Convert ms to days
+                const M = (2 * Math.PI / this.period) * daysSinceEpoch;
+
+                // Calculate position using simplified Keplerian formula
+                const r = this.a * (1 - this.e * this.e) / (1 + this.e * Math.cos(M));
+                const x = r * Math.cos(M);
+                const y = r * Math.sin(M) * Math.cos(this.i);
+                const z = r * Math.sin(M) * Math.sin(this.i);
+
+                this.mesh.position.set(x, y, z);
+            }
+
+            // Update children recursively
+            this.children.forEach(child => child.updateOrbitalPosition(time));
+        }
+    }
+    // ═══════════════════════════════════════════════════════════════
+    // SCENE SETUP
+    // ═══════════════════════════════════════════════════════════════
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    camera.position.set(0, 5, 10);
+    camera.lookAt(0, 0, 0);
+
+    // ═══════════════════════════════════════════════════════════════
+    // CELESTIAL BODIES
+    // ═══════════════════════════════════════════════════════════════
+
+    const AU = 10; // 1 AU = 10 units for visualization
+
+    // Sun (root node)
+    const sun = new OrbitalNode('Sun', 0.5, 0xffff00, { a: 0 });
+    scene.add(sun.mesh);
+
+    // Planets
+    const mercury = new OrbitalNode('Mercury', 0.1, 0x8c7853, {
+        a: 0.39 * AU,
+        e: 0.206,
+        i: 0.122,
+        period: 88,
+        epoch: 0
+    }, sun);
+
+    const venus = new OrbitalNode('Venus', 0.15, 0xffc649, {
+        a: 0.72 * AU,
+        e: 0.007,
+        i: 0.059,
+        period: 225,
+        epoch: 0
+    }, sun);
+
+    const earth = new OrbitalNode('Earth', 0.15, 0x4169e1, {
+        a: 1.0 * AU,
+        e: 0.017,
+        i: 0.000,
+        period: 365,
+        epoch: 0
+    }, sun);
+
+    const mars = new OrbitalNode('Mars', 0.12, 0xcd5c5c, {
+        a: 1.52 * AU,
+        e: 0.093,
+        i: 0.032,
+        period: 687,
+        epoch: 0
+    }, sun);
+
+    // Moon
+    const moon = new OrbitalNode('Moon', 0.05, 0xcccccc, {
+        a: 0.3,
+        e: 0.055,
+        i: 0.089,
+        period: 27.3,
+        epoch: 0
+    }, earth);
+
+    const bodies = [sun, mercury, venus, earth, mars, moon];
+
+    // ═══════════════════════════════════════════════════════════════
+    // TIME ENGINE
+    // ═══════════════════════════════════════════════════════════════
+
+    let currentTime = Date.now();
+    let timeSpeed = 1;
+    let isPlaying = false;
+    let targetBody = sun;
+
+    const timeSlider = document.getElementById('timeSlider');
+    const speedSlider = document.getElementById('speedSlider');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+
+    function updateTime(deltaMs) {
+        if (isPlaying) {
+            currentTime += deltaMs * timeSpeed;
+        }
+
+        // Update all orbital positions
+        sun.updateOrbitalPosition(currentTime);
+
+        // Update HUD
+        const date = new Date(currentTime);
+        document.getElementById('hudTime').textContent = `Time: ${date.toLocaleString()}`;
+        document.getElementById('hudSpeed').textContent = `Speed: ${timeSpeed.toFixed(1)}×`;
+        document.getElementById('hudTarget').textContent = `Target: ${targetBody.name}`;
+        document.getElementById('timeDisplay').textContent = date.toDateString();
+    }
+
+    timeSlider.addEventListener('input', (e) => {
+        currentTime = Date.now() + parseInt(e.target.value);
+        updateTime(0);
+    });
+
+    speedSlider.addEventListener('input', (e) => {
+        timeSpeed = Math.pow(10, parseFloat(e.target.value));
+        document.getElementById('speedValue').textContent = timeSpeed.toFixed(1);
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        playPauseBtn.textContent = isPlaying ? '⏸ PAUSE' : '▶ PLAY';
+        playPauseBtn.classList.toggle('active');
+    });
+
+    resetBtn.addEventListener('click', () => {
+        currentTime = Date.now();
+        timeSlider.value = 0;
+        speedSlider.value = 0;
+        timeSpeed = 1;
+        document.getElementById('speedValue').textContent = '1';
+        updateTime(0);
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // PLANET SELECTION
+    // ═══════════════════════════════════════════════════════════════
+
+    const planetButtons = document.getElementById('planetButtons');
+    [sun, mercury, venus, earth, mars].forEach(body => {
+        const btn = document.createElement('button');
+        btn.textContent = body.name;
+        btn.addEventListener('click', () => {
+            targetBody = body;
+            document.querySelectorAll('#planetButtons button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+        if (body === sun) btn.classList.add('active');
+        planetButtons.appendChild(btn);
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // CAMERA CONTROLS
+    // ═══════════════════════════════════════════════════════════════
+
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let cameraRotation = { x: 0, y: 0 };
+    let cameraDistance = 15;
+
+    renderer.domElement.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        const deltaX = e.clientX - previousMousePosition.x;
+        const deltaY = e.clientY - previousMousePosition.y;
+
+        cameraRotation.y += deltaX * 0.005;
+        cameraRotation.x += deltaY * 0.005;
+        cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    renderer.domElement.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        cameraDistance += e.deltaY * 0.01;
+        cameraDistance = Math.max(2, Math.min(100, cameraDistance));
+    });
+
+    function updateCamera() {
+        // Get target position in world space
+        const targetWorldPos = new THREE.Vector3();
+        targetBody.mesh.getWorldPosition(targetWorldPos);
+
+        // Calculate camera position relative to target
+        const x = Math.sin(cameraRotation.y) * Math.cos(cameraRotation.x) * cameraDistance;
+        const y = Math.sin(cameraRotation.x) * cameraDistance;
+        const z = Math.cos(cameraRotation.y) * Math.cos(cameraRotation.x) * cameraDistance;
+
+        camera.position.set(
+            targetWorldPos.x + x,
+            targetWorldPos.y + y,
+            targetWorldPos.z + z
+        );
+        camera.lookAt(targetWorldPos);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ANIMATION LOOP
+    // ═══════════════════════════════════════════════════════════════
+
+    let lastTime = Date.now();
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        const now = Date.now();
+        const deltaMs = now - lastTime;
+        lastTime = now;
+
+        updateTime(deltaMs);
+        updateCamera();
+
+        renderer.render(scene, camera);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Start animation
+    animate();
+
+    console.log('🌌 FRAYMUS EYES - Generation 176');
+    console.log('⚡ Three Pillars Active:');
+    console.log('   1. Time Engine: ✓');
+    console.log('   2. Spatial Hierarchy: ✓');
+    console.log('   3. Data Layer (Keplerian): ✓');
+</script>
+</body>
+</html>

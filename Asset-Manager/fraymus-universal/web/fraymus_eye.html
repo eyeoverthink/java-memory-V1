@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYNIX CORTEX VISUALIZER</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            overflow: hidden; 
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%);
+            color: #0f0; 
+            font-family: 'Courier New', monospace; 
+        }
+        
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            pointer-events: none;
+            text-shadow: 0 0 10px #0f0;
+        }
+        
+        .hud-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #0ff;
+        }
+        
+        .stat {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .stat-label { color: #888; }
+        .stat-value { color: #0f0; font-weight: bold; }
+        .stat-value.connected { color: #0f0; }
+        .stat-value.disconnected { color: #f00; }
+        .stat-value.warning { color: #ff0; }
+        
+        #legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        
+        .control-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #0ff;
+            color: #0ff;
+            padding: 8px 16px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            display: block;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 20px #0ff;
+        }
+        
+        #events {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .event-item {
+            padding: 4px 8px;
+            border-left: 2px solid #333;
+            margin-bottom: 2px;
+            background: rgba(0,0,0,0.5);
+        }
+        
+        .event-item.fusion { border-color: #ff0; color: #ff0; }
+        .event-item.spawn { border-color: #0f0; color: #0f0; }
+        .event-item.death { border-color: #f00; color: #f00; }
+    </style>
+</head>
+<body>
+    <div id="hud">
+        <div class="hud-title">🧠 FRAYNIX CORTEX v2.0</div>
+        <div class="stat">
+            <span class="stat-label">STATUS:</span>
+            <span id="status" class="stat-value disconnected">DISCONNECTED</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">PARTICLES:</span>
+            <span id="particleCount" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">ACTIVE NODES:</span>
+            <span id="nodeCount" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">ENTROPY:</span>
+            <span id="entropyVal" class="stat-value">0.00</span>%
+        </div>
+        <div class="stat">
+            <span class="stat-label">PULSES:</span>
+            <span id="pulseCount" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">FPS:</span>
+            <span id="fps" class="stat-value">0</span>
+        </div>
+    </div>
+    
+    <div id="legend">
+        <div class="legend-item"><div class="legend-color" style="background:#00aaff"></div>LOGIC (W=0)</div>
+        <div class="legend-item"><div class="legend-color" style="background:#00ff88"></div>MEMORY (W=1)</div>
+        <div class="legend-item"><div class="legend-color" style="background:#aa00ff"></div>SIMULATION (W=2)</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ffd700"></div>EGO (W=3)</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff3300"></div>HIGH ENTROPY</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ffffff"></div>FUSION EVENT</div>
+    </div>
+    
+    <div id="controls">
+        <button class="control-btn" onclick="toggleRotation()">⟳ Auto-Rotate</button>
+        <button class="control-btn" onclick="resetCamera()">⌖ Reset View</button>
+        <button class="control-btn" onclick="toggleWireframe()">▦ Wireframe</button>
+        <button class="control-btn" onclick="injectThought()">💡 Inject Thought</button>
+    </div>
+    
+    <div id="events"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    // ═══════════════════════════════════════════════════════════════════════
+    // CONFIGURATION
+    // ═══════════════════════════════════════════════════════════════════════
+    const CONFIG = {
+        wsUrl: 'ws://localhost:8888',
+        reconnectDelay: 3000,
+        particleBaseSize: 0.8,
+        nodeBaseSize: 0.5,
+        cameraDistance: 120,
+        autoRotate: true,
+        rotateSpeed: 0.002,
+        wireframe: true
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // THREE.JS SETUP
+    // ═══════════════════════════════════════════════════════════════════════
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0a0a1a, 0.008);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 50, CONFIG.cameraDistance);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MATERIALS & GEOMETRIES
+    // ═══════════════════════════════════════════════════════════════════════
+    const geometries = {
+        sphere: new THREE.SphereGeometry(1, 16, 16),
+        cube: new THREE.BoxGeometry(1, 1, 1),
+        octahedron: new THREE.OctahedronGeometry(1),
+        icosahedron: new THREE.IcosahedronGeometry(1, 0),
+        core: new THREE.IcosahedronGeometry(2, 1)
+    };
+
+    // Dimension colors (W axis)
+    const dimensionColors = {
+        0: 0x00aaff,  // Logic - Blue
+        1: 0x00ff88,  // Memory - Green
+        2: 0xaa00ff,  // Simulation - Purple
+        3: 0xffd700   // Ego - Gold
+    };
+
+    const materials = {
+        logic: new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: CONFIG.wireframe, transparent: true, opacity: 0.8 }),
+        memory: new THREE.MeshBasicMaterial({ color: 0x00ff88, wireframe: CONFIG.wireframe, transparent: true, opacity: 0.8 }),
+        simulation: new THREE.MeshBasicMaterial({ color: 0xaa00ff, wireframe: CONFIG.wireframe, transparent: true, opacity: 0.8 }),
+        ego: new THREE.MeshBasicMaterial({ color: 0xffd700, wireframe: CONFIG.wireframe, transparent: true, opacity: 0.9 }),
+        hot: new THREE.MeshBasicMaterial({ color: 0xff3300, wireframe: CONFIG.wireframe, transparent: true, opacity: 0.9 }),
+        particle: new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: CONFIG.wireframe, transparent: true, opacity: 0.7 }),
+        fusion: new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false, transparent: true, opacity: 1.0 })
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SCENE OBJECTS
+    // ═══════════════════════════════════════════════════════════════════════
+    const particleMeshes = new Map();
+    const nodeMeshes = new Map();
+    const synapseLines = [];
+
+    // Create bounding cube (8x8x8 space visualization)
+    const boundingBox = new THREE.BoxHelper(
+        new THREE.Mesh(new THREE.BoxGeometry(80, 80, 80)),
+        0x333366
+    );
+    scene.add(boundingBox);
+
+    // Create axis helpers
+    const axisGroup = new THREE.Group();
+    const axisLength = 50;
+    const axisMaterial = (color) => new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5 });
+    
+    // X axis (red)
+    const xGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-axisLength,0,0), new THREE.Vector3(axisLength,0,0)]);
+    axisGroup.add(new THREE.Line(xGeom, axisMaterial(0xff0000)));
+    
+    // Y axis (green)
+    const yGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-axisLength,0), new THREE.Vector3(0,axisLength,0)]);
+    axisGroup.add(new THREE.Line(yGeom, axisMaterial(0x00ff00)));
+    
+    // Z axis (blue)
+    const zGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,-axisLength), new THREE.Vector3(0,0,axisLength)]);
+    axisGroup.add(new THREE.Line(zGeom, axisMaterial(0x0000ff)));
+    
+    scene.add(axisGroup);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CAMERA CONTROLS
+    // ═══════════════════════════════════════════════════════════════════════
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+    let cameraAngle = { theta: 0, phi: Math.PI / 4 };
+
+    renderer.domElement.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        prevMouse = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+    renderer.domElement.addEventListener('mouseleave', () => isDragging = false);
+
+    renderer.domElement.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const dx = e.clientX - prevMouse.x;
+        const dy = e.clientY - prevMouse.y;
+        
+        cameraAngle.theta += dx * 0.005;
+        cameraAngle.phi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraAngle.phi + dy * 0.005));
+        
+        updateCamera();
+        prevMouse = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('wheel', (e) => {
+        CONFIG.cameraDistance = Math.max(50, Math.min(300, CONFIG.cameraDistance + e.deltaY * 0.1));
+        updateCamera();
+    });
+
+    function updateCamera() {
+        camera.position.x = CONFIG.cameraDistance * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
+        camera.position.y = CONFIG.cameraDistance * Math.cos(cameraAngle.phi);
+        camera.position.z = CONFIG.cameraDistance * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
+        camera.lookAt(0, 0, 0);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // WEBSOCKET CONNECTION
+    // ═══════════════════════════════════════════════════════════════════════
+    let ws = null;
+    let frameCount = 0;
+    let lastFpsTime = Date.now();
+
+    function connect() {
+        ws = new WebSocket(CONFIG.wsUrl);
+
+        ws.onopen = () => {
+            document.getElementById('status').innerText = 'CONNECTED';
+            document.getElementById('status').className = 'stat-value connected';
+            logEvent('Connected to Cortex Server', 'spawn');
+        };
+
+        ws.onclose = () => {
+            document.getElementById('status').innerText = 'DISCONNECTED';
+            document.getElementById('status').className = 'stat-value disconnected';
+            logEvent('Connection lost', 'death');
+            setTimeout(connect, CONFIG.reconnectDelay);
+        };
+
+        ws.onerror = () => {
+            document.getElementById('status').innerText = 'ERROR';
+            document.getElementById('status').className = 'stat-value disconnected';
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                handleFrame(data);
+            } catch (e) {
+                console.error('Parse error:', e);
+            }
+        };
+    }
+
+    function handleFrame(data) {
+        if (data.type === 'INIT') {
+            logEvent(`Initialized: ${data.totalNodes} nodes`, 'spawn');
+            return;
+        }
+
+        if (data.type === 'EVENT') {
+            logEvent(data.message, data.event.toLowerCase());
+            return;
+        }
+
+        // Update stats
+        if (data.stats) {
+            document.getElementById('entropyVal').innerText = data.stats.entropy || '0.00';
+            document.getElementById('pulseCount').innerText = data.stats.pulses || '0';
+            
+            // Color entropy warning
+            const entropyEl = document.getElementById('entropyVal');
+            if (data.stats.entropy > 50) {
+                entropyEl.className = 'stat-value warning';
+            } else {
+                entropyEl.className = 'stat-value';
+            }
+        }
+
+        // Update particles
+        if (data.particles) {
+            document.getElementById('particleCount').innerText = data.particles.length;
+            updateParticles(data.particles);
+        }
+
+        // Update nodes
+        if (data.nodes) {
+            document.getElementById('nodeCount').innerText = data.nodes.length;
+            updateNodes(data.nodes);
+        }
+
+        // FPS counter
+        frameCount++;
+        const now = Date.now();
+        if (now - lastFpsTime > 1000) {
+            document.getElementById('fps').innerText = frameCount;
+            frameCount = 0;
+            lastFpsTime = now;
+        }
+    }
+
+    function updateParticles(particles) {
+        const activeIds = new Set();
+
+        particles.forEach(p => {
+            activeIds.add(p.id);
+
+            let mesh = particleMeshes.get(p.id);
+            
+            if (!mesh) {
+                // Create new particle
+                const geom = p.cat === 'BRAIN' ? geometries.core : 
+                            p.cat === 'AGENT' ? geometries.octahedron : geometries.sphere;
+                const mat = p.e > 50 ? materials.hot : materials.particle;
+                
+                mesh = new THREE.Mesh(geom, mat.clone());
+                scene.add(mesh);
+                particleMeshes.set(p.id, mesh);
+            }
+
+            // Update position (map 0-100 to -40 to 40)
+            mesh.position.set(
+                (p.x - 50) * 0.8,
+                (p.y - 50) * 0.8,
+                (p.z - 50) * 0.8
+            );
+
+            // Update scale based on energy
+            const scale = CONFIG.particleBaseSize * (1 + p.e / 50);
+            mesh.scale.set(scale, scale, scale);
+
+            // Update color based on energy
+            if (p.e > 80) {
+                mesh.material.color.setHex(0xffffff);
+            } else if (p.e > 50) {
+                mesh.material.color.setHex(0xff3300);
+            }
+        });
+
+        // Remove dead particles
+        particleMeshes.forEach((mesh, id) => {
+            if (!activeIds.has(id)) {
+                scene.remove(mesh);
+                particleMeshes.delete(id);
+            }
+        });
+    }
+
+    function updateNodes(nodes) {
+        const activeIds = new Set();
+
+        nodes.forEach(n => {
+            const id = `${n.w}_${n.x}_${n.y}_${n.z}`;
+            activeIds.add(id);
+
+            let mesh = nodeMeshes.get(id);
+
+            if (!mesh) {
+                // Create new node
+                const geom = n.w === 3 ? geometries.icosahedron : geometries.cube;
+                const mat = Object.values(materials)[n.w].clone();
+                
+                mesh = new THREE.Mesh(geom, mat);
+                scene.add(mesh);
+                nodeMeshes.set(id, mesh);
+            }
+
+            // Map 8x8x8 grid to -35 to 35 world space
+            const offset = 35;
+            const scale = 10;
+            mesh.position.set(
+                (n.x - 3.5) * scale,
+                (n.y - 3.5) * scale,
+                (n.z - 3.5) * scale
+            );
+
+            // Offset by W dimension (slight separation)
+            mesh.position.x += (n.w - 1.5) * 2;
+
+            // Scale by charge
+            const s = CONFIG.nodeBaseSize * (1 + n.c);
+            mesh.scale.set(s, s, s);
+
+            // Pulse opacity
+            mesh.material.opacity = 0.3 + Math.min(0.7, n.c * 0.5);
+        });
+
+        // Fade out inactive nodes
+        nodeMeshes.forEach((mesh, id) => {
+            if (!activeIds.has(id)) {
+                mesh.material.opacity *= 0.95;
+                if (mesh.material.opacity < 0.05) {
+                    scene.remove(mesh);
+                    nodeMeshes.delete(id);
+                }
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // EVENT LOG
+    // ═══════════════════════════════════════════════════════════════════════
+    function logEvent(message, type = '') {
+        const el = document.getElementById('events');
+        const item = document.createElement('div');
+        item.className = 'event-item ' + type;
+        item.innerText = `[${new Date().toLocaleTimeString()}] ${message}`;
+        el.insertBefore(item, el.firstChild);
+        
+        // Keep only last 20 events
+        while (el.children.length > 20) {
+            el.removeChild(el.lastChild);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CONTROLS
+    // ═══════════════════════════════════════════════════════════════════════
+    function toggleRotation() {
+        CONFIG.autoRotate = !CONFIG.autoRotate;
+        logEvent(`Auto-rotate: ${CONFIG.autoRotate ? 'ON' : 'OFF'}`);
+    }
+
+    function resetCamera() {
+        cameraAngle = { theta: 0, phi: Math.PI / 4 };
+        CONFIG.cameraDistance = 120;
+        updateCamera();
+        logEvent('Camera reset');
+    }
+
+    function toggleWireframe() {
+        CONFIG.wireframe = !CONFIG.wireframe;
+        Object.values(materials).forEach(m => m.wireframe = CONFIG.wireframe);
+        particleMeshes.forEach(m => m.material.wireframe = CONFIG.wireframe);
+        nodeMeshes.forEach(m => m.material.wireframe = CONFIG.wireframe);
+        logEvent(`Wireframe: ${CONFIG.wireframe ? 'ON' : 'OFF'}`);
+    }
+
+    function injectThought() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send('INJECT:TestThought');
+            logEvent('Injected thought', 'spawn');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // RENDER LOOP
+    // ═══════════════════════════════════════════════════════════════════════
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Auto-rotate
+        if (CONFIG.autoRotate) {
+            cameraAngle.theta += CONFIG.rotateSpeed;
+            updateCamera();
+        }
+
+        // Pulse effect on active nodes
+        nodeMeshes.forEach(mesh => {
+            mesh.rotation.x += 0.01;
+            mesh.rotation.y += 0.01;
+        });
+
+        renderer.render(scene, camera);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // INITIALIZATION
+    // ═══════════════════════════════════════════════════════════════════════
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Start
+    connect();
+    animate();
+    logEvent('Cortex Visualizer initialized');
+</script>
+</body>
+</html>

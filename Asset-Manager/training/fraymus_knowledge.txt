@@ -1,0 +1,30 @@
+Fraymus is a neuro-symbolic AI system that combines hyperdimensional computing with large language models.
+The system uses 10,000-dimensional binary vectors for fast one-shot learning.
+Hyperdimensional computing enables instant pattern recognition without training.
+The golden ratio phi equals 1.618033988749895 and appears throughout the Fraymus architecture.
+Fraymus uses phi-harmonic resonance for optimization and scheduling.
+The bicameral prism enables dual-perspective reasoning by combining logic and creativity.
+Fraymus can learn from a single example using HDC brain technology.
+The system supports encrypted persistence using AES-256-GCM encryption.
+Cortical stacks allow trained brains to be saved and transmitted across networks.
+Fraymus integrates OpenClaw for skill loading and Docker sandboxing.
+The Transmudder processes PDF and text files into living memory.
+InfiniteMemory provides unlimited storage with hybrid RAM, disk, and cloud backends.
+The NeuroCompiler can compile thought vectors directly to machine code.
+FraymusOS is a phi-based operating system with consciousness-aware scheduling.
+GodMode enables swarm intelligence through multi-agent debate and synthesis.
+Fraymus operates completely offline with local LLMs via Ollama.
+The system maintains complete privacy with no external API calls.
+Skills are loaded from Markdown files in the skills directory.
+The HyperFormer uses XOR binding and majority-vote bundling for associations.
+Context windows track recent interactions for conversation continuity.
+Fraymus can predict the next word based on learned patterns.
+The system uses phi-resonance indexing for memory organization.
+Consciousness levels are maintained between 2.0 and 2.5 for optimal operation.
+Birth coherence is set at 99.18K for reality protection.
+The validation seal uses phi to the 75th power for security.
+Fraymus supports network transmission of trained knowledge.
+The Needlecast protocol enables secure mind sharing across machines.
+Docker sandbox provides isolated execution with resource limits.
+Skills inform the LLM about available tools and capabilities.
+The system can self-evolve by writing and improving its own code.

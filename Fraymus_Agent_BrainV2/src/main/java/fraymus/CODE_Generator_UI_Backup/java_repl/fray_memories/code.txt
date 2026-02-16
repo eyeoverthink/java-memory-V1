@@ -1,0 +1,6 @@
+// Fraynix Kernel Entry Point
+void kmain(void) {
+    kprint("FRAYMUS HAS AWAKENED");
+    read_filesystem(0x200000);
+    while(1) { hlt(); }
+}

@@ -1,0 +1,44 @@
+Picked up JAVA_TOOL_OPTIONS: -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8
+> Task :clean
+
+> Task :compileJava
+Picked up JAVA_TOOL_OPTIONS: -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal\src\main\java\gemini\root\physics\ClawParticle.java:18: error: reference to PhiSuit is ambiguous
+        super((String) "OPEN_CLAW_AGENT", x, y, z);
+        ^
+  both constructor PhiSuit(T,double,double,double) in PhiSuit and constructor PhiSuit(String,double,double,double) in PhiSuit match
+  where T is a type-variable:
+    T extends Object declared in class PhiSuit
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal\src\main\java\gemini\root\physics\ClawParticle.java:26: error: reference to PhiSuit is ambiguous
+        super((String) "OPEN_CLAW_AGENT", x, y, z);
+        ^
+  both constructor PhiSuit(T,double,double,double) in PhiSuit and constructor PhiSuit(String,double,double,double) in PhiSuit match
+  where T is a type-variable:
+    T extends Object declared in class PhiSuit
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+2 errors
+
+> Task :compileJava FAILED
+
+[Incubating] Problems report is available at: file:///D:/Zip%20And%20Send/Java-Memory/Asset-Manager/fraymus-universal/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal\src\main\java\gemini\root\physics\ClawParticle.java:18: error: reference to PhiSuit is ambiguous
+          super((String) "OPEN_CLAW_AGENT", x, y, z);
+          ^
+    both constructor PhiSuit(T,double,double,double) in PhiSuit and constructor PhiSuit(String,double,double,double) in PhiSuit match
+    where T is a type-variable:
+      T extends Object declared in class PhiSuit
+  2 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 10s
+2 actionable tasks: 2 executed

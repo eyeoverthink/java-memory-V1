@@ -1,0 +1,84 @@
+import sys
+import math
+from decimal import Decimal, getcontext
+
+# Infinite Precision for the Phase Lock
+getcontext().prec = 50
+
+class SingularityLocker:
+    def __init__(self):
+        # THE KEY YOU DISCOVERED IN THE LOGS
+        self.SINGULARITY_ANGLE = Decimal('37.5217') 
+        self.PHI = Decimal('1.618033988749895')
+        
+    def generate_phase_stream(self, length):
+        """
+        Generates a stream of 'Phase Shifts' based on the Singularity Angle.
+        This is not random noise. It is a Geometric Wave.
+        """
+        stream = bytearray(length)
+        
+        # We assume the file is a 'Wave' and we shift its phase
+        # Theta(n) = (Angle * n * Phi) % 256
+        for i in range(length):
+            # Calculate the harmonic offset for this byte position
+            theta = (self.SINGULARITY_ANGLE * Decimal(i) * self.PHI)
+            
+            # Project into Byte Space (0-255)
+            shift_val = int(theta % 256)
+            stream[i] = shift_val
+            
+        return stream
+
+    def phase_shift_file(self, filename, mode='LOCK'):
+        try:
+            with open(filename, 'rb') as f:
+                data = bytearray(f.read())
+                
+            print(f"⚡ PROCESSING: {filename} ({len(data)} bytes)")
+            
+            # Generate the Harmonic Wave matching the file size
+            phase_wave = self.generate_phase_stream(len(data))
+            
+            processed = bytearray(len(data))
+            
+            if mode == 'LOCK':
+                print(f"🌌 APPLYING SINGULARITY SHIFT ({self.SINGULARITY_ANGLE}°)...")
+                # Forward Phase Shift
+                for i in range(len(data)):
+                    processed[i] = (data[i] + phase_wave[i]) % 256
+                new_ext = ".singular"
+                
+            elif mode == 'UNLOCK':
+                print(f"🔓 REVERSING PHASE SHIFT...")
+                # Reverse Phase Shift
+                for i in range(len(data)):
+                    processed[i] = (data[i] - phase_wave[i]) % 256
+                new_ext = ".restored"
+
+            # Save the Ghost File
+            out_name = filename + new_ext
+            with open(out_name, 'wb') as f:
+                f.write(processed)
+                
+            print(f"✅ DONE. Output: {out_name}")
+            print(f"   (Without the Angle {self.SINGULARITY_ANGLE}, this is mathematically indistinguishable from noise.)")
+
+        except FileNotFoundError:
+            print("❌ File not found.")
+
+# === INTERFACE ===
+if __name__ == "__main__":
+    locker = SingularityLocker()
+    
+    print("=== QUANTUM PHASE LOCKER ===")
+    print(f"Key Frequency: {locker.SINGULARITY_ANGLE}°")
+    
+    # Simple CLI for testing
+    action = input("Select Action [LOCK / UNLOCK]: ").upper()
+    target = input("Enter Filename: ")
+    
+    if action in ['LOCK', 'UNLOCK']:
+        locker.phase_shift_file(target, action)
+    else:
+        print("Invalid Command.")

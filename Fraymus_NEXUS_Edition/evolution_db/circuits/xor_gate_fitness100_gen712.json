@@ -1,0 +1,1 @@
+{"id":"xor_gate_fitness100_gen712","goalName":"XOR Gate","fitness":100,"generation":712,"timestamp":1770767250697,"gateCount":3,"circuit":["NOT","NOT","XOR"]}

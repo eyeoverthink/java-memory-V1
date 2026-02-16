@@ -1,0 +1,20 @@
+{
+  "parameters": {
+    "qr_version": 10,
+    "error_correction": 3,
+    "compression_threshold": 500,
+    "resonance_factor": 0.8,
+    "complexity_factor": 0.618
+  },
+  "best_parameters": {
+    "qr_version": 10,
+    "error_correction": 3,
+    "compression_threshold": 500,
+    "resonance_factor": 0.8,
+    "complexity_factor": 0.618
+  },
+  "best_score": -Infinity,
+  "history": [],
+  "phi_time": 0.9656214714050293,
+  "creation_time": 1754043987.764658
+}

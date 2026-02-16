@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS NEURAL STREAM // GEN 186</title>
+    <style>
+        /* --- AESTHETIC: LIVEWIRE --- */
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; color: #00FF00; display: flex; height: 100vh; }
+        
+        /* LEFT: INPUT & CONTROLS */
+        #control-panel {
+            width: 300px; background: #080808; border-right: 1px solid #004400;
+            display: flex; flex-direction: column; padding: 20px; z-index: 10;
+        }
+        
+        textarea {
+            background: #111; border: 1px solid #333; color: #EEE; font-family: inherit; font-size: 12px;
+            padding: 10px; resize: none; outline: none; height: 150px; margin-bottom: 20px;
+        }
+        textarea:focus { border-color: #00FF00; }
+        
+        button {
+            background: #002200; color: #00FF00; border: 1px solid #00FF00; padding: 15px; cursor: pointer;
+            font-weight: bold; letter-spacing: 2px; transition: 0.2s;
+        }
+        button:hover { background: #00FF00; color: #000; box-shadow: 0 0 20px #00FF00; }
+        button:disabled { border-color: #555; color: #555; background: #111; cursor: not-allowed; box-shadow: none; }
+
+        #model-select {
+            background: #111; border: 1px solid #333; color: #00FF00; padding: 10px;
+            margin-bottom: 15px; font-family: inherit; outline: none;
+        }
+
+        /* RIGHT: THE CANVAS (VISUALIZER) */
+        #visualizer { flex-grow: 1; position: relative; background: #000; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* OUTPUT OVERLAY (The "Paper") */
+        #output-layer {
+            position: absolute; top: 20px; left: 20px; bottom: 20px; right: 20px;
+            pointer-events: none; overflow-y: auto; padding-bottom: 50px;
+            font-size: 14px; line-height: 1.6; color: #E0E0E0; white-space: pre-wrap;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+        
+        /* CURSOR BLINK */
+        .cursor { display: inline-block; width: 8px; height: 16px; background: #00FF00; animation: blink 1s infinite; vertical-align: middle; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* TELEMETRY */
+        #telemetry {
+            margin-top: 20px; font-size: 9px; color: #444; border-top: 1px solid #222; padding-top: 15px;
+        }
+        .tele-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .tele-val { color: #00AA00; }
+    </style>
+</head>
+<body>
+
+    <div id="control-panel">
+        <div style="font-size:18px; font-weight:bold; margin-bottom:20px; color:#00FF00;">NEURAL STREAM</div>
+        <div style="font-size:10px; color:#666; margin-bottom:5px;">SELECT MODEL</div>
+        <select id="model-select">
+            <option value="eyeoverthink/Fraymus">eyeoverthink/Fraymus</option>
+            <option value="codellama:7b">codellama:7b</option>
+            <option value="deepseek-coder:6.7b">deepseek-coder:6.7b</option>
+            <option value="qwen2.5-coder:7b">qwen2.5-coder:7b</option>
+            <option value="llama3.2:latest">llama3.2:latest</option>
+        </select>
+        <div style="font-size:10px; color:#666; margin-bottom:5px;">INPUT PROMPT</div>
+        <textarea id="prompt" placeholder="Ask Fraymus to write code...
+
+Example:
+Write a Python script to scan for prime numbers using recursion"></textarea>
+        <button id="run-btn" onclick="streamThought()">IGNITE</button>
+        <button id="stop-btn" onclick="stopStream()" style="margin-top:10px; background:#220000; border-color:#FF0000; color:#FF0000; display:none;">ABORT</button>
+        <div id="status" style="margin-top:20px; font-size:10px; color:#444;">STATUS: READY</div>
+        
+        <div id="telemetry">
+            <div class="tele-row"><span>TOKENS:</span><span class="tele-val" id="tele-tokens">0</span></div>
+            <div class="tele-row"><span>TOKENS/SEC:</span><span class="tele-val" id="tele-tps">0</span></div>
+            <div class="tele-row"><span>ELAPSED:</span><span class="tele-val" id="tele-time">0.0s</span></div>
+        </div>
+    </div>
+
+    <div id="visualizer">
+        <canvas id="simCanvas"></canvas>
+        <div id="output-layer"><span id="stream-text"></span><span class="cursor"></span></div>
+    </div>
+
+<script>
+/**
+ * 🧬 FRAYMUS NEURAL STREAM // GEN 186
+ * Real-time Token Visualization via Ollama Streaming API.
+ * 
+ * THE DIFFERENCE:
+ * Gen 185: Request -> Wait -> Dump Text
+ * Gen 186: Request -> T-O-K-E-N-S F-L-O-W-I-N-G
+ */
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+// --- STATE ---
+let particles = [];
+let connections = [];
+let isStreaming = false;
+let abortController = null;
+let tokenCount = 0;
+let startTime = 0;
+const API_URL = "http://localhost:11434/api/generate";
+
+// --- PARTICLE ENGINE ---
+class TokenParticle {
+    constructor(x, y, char) {
+        this.x = x; 
+        this.y = y;
+        this.vx = (Math.random()-0.5) * 8;
+        this.vy = (Math.random()-0.5) * 8;
+        this.life = 1.0;
+        this.char = char;
+        this.hue = 100 + Math.random() * 60; // Green-Cyan spectrum
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.98;
+        this.vy *= 0.98;
+        this.life -= 0.015;
+    }
+    draw() {
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+        
+        // Draw character or dot
+        if (this.char && this.char.trim()) {
+            ctx.font = "12px Consolas";
+            ctx.fillText(this.char, this.x, this.y);
+        } else {
+            ctx.fillRect(this.x, this.y, 3, 3);
+        }
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+// --- STREAM LOGIC ---
+async function streamThought() {
+    const prompt = document.getElementById('prompt').value;
+    const model = document.getElementById('model-select').value;
+    if(!prompt) return;
+
+    // Reset UI
+    const out = document.getElementById('stream-text');
+    out.innerText = "";
+    document.getElementById('run-btn').disabled = true;
+    document.getElementById('run-btn').innerText = "STREAMING...";
+    document.getElementById('stop-btn').style.display = "block";
+    setStatus("OPENING NEURAL LINK...", "#00FFFF");
+    isStreaming = true;
+    tokenCount = 0;
+    startTime = performance.now();
+    
+    abortController = new AbortController();
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                prompt: prompt,
+                stream: true
+            }),
+            signal: abortController.signal
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        setStatus("NEURAL LINK ACTIVE", "#00FF00");
+
+        // STREAM READER LOOP
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (!line) continue;
+                try {
+                    const json = JSON.parse(line);
+                    if (json.response) {
+                        // 1. UPDATE TEXT
+                        out.innerText += json.response;
+                        tokenCount++;
+                        
+                        // 2. TRIGGER VISUALS
+                        const chars = json.response.split('');
+                        for (let c of chars) {
+                            spawnBurst(
+                                width/2 + (Math.random()-0.5)*300, 
+                                height/2 + (Math.random()-0.5)*200,
+                                c
+                            );
+                        }
+                        
+                        // 3. UPDATE TELEMETRY
+                        updateTelemetry();
+                        
+                        // Auto scroll
+                        const overlay = document.getElementById('output-layer');
+                        overlay.scrollTop = overlay.scrollHeight;
+                    }
+                    if (json.done) {
+                        setStatus("TRANSMISSION COMPLETE", "#008800");
+                    }
+                } catch (e) {
+                    // Ignore parse errors for partial JSON
+                }
+            }
+        }
+
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            setStatus("STREAM ABORTED", "#FFAA00");
+        } else {
+            setStatus("ERROR: " + e.message, "#FF0000");
+            out.innerText += "\n\n[CONNECTION LOST]\n\nTroubleshooting:\n1. Run: OLLAMA_ORIGINS=\"*\" ollama serve\n2. Verify model is installed: ollama list";
+        }
+    } finally {
+        document.getElementById('run-btn').disabled = false;
+        document.getElementById('run-btn').innerText = "IGNITE";
+        document.getElementById('stop-btn').style.display = "none";
+        isStreaming = false;
+        abortController = null;
+    }
+}
+
+function stopStream() {
+    if (abortController) {
+        abortController.abort();
+    }
+}
+
+function updateTelemetry() {
+    const elapsed = (performance.now() - startTime) / 1000;
+    const tps = elapsed > 0 ? (tokenCount / elapsed).toFixed(1) : 0;
+    
+    document.getElementById('tele-tokens').innerText = tokenCount;
+    document.getElementById('tele-tps').innerText = tps;
+    document.getElementById('tele-time').innerText = elapsed.toFixed(1) + 's';
+}
+
+// --- VISUALIZATION LOOP ---
+function spawnBurst(x, y, char) {
+    particles.push(new TokenParticle(x, y, char));
+    
+    // Add neural connection point
+    connections.push({x: x, y: y, life: 1.0});
+}
+
+function loop() {
+    // Clear with trail
+    ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw neural web (connections between recent tokens)
+    ctx.lineWidth = 1;
+    for (let i = connections.length - 1; i >= 0; i--) {
+        let c = connections[i];
+        
+        // Connect to neighbors
+        for (let j = Math.max(0, i - 3); j < i; j++) {
+            let prev = connections[j];
+            let dist = Math.sqrt((c.x - prev.x)**2 + (c.y - prev.y)**2);
+            if (dist < 150) {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(0, 255, 100, ${c.life * prev.life * 0.3})`;
+                ctx.moveTo(c.x, c.y);
+                ctx.lineTo(prev.x, prev.y);
+                ctx.stroke();
+            }
+        }
+        
+        // Node glow
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(0, 255, 100, ${c.life * 0.5})`;
+        ctx.arc(c.x, c.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        c.life -= 0.02;
+        if (c.life <= 0) connections.splice(i, 1);
+    }
+
+    // Update Particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.update();
+        p.draw();
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    // Central core pulse when streaming
+    if (isStreaming) {
+        let pulse = (Math.sin(Date.now() / 100) + 1) / 2;
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(0, 255, 0, ${0.1 + pulse * 0.2})`;
+        ctx.lineWidth = 2;
+        ctx.arc(width/2, height/2, 100 + pulse * 20, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    requestAnimationFrame(loop);
+}
+
+function setStatus(msg, col) {
+    const el = document.getElementById('status');
+    el.innerText = "STATUS: " + msg;
+    el.style.color = col;
+}
+
+function resize() {
+    width = document.getElementById('visualizer').clientWidth;
+    height = document.getElementById('visualizer').clientHeight;
+    canvas.width = width; canvas.height = height;
+}
+window.addEventListener('resize', resize);
+
+// BOOT
+resize();
+loop();
+console.log('🧬 FRAYMUS NEURAL STREAM // GEN 186');
+console.log('   STREAMING ENGINE ACTIVE');
+console.log('   TARGET: localhost:11434');
+
+</script>
+</body>
+</html>

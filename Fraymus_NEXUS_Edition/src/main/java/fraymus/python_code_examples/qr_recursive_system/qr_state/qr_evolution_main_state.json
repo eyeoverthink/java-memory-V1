@@ -1,0 +1,265 @@
+{
+  "id": "92640733-4141-4080-bbb9-1e0484ce798b",
+  "creation_time": 1754043987.764365,
+  "phi_time": 0.9651474952697754,
+  "config": {
+    "base_dir": "qr_evolution_system",
+    "sequence_dir": "qr_sequence",
+    "reports_dir": "qr_reports",
+    "state_dir": "qr_state",
+    "log_file": "qr_evolution_log.json",
+    "self_improvement_enabled": true,
+    "learning_rate": 0.6180339887498948,
+    "max_iterations": 100,
+    "auto_save": true
+  },
+  "cycle_count": 2,
+  "last_improvement_time": 1754043987.764684,
+  "history": [
+    {
+      "cycle_id": "1d0a0850-be82-45c8-99ea-21530fc6aa9c",
+      "cycle_number": 1,
+      "timestamp": 1754043988.0129228,
+      "phi_time": 0.3673224449157715,
+      "duration": 0.24822282791137695,
+      "generation_results": [
+        {
+          "path": "qr_evolution_system/qr_sequence/qr_frame_001.png",
+          "meta": {
+            "id": "7f5f1eef-2195-44d8-966a-8709d9b2f7b9",
+            "timestamp": 1754043987.7647371,
+            "phi_time": 0.9657492637634277,
+            "version": "1.0.0",
+            "compressed": false,
+            "frame_id": 1,
+            "resonance_factor": 0.8,
+            "complexity_factor": 0.618
+          },
+          "performance": {
+            "operation": "generate",
+            "path": "qr_evolution_system/qr_sequence/qr_frame_001.png",
+            "payload_size": 260,
+            "compressed": false,
+            "time_taken": 0.08301806449890137,
+            "timestamp": 1754043987.847732,
+            "phi_time": 0.10003805160522461,
+            "parameters": {
+              "qr_version": 10,
+              "error_correction": 3,
+              "compression_threshold": 500,
+              "resonance_factor": 0.8,
+              "complexity_factor": 0.618
+            }
+          }
+        },
+        {
+          "path": "qr_evolution_system/qr_sequence/qr_frame_002.png",
+          "meta": {
+            "id": "c3fc0299-8f16-4c59-ab3e-8e151347805a",
+            "timestamp": 1754043987.847918,
+            "phi_time": 0.10033893585205078,
+            "version": "1.0.0",
+            "compressed": false,
+            "frame_id": 2,
+            "resonance_factor": 0.8,
+            "complexity_factor": 0.618
+          },
+          "performance": {
+            "operation": "generate",
+            "path": "qr_evolution_system/qr_sequence/qr_frame_002.png",
+            "payload_size": 275,
+            "compressed": false,
+            "time_taken": 0.04664301872253418,
+            "timestamp": 1754043987.894519,
+            "phi_time": 0.17574119567871094,
+            "parameters": {
+              "qr_version": 10,
+              "error_correction": 3,
+              "compression_threshold": 500,
+              "resonance_factor": 0.8,
+              "complexity_factor": 0.618
+            }
+          }
+        },
+        {
+          "path": "qr_evolution_system/qr_sequence/qr_frame_003.png",
+          "meta": {
+            "id": "4047853d-9898-41a3-a5f3-f5a322f33561",
+            "timestamp": 1754043987.8946729,
+            "phi_time": 0.17599010467529297,
+            "version": "1.0.0",
+            "compressed": false,
+            "frame_id": 3,
+            "resonance_factor": 0.8,
+            "complexity_factor": 0.618
+          },
+          "performance": {
+            "operation": "generate",
+            "path": "qr_evolution_system/qr_sequence/qr_frame_003.png",
+            "payload_size": 275,
+            "compressed": false,
+            "time_taken": 0.04802989959716797,
+            "timestamp": 1754043987.9426718,
+            "phi_time": 0.25365400314331055,
+            "parameters": {
+              "qr_version": 10,
+              "error_correction": 3,
+              "compression_threshold": 500,
+              "resonance_factor": 0.8,
+              "complexity_factor": 0.618
+            }
+          }
+        }
+      ],
+      "performance_data": {
+        "total_qr_codes": 3,
+        "avg_generation_time": 0.05923032760620117,
+        "max_generation_time": 0.08301806449890137,
+        "min_generation_time": 0.04664301872253418,
+        "avg_payload_size": 270.0,
+        "avg_phi_time": 0.41402610143025714,
+        "phi_resonance": 0.564181929338007
+      },
+      "system_state": {
+        "optimizer_score": -Infinity,
+        "optimizer_parameters": {
+          "qr_version": 10,
+          "error_correction": 3,
+          "compression_threshold": 500,
+          "resonance_factor": 0.8,
+          "complexity_factor": 0.618
+        },
+        "generator_parameters": {
+          "qr_version": 11,
+          "error_correction": 0,
+          "compression_threshold": 584,
+          "resonance_factor": 0.595221569298046,
+          "complexity_factor": 0.9534766231464511
+        }
+      }
+    },
+    {
+      "cycle_id": "e9a04511-3243-40b2-999d-be73d147f00c",
+      "cycle_number": 2,
+      "timestamp": 1754043989.1217191,
+      "phi_time": 0.1613926887512207,
+      "duration": 0.10810017585754395,
+      "generation_results": [
+        {
+          "path": "qr_evolution_system/qr_sequence/qr_frame_001.png",
+          "meta": {
+            "id": "5aae071f-ab4b-49ad-868a-b50721bc66ba",
+            "timestamp": 1754043989.014064,
+            "phi_time": 0.9872031211853027,
+            "version": "1.0.0",
+            "compressed": false,
+            "frame_id": 1,
+            "resonance_factor": 0.595221569298046,
+            "complexity_factor": 0.9534766231464511
+          },
+          "performance": {
+            "operation": "generate",
+            "path": "qr_evolution_system/qr_sequence/qr_frame_001.png",
+            "payload_size": 260,
+            "compressed": false,
+            "time_taken": 0.03651881217956543,
+            "timestamp": 1754043989.050397,
+            "phi_time": 0.045990943908691406,
+            "parameters": {
+              "qr_version": 11,
+              "error_correction": 0,
+              "compression_threshold": 584,
+              "resonance_factor": 0.595221569298046,
+              "complexity_factor": 0.9534766231464511
+            }
+          }
+        },
+        {
+          "path": "qr_evolution_system/qr_sequence/qr_frame_002.png",
+          "meta": {
+            "id": "dd932773-535c-49a5-aef6-70fa75712313",
+            "timestamp": 1754043989.050524,
+            "phi_time": 0.04619646072387695,
+            "version": "1.0.0",
+            "compressed": false,
+            "frame_id": 2,
+            "resonance_factor": 0.595221569298046,
+            "complexity_factor": 0.9534766231464511
+          },
+          "performance": {
+            "operation": "generate",
+            "path": "qr_evolution_system/qr_sequence/qr_frame_002.png",
+            "payload_size": 275,
+            "compressed": false,
+            "time_taken": 0.035372018814086914,
+            "timestamp": 1754043989.085865,
+            "phi_time": 0.1033792495727539,
+            "parameters": {
+              "qr_version": 11,
+              "error_correction": 0,
+              "compression_threshold": 584,
+              "resonance_factor": 0.595221569298046,
+              "complexity_factor": 0.9534766231464511
+            }
+          }
+        },
+        {
+          "path": "qr_evolution_system/qr_sequence/qr_frame_003.png",
+          "meta": {
+            "id": "a4920a2d-b675-4951-a191-8f52dd83ead0",
+            "timestamp": 1754043989.085972,
+            "phi_time": 0.10355234146118164,
+            "version": "1.0.0",
+            "compressed": false,
+            "frame_id": 3,
+            "resonance_factor": 0.595221569298046,
+            "complexity_factor": 0.9534766231464511
+          },
+          "performance": {
+            "operation": "generate",
+            "path": "qr_evolution_system/qr_sequence/qr_frame_003.png",
+            "payload_size": 275,
+            "compressed": false,
+            "time_taken": 0.03514695167541504,
+            "timestamp": 1754043989.121093,
+            "phi_time": 0.16037940979003906,
+            "parameters": {
+              "qr_version": 11,
+              "error_correction": 0,
+              "compression_threshold": 584,
+              "resonance_factor": 0.595221569298046,
+              "complexity_factor": 0.9534766231464511
+            }
+          }
+        }
+      ],
+      "performance_data": {
+        "total_qr_codes": 3,
+        "avg_generation_time": 0.035679260889689125,
+        "max_generation_time": 0.03651881217956543,
+        "min_generation_time": 0.03514695167541504,
+        "avg_payload_size": 270.0,
+        "avg_phi_time": 0.3789839744567871,
+        "phi_resonance": 0.5148372307499537
+      },
+      "system_state": {
+        "optimizer_score": -Infinity,
+        "optimizer_parameters": {
+          "qr_version": 10,
+          "error_correction": 3,
+          "compression_threshold": 500,
+          "resonance_factor": 0.8,
+          "complexity_factor": 0.618
+        },
+        "generator_parameters": {
+          "qr_version": 11,
+          "error_correction": 0,
+          "compression_threshold": 581,
+          "resonance_factor": 0.6134977269600081,
+          "complexity_factor": 0.8689166618454135
+        }
+      }
+    }
+  ],
+  "version": "2.0.0"
+}

@@ -1,0 +1,360 @@
+Picked up JAVA_TOOL_OPTIONS: -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8
+
+> Task :compileJava
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal\src\main\java\gemini\root\physics\ClawParticle.java:18: error: reference to PhiSuit is ambiguous
+        super((String) "OPEN_CLAW_AGENT", x, y, z);
+        ^
+  both constructor PhiSuit(T,double,double,double) in PhiSuit and constructor PhiSuit(String,double,double,double) in PhiSuit match
+  where T is a type-variable:
+    T extends Object declared in class PhiSuit
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal\src\main\java\gemini\root\physics\ClawParticle.java:26: error: reference to PhiSuit is ambiguous
+        super((String) "OPEN_CLAW_AGENT", x, y, z);
+        ^
+  both constructor PhiSuit(T,double,double,double) in PhiSuit and constructor PhiSuit(String,double,double,double) in PhiSuit match
+  where T is a type-variable:
+    T extends Object declared in class PhiSuit
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+2 errors
+
+> Task :compileJava FAILED
+
+[Incubating] Problems report is available at: file:///D:/Zip%20And%20Send/Java-Memory/Asset-Manager/fraymus-universal/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal\src\main\java\gemini\root\physics\ClawParticle.java:18: error: reference to PhiSuit is ambiguous
+          super((String) "OPEN_CLAW_AGENT", x, y, z);
+          ^
+    both constructor PhiSuit(T,double,double,double) in PhiSuit and constructor PhiSuit(String,double,double,double) in PhiSuit match
+    where T is a type-variable:
+      T extends Object declared in class PhiSuit
+  2 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 4s
+1 actionable task: 1 executed
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'🧬' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'⚡' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Architectural' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>The system cannot find the file specified.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'📖' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Parent:' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Fitness:' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'We' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Spawns' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Links' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Here' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'File:' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'package' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'import' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'import' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'import' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'/**' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'public' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'//' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>> was unexpected at this time.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'private' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'private' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'public' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'System.out.println' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'HyperCortex' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'//' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'brain.inject' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'brain.inject' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'brain.inject' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'//' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'new' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'//' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'try' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'System.out.println' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Thread.sleep' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'//' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>node:internal/modules/cjs/loader:1424
+  throw err;
+  ^
+
+Error: Cannot find module 'D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal\logic'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1421:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1059:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1064:22)
+    at Module._load (node:internal/modules/cjs/loader:1227:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.11.1
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'public' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'lattice.add' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'System.out.println' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'public' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>(Node was unexpected at this time.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>return was unexpected at this time.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'return' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Override' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'public' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'System.out.println' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'while' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'pulse' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'try' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'printFinalReport' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'/**' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'*' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'private' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'//' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>< was unexpected at this time.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'//' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'private' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>(int was unexpected at this time.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'double' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'return' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'public' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'active' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'System.out.println' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'System.out.println' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'System.out.println' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'System.out.printf' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'}' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'When' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Nodes' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Evolution' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>'Final' is not recognized as an internal or external command,
+operable program or batch file.
+
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>
+D:\Zip And Send\Java-Memory\Asset-Manager\fraymus-universal>Picked up JAVA_TOOL_OPTIONS: -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8
+> Task :compileJava UP-TO-DATE
+> Task :processResources NO-SOURCE
+> Task :classes UP-TO-DATE
+
+> Task :runMain
+Picked up JAVA_TOOL_OPTIONS: -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8
+⚡ FRAYMUS GOD PROTOCOL: INITIATED
+🧠 HYPER-CORTEX ONLINE. Dimension: 10,000D
+   ✨ INJECTED: SELF
+   ✨ INJECTED: AWARENESS
+   ✨ INJECTED: RECURSION
+
+🔥 EXECUTING OMEGA POINT SEQUENCE...
+   🔒 SECRET SECURED: nRKi1eCe3JTsVZC...
+   🧠 LOGIC OPTIMIZED. Fitness: -7.072378960770173
+   📚 HISTORY SEALED. Root: 96e144320fe0076d74c05c513542a84c13ea0882f650eff90cd8ece4cefb8ec0
+
+✅ SYSTEM IS ALIVE. WAITING FOR INPUT...
+>    ✨ INJECTED: OPENCLAW ONBOARD --INSTALL-DAEMON
+>    ✨ INJECTED: OPENCLAW GATEWAY STATUS
+>    ✨ INJECTED: NPM INSTALL -G OPENCLAW@LATEST
+>    ✨ INJECTED: 
+>    ✨ INJECTED: NPM INSTALL -G OPENCLAW@LATEST
+>    ✨ INJECTED: 
+>    ✨ INJECTED: NPM INSTALL -G OPENCLAW@LATEST
+> 

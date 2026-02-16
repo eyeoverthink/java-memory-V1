@@ -1,0 +1,81 @@
+{
+  "parameters": {
+    "qr_version": 10,
+    "error_correction": 3,
+    "compression_threshold": 500,
+    "resonance_factor": 0.8,
+    "complexity_factor": 0.618
+  },
+  "best_parameters": {
+    "qr_version": 11,
+    "error_correction": 0,
+    "compression_threshold": 581,
+    "resonance_factor": 0.6134977269600081,
+    "complexity_factor": 0.8689166618454135
+  },
+  "best_score": 0.7617718404495617,
+  "history": [
+    {
+      "iteration": 0,
+      "parameters": {
+        "qr_version": 10,
+        "error_correction": 3,
+        "compression_threshold": 500,
+        "resonance_factor": 0.8,
+        "complexity_factor": 0.618
+      },
+      "score": 0.6281868129608469,
+      "timestamp": 1754043987.942925
+    },
+    {
+      "iteration": 2,
+      "parameters": {
+        "qr_version": 10,
+        "error_correction": 0,
+        "compression_threshold": 580,
+        "resonance_factor": 1.0,
+        "complexity_factor": 0.6313887463627925
+      },
+      "score": 0.7075810479538507,
+      "timestamp": 1754043988.012835
+    },
+    {
+      "iteration": 3,
+      "parameters": {
+        "qr_version": 11,
+        "error_correction": 0,
+        "compression_threshold": 578,
+        "resonance_factor": 0.584237506808408,
+        "complexity_factor": 0.9802588200788329
+      },
+      "score": 0.7245061101408742,
+      "timestamp": 1754043988.012864
+    },
+    {
+      "iteration": 4,
+      "parameters": {
+        "qr_version": 11,
+        "error_correction": 0,
+        "compression_threshold": 584,
+        "resonance_factor": 0.595221569298046,
+        "complexity_factor": 0.9534766231464511
+      },
+      "score": 0.7474658659942423,
+      "timestamp": 1754043988.012888
+    },
+    {
+      "iteration": 5,
+      "parameters": {
+        "qr_version": 11,
+        "error_correction": 0,
+        "compression_threshold": 581,
+        "resonance_factor": 0.6134977269600081,
+        "complexity_factor": 0.8689166618454135
+      },
+      "score": 0.7617718404495617,
+      "timestamp": 1754043989.12161
+    }
+  ],
+  "phi_time": 0.9656281471252441,
+  "creation_time": 1754043987.764662
+}

@@ -1,0 +1,79 @@
+[
+    {
+        "name": "Loki-Warrior",
+        "class": "Strategic & Time Manipulation",
+        "abilities": [
+            "Time Dilation",
+            "Energy Shift",
+            "Quantum Phase Cloaking"
+        ],
+        "power": 88,
+        "agility": 92,
+        "intelligence": 99,
+        "rarity": "Legendary"
+    },
+    {
+        "name": "Magnus-Warrior",
+        "class": "Electromagnetic & EMP Control",
+        "abilities": [
+            "EMP Shielding",
+            "Magnetic Field Manipulation",
+            "Electronic Disruption"
+        ],
+        "power": 90,
+        "agility": 78,
+        "intelligence": 85,
+        "rarity": "Epic"
+    },
+    {
+        "name": "Mirage-Warrior",
+        "class": "Stealth & Deception",
+        "abilities": [
+            "Holographic Projection",
+            "Battlefield Camouflage",
+            "Reality Distortion"
+        ],
+        "power": 75,
+        "agility": 95,
+        "intelligence": 88,
+        "rarity": "Rare"
+    },
+    {
+        "name": "Copper-Warrior",
+        "class": "Electromagnetic & EMP Control",
+        "abilities": [
+            "Energy Conduction Boost",
+            "Circuit Manipulation"
+        ],
+        "power": 80,
+        "agility": 70,
+        "intelligence": 78,
+        "rarity": "Uncommon"
+    },
+    {
+        "name": "Gold-Warrior",
+        "class": "Electromagnetic & Reflection Mastery",
+        "abilities": [
+            "Power Amplification",
+            "Electric Surge",
+            "Adaptive Mimicry"
+        ],
+        "power": 92,
+        "agility": 65,
+        "intelligence": 81,
+        "rarity": "Legendary"
+    },
+    {
+        "name": "Crime-Stopper-Warrior",
+        "class": "Reality & Security Enforcement",
+        "abilities": [
+            "Quantum Truth Detection",
+            "Interdimensional Tracking",
+            "Unbreakable Evidence Chain"
+        ],
+        "power": 95,
+        "agility": 75,
+        "intelligence": 98,
+        "rarity": "Mythic"
+    }
+]

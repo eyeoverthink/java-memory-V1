@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <title>FRAYMUS // UNIVERSAL INTERFACE</title>
+  <style>
+    body { background:#050505; color:#00FF00; font-family:'Courier New', monospace; margin:0; padding:20px; }
+    #chat-box { height:80vh; overflow-y:auto; border-bottom:2px solid #005500; padding-bottom:16px; }
+    .msg { margin:10px 0; padding:10px; border-left:3px solid transparent; white-space:pre-wrap; }
+    .user { border-color:#00FFFF; color:#E0E0E0; background:rgba(0,50,50,.2); }
+    .ai { border-color:#00FF00; color:#00FF00; background:rgba(0,50,0,.2); }
+    .sys { border-color:#FFAA00; color:#FFDD88; background:rgba(60,40,0,.2); }
+    #input-area { margin-top:16px; display:flex; gap:10px; }
+    input { flex:1; background:#000; border:1px solid #005500; color:#FFF; padding:14px; font-family:inherit; font-size:16px; outline:none; }
+    input:focus { border-color:#00FF00; box-shadow:0 0 10px #005500; }
+  </style></head><body><div id="chat-box"></div><div id="input-area">
+  <input id="cmd" placeholder="COMMAND THE SYSTEM... (TRANSMUTE: path | INDEX: dir | !calc 2+2)" autofocus /></div><script>
+  const box = document.getElementById('chat-box');
+  const input = document.getElementById('cmd');
+
+  addMsg("Connecting to ws://localhost:8887 ...", "sys");
+  const socket = new WebSocket("ws://localhost:8887");
+
+  socket.onopen = () => addMsg("CONNECTED.", "sys");
+  socket.onerror = () => addMsg("WebSocket error. Is Java running?", "sys");
+
+  socket.onmessage = (event) => addMsg(event.data, 'ai');
+
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const text = input.value.trim();
+      if (!text) return;
+      addMsg(text, 'user');
+      socket.send(text);
+      input.value = '';
+    }
+  });
+
+  function addMsg(text, type) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + type;
+    div.textContent = (type === 'ai' ? 'FRAYMUS: ' : type === 'sys' ? 'SYSTEM: ' : 'YOU: ') + text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }</script></body></html>

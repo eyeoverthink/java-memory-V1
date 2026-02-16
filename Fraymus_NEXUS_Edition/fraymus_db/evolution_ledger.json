@@ -1,0 +1,1271 @@
+[
+  {
+    "id": "GEN_1_1770678635521",
+    "generation": 1,
+    "timestamp": 1770678635521,
+    "circuitDNA": "NAND-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GENESIS"
+  },
+  {
+    "id": "GEN_2_1770678635538",
+    "generation": 2,
+    "timestamp": 1770678635538,
+    "circuitDNA": "NAND-XOR-",
+    "circuitSize": 2,
+    "fitness": 0.25,
+    "parentId": "GEN_1"
+  },
+  {
+    "id": "GEN_3_1770678635539",
+    "generation": 3,
+    "timestamp": 1770678635539,
+    "circuitDNA": "NAND-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_2"
+  },
+  {
+    "id": "GEN_4_1770678635540",
+    "generation": 4,
+    "timestamp": 1770678635540,
+    "circuitDNA": "",
+    "circuitSize": 0,
+    "fitness": 0.50,
+    "parentId": "GEN_3"
+  },
+  {
+    "id": "GEN_5_1770678635542",
+    "generation": 5,
+    "timestamp": 1770678635542,
+    "circuitDNA": "OR-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_4"
+  },
+  {
+    "id": "GEN_6_1770678635543",
+    "generation": 6,
+    "timestamp": 1770678635543,
+    "circuitDNA": "OR-AND-",
+    "circuitSize": 2,
+    "fitness": 0.50,
+    "parentId": "GEN_5"
+  },
+  {
+    "id": "GEN_7_1770678635544",
+    "generation": 7,
+    "timestamp": 1770678635544,
+    "circuitDNA": "OR-AND-OR-",
+    "circuitSize": 3,
+    "fitness": 0.50,
+    "parentId": "GEN_6"
+  },
+  {
+    "id": "GEN_8_1770678635546",
+    "generation": 8,
+    "timestamp": 1770678635546,
+    "circuitDNA": "OR-OR-",
+    "circuitSize": 2,
+    "fitness": 0.75,
+    "parentId": "GEN_7"
+  },
+  {
+    "id": "GEN_9_1770678635547",
+    "generation": 9,
+    "timestamp": 1770678635547,
+    "circuitDNA": "OR-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_8"
+  },
+  {
+    "id": "GEN_10_1770678635550",
+    "generation": 10,
+    "timestamp": 1770678635550,
+    "circuitDNA": "OR-NOT-",
+    "circuitSize": 2,
+    "fitness": 0.25,
+    "parentId": "GEN_9"
+  },
+  {
+    "id": "GEN_11_1770678635551",
+    "generation": 11,
+    "timestamp": 1770678635551,
+    "circuitDNA": "OR-NOT-AND-",
+    "circuitSize": 3,
+    "fitness": 0.50,
+    "parentId": "GEN_10"
+  },
+  {
+    "id": "GEN_12_1770678635553",
+    "generation": 12,
+    "timestamp": 1770678635553,
+    "circuitDNA": "OR-NOT-AND-XOR-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_11"
+  },
+  {
+    "id": "GEN_13_1770678635555",
+    "generation": 13,
+    "timestamp": 1770678635555,
+    "circuitDNA": "OR-NOT-AND-",
+    "circuitSize": 3,
+    "fitness": 0.50,
+    "parentId": "GEN_12"
+  },
+  {
+    "id": "GEN_14_1770678635556",
+    "generation": 14,
+    "timestamp": 1770678635556,
+    "circuitDNA": "OR-NOT-AND-OR-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_13"
+  },
+  {
+    "id": "GEN_15_1770678635558",
+    "generation": 15,
+    "timestamp": 1770678635558,
+    "circuitDNA": "OR-NOT-AND-OR-NAND-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_14"
+  },
+  {
+    "id": "GEN_16_1770678635560",
+    "generation": 16,
+    "timestamp": 1770678635560,
+    "circuitDNA": "OR-NOT-AND-OR-NAND-NOT-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_15"
+  },
+  {
+    "id": "GEN_17_1770678635562",
+    "generation": 17,
+    "timestamp": 1770678635562,
+    "circuitDNA": "OR-NOT-AND-OR-NAND-NOT-NAND-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_16"
+  },
+  {
+    "id": "GEN_18_1770678635563",
+    "generation": 18,
+    "timestamp": 1770678635563,
+    "circuitDNA": "OR-NOT-AND-OR-NAND-NOT-NAND-AND-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_17"
+  },
+  {
+    "id": "GEN_19_1770678635565",
+    "generation": 19,
+    "timestamp": 1770678635565,
+    "circuitDNA": "OR-AND-OR-NAND-NOT-NAND-AND-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_18"
+  },
+  {
+    "id": "GEN_20_1770678635566",
+    "generation": 20,
+    "timestamp": 1770678635566,
+    "circuitDNA": "OR-AND-OR-NAND-NOT-NAND-AND-NOT-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_19"
+  },
+  {
+    "id": "GEN_21_1770678635568",
+    "generation": 21,
+    "timestamp": 1770678635568,
+    "circuitDNA": "OR-AND-OR-NAND-NOT-NAND-AND-NOT-NOT-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_20"
+  },
+  {
+    "id": "GEN_22_1770678635569",
+    "generation": 22,
+    "timestamp": 1770678635569,
+    "circuitDNA": "OR-AND-OR-NAND-NOT-NAND-AND-NOT-NOT-NAND-",
+    "circuitSize": 10,
+    "fitness": 0.50,
+    "parentId": "GEN_21"
+  },
+  {
+    "id": "GEN_23_1770678635571",
+    "generation": 23,
+    "timestamp": 1770678635571,
+    "circuitDNA": "OR-AND-OR-NAND-NOT-NAND-AND-NOT-NAND-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_22"
+  },
+  {
+    "id": "GEN_24_1770678635572",
+    "generation": 24,
+    "timestamp": 1770678635572,
+    "circuitDNA": "OR-AND-OR-NAND-NOT-NAND-AND-NOT-NAND-NAND-",
+    "circuitSize": 10,
+    "fitness": 0.50,
+    "parentId": "GEN_23"
+  },
+  {
+    "id": "GEN_25_1770678635573",
+    "generation": 25,
+    "timestamp": 1770678635573,
+    "circuitDNA": "OR-AND-NAND-NOT-NAND-AND-NOT-NAND-NAND-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_24"
+  },
+  {
+    "id": "GEN_26_1770678635575",
+    "generation": 26,
+    "timestamp": 1770678635575,
+    "circuitDNA": "OR-AND-NAND-NAND-AND-NOT-NAND-NAND-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_25"
+  },
+  {
+    "id": "GEN_27_1770678635576",
+    "generation": 27,
+    "timestamp": 1770678635576,
+    "circuitDNA": "OR-AND-NAND-NAND-AND-NOT-NAND-NAND-NOT-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_26"
+  },
+  {
+    "id": "GEN_28_1770678635578",
+    "generation": 28,
+    "timestamp": 1770678635578,
+    "circuitDNA": "OR-AND-NAND-NAND-AND-NOT-NAND-NAND-NOT-NOT-",
+    "circuitSize": 10,
+    "fitness": 0.50,
+    "parentId": "GEN_27"
+  },
+  {
+    "id": "GEN_29_1770678635579",
+    "generation": 29,
+    "timestamp": 1770678635579,
+    "circuitDNA": "OR-AND-NAND-NAND-AND-NOT-NAND-NAND-NOT-NOT-NOT-",
+    "circuitSize": 11,
+    "fitness": 0.50,
+    "parentId": "GEN_28"
+  },
+  {
+    "id": "GEN_30_1770678635580",
+    "generation": 30,
+    "timestamp": 1770678635580,
+    "circuitDNA": "OR-NAND-NAND-AND-NOT-NAND-NAND-NOT-NOT-NOT-",
+    "circuitSize": 10,
+    "fitness": 0.50,
+    "parentId": "GEN_29"
+  },
+  {
+    "id": "GEN_31_1770678635581",
+    "generation": 31,
+    "timestamp": 1770678635581,
+    "circuitDNA": "OR-NAND-AND-NOT-NAND-NAND-NOT-NOT-NOT-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_30"
+  },
+  {
+    "id": "GEN_32_1770678635583",
+    "generation": 32,
+    "timestamp": 1770678635583,
+    "circuitDNA": "NAND-AND-NOT-NAND-NAND-NOT-NOT-NOT-",
+    "circuitSize": 8,
+    "fitness": 0.75,
+    "parentId": "GEN_31"
+  },
+  {
+    "id": "GEN_33_1770678635583",
+    "generation": 33,
+    "timestamp": 1770678635583,
+    "circuitDNA": "NAND-AND-NOT-NAND-NAND-NOT-NOT-NOT-NAND-",
+    "circuitSize": 9,
+    "fitness": 0.25,
+    "parentId": "GEN_32"
+  },
+  {
+    "id": "GEN_34_1770678635584",
+    "generation": 34,
+    "timestamp": 1770678635584,
+    "circuitDNA": "AND-NOT-NAND-NAND-NOT-NOT-NOT-NAND-",
+    "circuitSize": 8,
+    "fitness": 0.75,
+    "parentId": "GEN_33"
+  },
+  {
+    "id": "GEN_35_1770678635586",
+    "generation": 35,
+    "timestamp": 1770678635586,
+    "circuitDNA": "AND-NOT-NAND-NAND-NOT-NOT-NOT-",
+    "circuitSize": 7,
+    "fitness": 0.25,
+    "parentId": "GEN_34"
+  },
+  {
+    "id": "GEN_36_1770678635586",
+    "generation": 36,
+    "timestamp": 1770678635586,
+    "circuitDNA": "AND-NOT-NAND-NAND-NOT-NOT-NOT-OR-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_35"
+  },
+  {
+    "id": "GEN_37_1770678635587",
+    "generation": 37,
+    "timestamp": 1770678635587,
+    "circuitDNA": "AND-NOT-NAND-NAND-NOT-NOT-NOT-OR-XOR-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_36"
+  },
+  {
+    "id": "GEN_38_1770678635588",
+    "generation": 38,
+    "timestamp": 1770678635588,
+    "circuitDNA": "NOT-NAND-NAND-NOT-NOT-NOT-OR-XOR-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_37"
+  },
+  {
+    "id": "GEN_39_1770678635590",
+    "generation": 39,
+    "timestamp": 1770678635590,
+    "circuitDNA": "NOT-NAND-NAND-NOT-NOT-NOT-OR-XOR-NOT-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_38"
+  },
+  {
+    "id": "GEN_40_1770678635592",
+    "generation": 40,
+    "timestamp": 1770678635592,
+    "circuitDNA": "NOT-NAND-NOT-NOT-NOT-OR-XOR-NOT-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_39"
+  },
+  {
+    "id": "GEN_41_1770678635594",
+    "generation": 41,
+    "timestamp": 1770678635594,
+    "circuitDNA": "NOT-NAND-NOT-NOT-NOT-OR-XOR-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_40"
+  },
+  {
+    "id": "GEN_42_1770678635595",
+    "generation": 42,
+    "timestamp": 1770678635595,
+    "circuitDNA": "NOT-NAND-NOT-NOT-NOT-OR-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_41"
+  },
+  {
+    "id": "GEN_43_1770678635596",
+    "generation": 43,
+    "timestamp": 1770678635596,
+    "circuitDNA": "NAND-NOT-NOT-NOT-OR-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_42"
+  },
+  {
+    "id": "GEN_44_1770678635597",
+    "generation": 44,
+    "timestamp": 1770678635597,
+    "circuitDNA": "NAND-NOT-NOT-NOT-OR-NAND-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_43"
+  },
+  {
+    "id": "GEN_45_1770678635598",
+    "generation": 45,
+    "timestamp": 1770678635598,
+    "circuitDNA": "NAND-NOT-NOT-NOT-OR-NAND-XOR-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_44"
+  },
+  {
+    "id": "GEN_46_1770678635600",
+    "generation": 46,
+    "timestamp": 1770678635600,
+    "circuitDNA": "NAND-NOT-NOT-OR-NAND-XOR-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_45"
+  },
+  {
+    "id": "GEN_47_1770678635602",
+    "generation": 47,
+    "timestamp": 1770678635602,
+    "circuitDNA": "NAND-NOT-NOT-OR-NAND-XOR-AND-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_46"
+  },
+  {
+    "id": "GEN_48_1770678635603",
+    "generation": 48,
+    "timestamp": 1770678635603,
+    "circuitDNA": "NAND-NOT-NOT-OR-NAND-AND-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_47"
+  },
+  {
+    "id": "GEN_49_1770678635604",
+    "generation": 49,
+    "timestamp": 1770678635604,
+    "circuitDNA": "NAND-NOT-NOT-OR-NAND-AND-OR-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_48"
+  },
+  {
+    "id": "GEN_50_1770678635605",
+    "generation": 50,
+    "timestamp": 1770678635605,
+    "circuitDNA": "NAND-NOT-OR-NAND-AND-OR-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_49"
+  },
+  {
+    "id": "GEN_51_1770678635606",
+    "generation": 51,
+    "timestamp": 1770678635606,
+    "circuitDNA": "NAND-NOT-OR-NAND-AND-OR-AND-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_50"
+  },
+  {
+    "id": "GEN_52_1770678635607",
+    "generation": 52,
+    "timestamp": 1770678635607,
+    "circuitDNA": "NAND-NOT-OR-NAND-AND-OR-AND-NOT-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_51"
+  },
+  {
+    "id": "GEN_53_1770678635608",
+    "generation": 53,
+    "timestamp": 1770678635608,
+    "circuitDNA": "NOT-OR-NAND-AND-OR-AND-NOT-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_52"
+  },
+  {
+    "id": "GEN_54_1770678635610",
+    "generation": 54,
+    "timestamp": 1770678635610,
+    "circuitDNA": "NOT-OR-NAND-AND-OR-AND-NOT-OR-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_53"
+  },
+  {
+    "id": "GEN_55_1770678635611",
+    "generation": 55,
+    "timestamp": 1770678635611,
+    "circuitDNA": "NOT-OR-NAND-AND-OR-AND-NOT-OR-NOT-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_54"
+  },
+  {
+    "id": "GEN_56_1770678635612",
+    "generation": 56,
+    "timestamp": 1770678635612,
+    "circuitDNA": "OR-NAND-AND-OR-AND-NOT-OR-NOT-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_55"
+  },
+  {
+    "id": "GEN_57_1770678635614",
+    "generation": 57,
+    "timestamp": 1770678635614,
+    "circuitDNA": "OR-NAND-OR-AND-NOT-OR-NOT-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_56"
+  },
+  {
+    "id": "GEN_58_1770678635615",
+    "generation": 58,
+    "timestamp": 1770678635615,
+    "circuitDNA": "OR-NAND-OR-AND-NOT-NOT-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_57"
+  },
+  {
+    "id": "GEN_59_1770678635616",
+    "generation": 59,
+    "timestamp": 1770678635616,
+    "circuitDNA": "OR-NAND-OR-AND-NOT-NOT-NAND-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_58"
+  },
+  {
+    "id": "GEN_60_1770678635618",
+    "generation": 60,
+    "timestamp": 1770678635618,
+    "circuitDNA": "OR-NAND-OR-AND-NOT-NAND-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_59"
+  },
+  {
+    "id": "GEN_61_1770678635618",
+    "generation": 61,
+    "timestamp": 1770678635618,
+    "circuitDNA": "OR-NAND-OR-AND-NAND-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_60"
+  },
+  {
+    "id": "GEN_62_1770678635620",
+    "generation": 62,
+    "timestamp": 1770678635620,
+    "circuitDNA": "OR-NAND-OR-AND-NAND-NAND-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_61"
+  },
+  {
+    "id": "GEN_63_1770678635621",
+    "generation": 63,
+    "timestamp": 1770678635621,
+    "circuitDNA": "OR-NAND-OR-AND-NAND-NAND-NAND-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_62"
+  },
+  {
+    "id": "GEN_64_1770678635623",
+    "generation": 64,
+    "timestamp": 1770678635623,
+    "circuitDNA": "OR-NAND-OR-AND-NAND-NAND-NAND-OR-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_63"
+  },
+  {
+    "id": "GEN_65_1770678635624",
+    "generation": 65,
+    "timestamp": 1770678635624,
+    "circuitDNA": "OR-NAND-OR-AND-NAND-NAND-OR-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_64"
+  },
+  {
+    "id": "GEN_66_1770678635626",
+    "generation": 66,
+    "timestamp": 1770678635626,
+    "circuitDNA": "OR-NAND-OR-AND-NAND-NAND-OR-XOR-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_65"
+  },
+  {
+    "id": "GEN_67_1770678635627",
+    "generation": 67,
+    "timestamp": 1770678635627,
+    "circuitDNA": "NAND-OR-AND-NAND-NAND-OR-XOR-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_66"
+  },
+  {
+    "id": "GEN_68_1770678635628",
+    "generation": 68,
+    "timestamp": 1770678635628,
+    "circuitDNA": "NAND-OR-AND-NAND-NAND-OR-XOR-XOR-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_67"
+  },
+  {
+    "id": "GEN_69_1770678635630",
+    "generation": 69,
+    "timestamp": 1770678635630,
+    "circuitDNA": "NAND-OR-AND-NAND-NAND-XOR-XOR-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_68"
+  },
+  {
+    "id": "GEN_70_1770678635631",
+    "generation": 70,
+    "timestamp": 1770678635631,
+    "circuitDNA": "NAND-AND-NAND-NAND-XOR-XOR-",
+    "circuitSize": 6,
+    "fitness": 0.75,
+    "parentId": "GEN_69"
+  },
+  {
+    "id": "GEN_71_1770678635632",
+    "generation": 71,
+    "timestamp": 1770678635632,
+    "circuitDNA": "NAND-NAND-NAND-XOR-XOR-",
+    "circuitSize": 5,
+    "fitness": 0.75,
+    "parentId": "GEN_70"
+  },
+  {
+    "id": "GEN_72_1770678635634",
+    "generation": 72,
+    "timestamp": 1770678635634,
+    "circuitDNA": "NAND-NAND-NAND-XOR-XOR-XOR-",
+    "circuitSize": 6,
+    "fitness": 0.25,
+    "parentId": "GEN_71"
+  },
+  {
+    "id": "GEN_73_1770678635635",
+    "generation": 73,
+    "timestamp": 1770678635635,
+    "circuitDNA": "NAND-NAND-NAND-XOR-XOR-XOR-AND-",
+    "circuitSize": 7,
+    "fitness": 0.25,
+    "parentId": "GEN_72"
+  },
+  {
+    "id": "GEN_74_1770678635636",
+    "generation": 74,
+    "timestamp": 1770678635636,
+    "circuitDNA": "NAND-NAND-NAND-XOR-XOR-XOR-AND-NAND-",
+    "circuitSize": 8,
+    "fitness": 0.75,
+    "parentId": "GEN_73"
+  },
+  {
+    "id": "GEN_75_1770678635637",
+    "generation": 75,
+    "timestamp": 1770678635637,
+    "circuitDNA": "NAND-NAND-NAND-XOR-XOR-XOR-NAND-",
+    "circuitSize": 7,
+    "fitness": 0.75,
+    "parentId": "GEN_74"
+  },
+  {
+    "id": "GEN_76_1770678635638",
+    "generation": 76,
+    "timestamp": 1770678635638,
+    "circuitDNA": "NAND-NAND-NAND-XOR-XOR-NAND-",
+    "circuitSize": 6,
+    "fitness": 0.25,
+    "parentId": "GEN_75"
+  },
+  {
+    "id": "GEN_77_1770678635640",
+    "generation": 77,
+    "timestamp": 1770678635640,
+    "circuitDNA": "NAND-NAND-NAND-XOR-XOR-NAND-OR-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_76"
+  },
+  {
+    "id": "GEN_78_1770678635642",
+    "generation": 78,
+    "timestamp": 1770678635642,
+    "circuitDNA": "NAND-NAND-NAND-XOR-NAND-OR-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_77"
+  },
+  {
+    "id": "GEN_79_1770678635643",
+    "generation": 79,
+    "timestamp": 1770678635643,
+    "circuitDNA": "NAND-NAND-NAND-XOR-NAND-OR-XOR-",
+    "circuitSize": 7,
+    "fitness": 0.50,
+    "parentId": "GEN_78"
+  },
+  {
+    "id": "GEN_80_1770678635645",
+    "generation": 80,
+    "timestamp": 1770678635645,
+    "circuitDNA": "NAND-NAND-NAND-XOR-NAND-OR-XOR-AND-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_79"
+  },
+  {
+    "id": "GEN_81_1770678635646",
+    "generation": 81,
+    "timestamp": 1770678635646,
+    "circuitDNA": "NAND-NAND-NAND-XOR-NAND-OR-XOR-AND-NAND-",
+    "circuitSize": 9,
+    "fitness": 0.50,
+    "parentId": "GEN_80"
+  },
+  {
+    "id": "GEN_82_1770678635647",
+    "generation": 82,
+    "timestamp": 1770678635647,
+    "circuitDNA": "NAND-NAND-NAND-XOR-NAND-XOR-AND-NAND-",
+    "circuitSize": 8,
+    "fitness": 0.75,
+    "parentId": "GEN_81"
+  },
+  {
+    "id": "GEN_83_1770678635648",
+    "generation": 83,
+    "timestamp": 1770678635648,
+    "circuitDNA": "NAND-NAND-XOR-NAND-XOR-AND-NAND-",
+    "circuitSize": 7,
+    "fitness": 0.25,
+    "parentId": "GEN_82"
+  },
+  {
+    "id": "GEN_84_1770678635649",
+    "generation": 84,
+    "timestamp": 1770678635649,
+    "circuitDNA": "NAND-NAND-XOR-NAND-XOR-AND-",
+    "circuitSize": 6,
+    "fitness": 0.75,
+    "parentId": "GEN_83"
+  },
+  {
+    "id": "GEN_85_1770678635651",
+    "generation": 85,
+    "timestamp": 1770678635651,
+    "circuitDNA": "NAND-NAND-XOR-XOR-AND-",
+    "circuitSize": 5,
+    "fitness": 0.25,
+    "parentId": "GEN_84"
+  },
+  {
+    "id": "GEN_86_1770678635652",
+    "generation": 86,
+    "timestamp": 1770678635652,
+    "circuitDNA": "NAND-XOR-XOR-AND-",
+    "circuitSize": 4,
+    "fitness": 0.75,
+    "parentId": "GEN_85"
+  },
+  {
+    "id": "GEN_87_1770678635654",
+    "generation": 87,
+    "timestamp": 1770678635654,
+    "circuitDNA": "NAND-XOR-XOR-AND-AND-",
+    "circuitSize": 5,
+    "fitness": 0.75,
+    "parentId": "GEN_86"
+  },
+  {
+    "id": "GEN_88_1770678635656",
+    "generation": 88,
+    "timestamp": 1770678635656,
+    "circuitDNA": "NAND-XOR-XOR-AND-AND-NOT-",
+    "circuitSize": 6,
+    "fitness": 0.25,
+    "parentId": "GEN_87"
+  },
+  {
+    "id": "GEN_89_1770678635657",
+    "generation": 89,
+    "timestamp": 1770678635657,
+    "circuitDNA": "NAND-XOR-XOR-AND-AND-NOT-NOT-",
+    "circuitSize": 7,
+    "fitness": 0.75,
+    "parentId": "GEN_88"
+  },
+  {
+    "id": "GEN_90_1770678635659",
+    "generation": 90,
+    "timestamp": 1770678635659,
+    "circuitDNA": "NAND-XOR-XOR-AND-NOT-NOT-",
+    "circuitSize": 6,
+    "fitness": 0.75,
+    "parentId": "GEN_89"
+  },
+  {
+    "id": "GEN_91_1770678635661",
+    "generation": 91,
+    "timestamp": 1770678635661,
+    "circuitDNA": "NAND-XOR-XOR-AND-NOT-NOT-XOR-",
+    "circuitSize": 7,
+    "fitness": 0.25,
+    "parentId": "GEN_90"
+  },
+  {
+    "id": "GEN_92_1770678635662",
+    "generation": 92,
+    "timestamp": 1770678635662,
+    "circuitDNA": "NAND-XOR-AND-NOT-NOT-XOR-",
+    "circuitSize": 6,
+    "fitness": 0.75,
+    "parentId": "GEN_91"
+  },
+  {
+    "id": "GEN_93_1770678635663",
+    "generation": 93,
+    "timestamp": 1770678635663,
+    "circuitDNA": "NAND-XOR-NOT-NOT-XOR-",
+    "circuitSize": 5,
+    "fitness": 0.75,
+    "parentId": "GEN_92"
+  },
+  {
+    "id": "GEN_94_1770678635665",
+    "generation": 94,
+    "timestamp": 1770678635665,
+    "circuitDNA": "NAND-XOR-NOT-XOR-",
+    "circuitSize": 4,
+    "fitness": 0.25,
+    "parentId": "GEN_93"
+  },
+  {
+    "id": "GEN_95_1770678635666",
+    "generation": 95,
+    "timestamp": 1770678635666,
+    "circuitDNA": "NAND-NOT-XOR-",
+    "circuitSize": 3,
+    "fitness": 0.75,
+    "parentId": "GEN_94"
+  },
+  {
+    "id": "GEN_96_1770678635668",
+    "generation": 96,
+    "timestamp": 1770678635668,
+    "circuitDNA": "NAND-NOT-XOR-OR-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_95"
+  },
+  {
+    "id": "GEN_97_1770678635669",
+    "generation": 97,
+    "timestamp": 1770678635669,
+    "circuitDNA": "NAND-NOT-XOR-OR-AND-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_96"
+  },
+  {
+    "id": "GEN_98_1770678635671",
+    "generation": 98,
+    "timestamp": 1770678635671,
+    "circuitDNA": "NAND-NOT-XOR-OR-AND-OR-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_97"
+  },
+  {
+    "id": "GEN_99_1770678635672",
+    "generation": 99,
+    "timestamp": 1770678635672,
+    "circuitDNA": "NAND-NOT-XOR-OR-OR-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_98"
+  },
+  {
+    "id": "GEN_100_1770678635674",
+    "generation": 100,
+    "timestamp": 1770678635674,
+    "circuitDNA": "NAND-NOT-OR-OR-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_99"
+  },
+  {
+    "id": "GEN_101_1770678635675",
+    "generation": 101,
+    "timestamp": 1770678635675,
+    "circuitDNA": "NAND-NOT-OR-OR-NAND-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_100"
+  },
+  {
+    "id": "GEN_102_1770678635677",
+    "generation": 102,
+    "timestamp": 1770678635677,
+    "circuitDNA": "NOT-OR-OR-NAND-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_101"
+  },
+  {
+    "id": "GEN_103_1770678635679",
+    "generation": 103,
+    "timestamp": 1770678635679,
+    "circuitDNA": "NOT-OR-OR-NAND-NOT-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_102"
+  },
+  {
+    "id": "GEN_104_1770678635681",
+    "generation": 104,
+    "timestamp": 1770678635681,
+    "circuitDNA": "NOT-OR-OR-NAND-NOT-AND-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_103"
+  },
+  {
+    "id": "GEN_105_1770678635682",
+    "generation": 105,
+    "timestamp": 1770678635682,
+    "circuitDNA": "OR-OR-NAND-NOT-AND-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_104"
+  },
+  {
+    "id": "GEN_106_1770678635684",
+    "generation": 106,
+    "timestamp": 1770678635684,
+    "circuitDNA": "OR-OR-NAND-NOT-AND-OR-",
+    "circuitSize": 6,
+    "fitness": 0.50,
+    "parentId": "GEN_105"
+  },
+  {
+    "id": "GEN_107_1770678635685",
+    "generation": 107,
+    "timestamp": 1770678635685,
+    "circuitDNA": "OR-NAND-NOT-AND-OR-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_106"
+  },
+  {
+    "id": "GEN_108_1770678635687",
+    "generation": 108,
+    "timestamp": 1770678635687,
+    "circuitDNA": "OR-NAND-NOT-OR-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_107"
+  },
+  {
+    "id": "GEN_109_1770678635688",
+    "generation": 109,
+    "timestamp": 1770678635688,
+    "circuitDNA": "OR-NAND-OR-",
+    "circuitSize": 3,
+    "fitness": 0.50,
+    "parentId": "GEN_108"
+  },
+  {
+    "id": "GEN_110_1770678635690",
+    "generation": 110,
+    "timestamp": 1770678635690,
+    "circuitDNA": "OR-NAND-OR-NOT-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_109"
+  },
+  {
+    "id": "GEN_111_1770678635691",
+    "generation": 111,
+    "timestamp": 1770678635691,
+    "circuitDNA": "OR-NAND-OR-NOT-NOT-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_110"
+  },
+  {
+    "id": "GEN_112_1770678635692",
+    "generation": 112,
+    "timestamp": 1770678635692,
+    "circuitDNA": "OR-NAND-NOT-NOT-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_111"
+  },
+  {
+    "id": "GEN_113_1770678635693",
+    "generation": 113,
+    "timestamp": 1770678635693,
+    "circuitDNA": "OR-NOT-NOT-",
+    "circuitSize": 3,
+    "fitness": 0.75,
+    "parentId": "GEN_112"
+  },
+  {
+    "id": "GEN_114_1770678635694",
+    "generation": 114,
+    "timestamp": 1770678635694,
+    "circuitDNA": "OR-NOT-",
+    "circuitSize": 2,
+    "fitness": 0.25,
+    "parentId": "GEN_113"
+  },
+  {
+    "id": "GEN_115_1770678635695",
+    "generation": 115,
+    "timestamp": 1770678635695,
+    "circuitDNA": "OR-NOT-OR-",
+    "circuitSize": 3,
+    "fitness": 0.25,
+    "parentId": "GEN_114"
+  },
+  {
+    "id": "GEN_116_1770678635697",
+    "generation": 116,
+    "timestamp": 1770678635697,
+    "circuitDNA": "OR-OR-",
+    "circuitSize": 2,
+    "fitness": 0.75,
+    "parentId": "GEN_115"
+  },
+  {
+    "id": "GEN_117_1770678635698",
+    "generation": 117,
+    "timestamp": 1770678635698,
+    "circuitDNA": "OR-OR-NOT-",
+    "circuitSize": 3,
+    "fitness": 0.25,
+    "parentId": "GEN_116"
+  },
+  {
+    "id": "GEN_118_1770678635700",
+    "generation": 118,
+    "timestamp": 1770678635700,
+    "circuitDNA": "OR-OR-NOT-NOT-",
+    "circuitSize": 4,
+    "fitness": 0.75,
+    "parentId": "GEN_117"
+  },
+  {
+    "id": "GEN_119_1770678635702",
+    "generation": 119,
+    "timestamp": 1770678635702,
+    "circuitDNA": "OR-OR-NOT-",
+    "circuitSize": 3,
+    "fitness": 0.25,
+    "parentId": "GEN_118"
+  },
+  {
+    "id": "GEN_120_1770678635703",
+    "generation": 120,
+    "timestamp": 1770678635703,
+    "circuitDNA": "OR-OR-NOT-AND-",
+    "circuitSize": 4,
+    "fitness": 0.50,
+    "parentId": "GEN_119"
+  },
+  {
+    "id": "GEN_121_1770678635704",
+    "generation": 121,
+    "timestamp": 1770678635704,
+    "circuitDNA": "OR-OR-AND-",
+    "circuitSize": 3,
+    "fitness": 0.50,
+    "parentId": "GEN_120"
+  },
+  {
+    "id": "GEN_122_1770678635706",
+    "generation": 122,
+    "timestamp": 1770678635706,
+    "circuitDNA": "OR-AND-",
+    "circuitSize": 2,
+    "fitness": 0.50,
+    "parentId": "GEN_121"
+  },
+  {
+    "id": "GEN_123_1770678635707",
+    "generation": 123,
+    "timestamp": 1770678635707,
+    "circuitDNA": "OR-AND-AND-",
+    "circuitSize": 3,
+    "fitness": 0.50,
+    "parentId": "GEN_122"
+  },
+  {
+    "id": "GEN_124_1770678635708",
+    "generation": 124,
+    "timestamp": 1770678635708,
+    "circuitDNA": "OR-AND-",
+    "circuitSize": 2,
+    "fitness": 0.50,
+    "parentId": "GEN_123"
+  },
+  {
+    "id": "GEN_125_1770678635709",
+    "generation": 125,
+    "timestamp": 1770678635709,
+    "circuitDNA": "AND-",
+    "circuitSize": 1,
+    "fitness": 0.25,
+    "parentId": "GEN_124"
+  },
+  {
+    "id": "GEN_126_1770678635711",
+    "generation": 126,
+    "timestamp": 1770678635711,
+    "circuitDNA": "",
+    "circuitSize": 0,
+    "fitness": 0.50,
+    "parentId": "GEN_125"
+  },
+  {
+    "id": "GEN_127_1770678635713",
+    "generation": 127,
+    "timestamp": 1770678635713,
+    "circuitDNA": "OR-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_126"
+  },
+  {
+    "id": "GEN_128_1770678635714",
+    "generation": 128,
+    "timestamp": 1770678635714,
+    "circuitDNA": "OR-AND-",
+    "circuitSize": 2,
+    "fitness": 0.50,
+    "parentId": "GEN_127"
+  },
+  {
+    "id": "GEN_129_1770678635716",
+    "generation": 129,
+    "timestamp": 1770678635716,
+    "circuitDNA": "OR-AND-XOR-",
+    "circuitSize": 3,
+    "fitness": 0.50,
+    "parentId": "GEN_128"
+  },
+  {
+    "id": "GEN_130_1770678635717",
+    "generation": 130,
+    "timestamp": 1770678635717,
+    "circuitDNA": "OR-AND-",
+    "circuitSize": 2,
+    "fitness": 0.50,
+    "parentId": "GEN_129"
+  },
+  {
+    "id": "GEN_131_1770678635719",
+    "generation": 131,
+    "timestamp": 1770678635719,
+    "circuitDNA": "OR-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_130"
+  },
+  {
+    "id": "GEN_132_1770678635720",
+    "generation": 132,
+    "timestamp": 1770678635720,
+    "circuitDNA": "OR-OR-",
+    "circuitSize": 2,
+    "fitness": 0.75,
+    "parentId": "GEN_131"
+  },
+  {
+    "id": "GEN_133_1770678635721",
+    "generation": 133,
+    "timestamp": 1770678635721,
+    "circuitDNA": "OR-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_132"
+  },
+  {
+    "id": "GEN_134_1770678635722",
+    "generation": 134,
+    "timestamp": 1770678635722,
+    "circuitDNA": "OR-NAND-",
+    "circuitSize": 2,
+    "fitness": 0.50,
+    "parentId": "GEN_133"
+  },
+  {
+    "id": "GEN_135_1770678635724",
+    "generation": 135,
+    "timestamp": 1770678635724,
+    "circuitDNA": "NAND-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_134"
+  },
+  {
+    "id": "GEN_136_1770678635725",
+    "generation": 136,
+    "timestamp": 1770678635725,
+    "circuitDNA": "",
+    "circuitSize": 0,
+    "fitness": 0.50,
+    "parentId": "GEN_135"
+  },
+  {
+    "id": "GEN_137_1770678635726",
+    "generation": 137,
+    "timestamp": 1770678635726,
+    "circuitDNA": "OR-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_136"
+  },
+  {
+    "id": "GEN_138_1770678635727",
+    "generation": 138,
+    "timestamp": 1770678635727,
+    "circuitDNA": "OR-XOR-",
+    "circuitSize": 2,
+    "fitness": 0.75,
+    "parentId": "GEN_137"
+  },
+  {
+    "id": "GEN_139_1770678635728",
+    "generation": 139,
+    "timestamp": 1770678635728,
+    "circuitDNA": "OR-XOR-XOR-",
+    "circuitSize": 3,
+    "fitness": 0.75,
+    "parentId": "GEN_138"
+  },
+  {
+    "id": "GEN_140_1770678635729",
+    "generation": 140,
+    "timestamp": 1770678635729,
+    "circuitDNA": "OR-XOR-",
+    "circuitSize": 2,
+    "fitness": 0.75,
+    "parentId": "GEN_139"
+  },
+  {
+    "id": "GEN_141_1770678635730",
+    "generation": 141,
+    "timestamp": 1770678635730,
+    "circuitDNA": "XOR-",
+    "circuitSize": 1,
+    "fitness": 1.00,
+    "parentId": "GEN_140"
+  }
+]

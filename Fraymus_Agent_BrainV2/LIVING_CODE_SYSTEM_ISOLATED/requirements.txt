@@ -1,0 +1,31 @@
+# LIVING CODE SYSTEM - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core
+streamlit==1.31.0
+numpy==1.24.3
+pandas==2.0.3
+matplotlib==3.7.2
+
+# LLM Integration
+transformers==4.36.0
+torch==2.1.0
+openai==1.6.1
+anthropic==0.8.1
+
+# PDF Processing
+PyPDF2==3.0.1
+pdfplumber==0.10.3
+
+# Knowledge Extraction
+nltk==3.8.1
+beautifulsoup4==4.12.2
+requests==2.31.0
+
+# QR Code Generation
+qrcode==7.4.2
+Pillow==10.1.0
+
+# Quantum/Math
+scipy==1.11.3
+sympy==1.12
