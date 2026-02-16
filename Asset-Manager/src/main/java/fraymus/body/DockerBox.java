@@ -77,6 +77,7 @@ public class DockerBox {
             return "❌ DOCKER NOT AVAILABLE\nInstall Docker to use sandboxed execution.";
         }
         
+        // Try Docker first, fallback to direct execution if API broken
         try {
             System.out.println("   🐳 DOCKER BOX: Executing safely in " + image + "...");
             System.out.println("   📝 Command: " + command);
@@ -125,7 +126,15 @@ public class DockerBox {
             }
             
             int exitCode = p.exitValue();
-            String result = "📦 SANDBOX OUTPUT (exit: " + exitCode + "):\n\n" + output.toString();
+            
+            // Check if Docker API failed (500 error)
+            String outputStr = output.toString();
+            if (exitCode != 0 && outputStr.contains("500 Internal Server Error")) {
+                System.err.println("   ⚠️  Docker API broken - falling back to direct execution");
+                return runDirectFallback(command, image);
+            }
+            
+            String result = "📦 SANDBOX OUTPUT (exit: " + exitCode + "):\n\n" + outputStr;
             
             if (exitCode != 0) {
                 result = "⚠️  " + result;
@@ -223,6 +232,74 @@ public class DockerBox {
      */
     private String escapeSingleQuotes(String str) {
         return str.replace("'", "'\\''");
+    }
+    
+    /**
+     * Fallback: Run Python directly when Docker API is broken
+     */
+    private String runDirectFallback(String command, String image) {
+        try {
+            System.out.println("   ⚡ FALLBACK MODE: Running directly (Docker API broken)");
+            
+            // Extract Python code if it's a python command
+            if (command.contains("python")) {
+                // Try to run Python directly
+                ProcessBuilder pb = new ProcessBuilder("python", "-c", extractPythonCode(command));
+                pb.redirectErrorStream(true);
+                Process p = pb.start();
+                
+                StringBuilder output = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(p.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        output.append(line).append("\n");
+                    }
+                }
+                
+                boolean finished = p.waitFor(timeoutSeconds, TimeUnit.SECONDS);
+                if (!finished) {
+                    p.destroyForcibly();
+                    return "❌ TIMEOUT (" + timeoutSeconds + "s)";
+                }
+                
+                int exitCode = p.exitValue();
+                String result = "⚡ DIRECT EXECUTION (exit: " + exitCode + "):\n\n" + output.toString();
+                
+                if (exitCode == 0) {
+                    result = "✅ " + result;
+                } else {
+                    result = "⚠️  " + result;
+                }
+                
+                return result;
+            } else {
+                return "⚠️  FALLBACK: Only Python commands supported in fallback mode";
+            }
+        } catch (Exception e) {
+            return "❌ FALLBACK ERROR: " + e.getMessage();
+        }
+    }
+    
+    /**
+     * Extract Python code from command string
+     */
+    private String extractPythonCode(String command) {
+        // Extract code between quotes in python -c "code" format
+        int start = command.indexOf("\"");
+        int end = command.lastIndexOf("\"");
+        if (start != -1 && end != -1 && start < end) {
+            return command.substring(start + 1, end);
+        }
+        
+        // Try single quotes
+        start = command.indexOf("'");
+        end = command.lastIndexOf("'");
+        if (start != -1 && end != -1 && start < end) {
+            return command.substring(start + 1, end);
+        }
+        
+        return command;
     }
     
     /**

@@ -57,7 +57,7 @@ public class BicameralPrism {
             System.out.println("   🏠 Using local Ollama for LLM Spine");
             this.useOpenAI = false;
             this.logicBrain = new OllamaSpine("llama3");
-            this.abstractBrain = new OllamaSpine("mistral");
+            this.abstractBrain = new OllamaSpine("llama3.2");
             this.synthesizer = new OllamaSpine("llama3");
         }
     }
