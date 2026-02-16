@@ -31,6 +31,7 @@ public class VisualCortex {
     
     private static final double PHI = 1.618033988749895;
     private static final String PYTHON_SCRIPT = "VideoCortex.py";
+    private static final String PYTHON_COMMAND = "py -3.12"; // Use Python 3.12 with GPU support
     private static boolean initialized = false;
     private static boolean available = false;
     
@@ -56,17 +57,17 @@ public class VisualCortex {
             return false;
         }
         
-        // Check if Python is available
+        // Check if Python 3.12 is available
         try {
-            ProcessBuilder pb = new ProcessBuilder("python", "--version");
+            ProcessBuilder pb = new ProcessBuilder("py", "-3.12", "--version");
             Process p = pb.start();
             p.waitFor();
             
             if (p.exitValue() == 0) {
                 available = true;
-                System.out.println("👁️ VISUAL CORTEX: Available and ready");
+                System.out.println("👁️ VISUAL CORTEX: Available and ready (Python 3.12 + GPU)");
             } else {
-                System.out.println("👁️ VISUAL CORTEX: Python not found");
+                System.out.println("👁️ VISUAL CORTEX: Python 3.12 not found");
                 available = false;
             }
         } catch (Exception e) {
@@ -121,7 +122,8 @@ public class VisualCortex {
             
             // Build command
             List<String> command = new ArrayList<>();
-            command.add("python");
+            command.add("py");
+            command.add("-3.12");
             command.add(PYTHON_SCRIPT);
             command.add("--state-file");
             command.add(tempFile.getAbsolutePath());
