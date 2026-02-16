@@ -1,0 +1,9 @@
+  {
+    "id": "GEN_3_1770678635539",
+    "generation": 3,
+    "timestamp": 1770678635539,
+    "circuitDNA": "NAND-",
+    "circuitSize": 1,
+    "fitness": 0.75,
+    "parentId": "GEN_2"
+  }

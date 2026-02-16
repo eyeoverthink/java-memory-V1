@@ -1,0 +1,9 @@
+  {
+    "id": "GEN_123_1770678635707",
+    "generation": 123,
+    "timestamp": 1770678635707,
+    "circuitDNA": "OR-AND-AND-",
+    "circuitSize": 3,
+    "fitness": 0.50,
+    "parentId": "GEN_122"
+  }

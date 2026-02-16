@@ -1,0 +1,15 @@
+/* ═══════════════════════════════════════════════════════════ */
+/* INTEGRATION NOTE:                                            */
+/* To enable the compiler, add this to your kernel.c:          */
+/*                                                              */
+/* 1. Include compiler.c functions (or link separately)        */
+/* 2. In the shell command parser, add:                        */
+/*                                                              */
+/*    else if(strcmp_prefix(buffer, "run", 3)) {              */
+/*        run_script(&buffer[4]);  // Skip "run "            */
+/*    }                                                         */
+/*                                                              */
+/* Example usage at fray> prompt:                              */
+/*   fray> run 10 5 + .                                        */
+/*   > OUTPUT: 15                                              */
+/* ═══════════════════════════════════════════════════════════ */

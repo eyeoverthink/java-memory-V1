@@ -1,0 +1,1 @@
+{"id":"full_adder_fitness100_gen1","goalName":"Full Adder","fitness":100,"generation":1,"timestamp":1770765711155,"gateCount":3,"circuit":["NOT","NOT","XOR"]}

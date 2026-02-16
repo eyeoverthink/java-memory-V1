@@ -1,0 +1,67 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+version '2.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+def osName = System.getProperty('os.name').toLowerCase()
+def lwjglNativesValue = osName.contains('win') ? 'natives-windows' :
+        (osName.contains('mac') ? 'natives-macos' : 'natives-linux')
+def imguiNativesSuffix = osName.contains('win') ? 'windows' :
+        (osName.contains('mac') ? 'macos' : 'linux')
+
+repositories {
+    mavenCentral()
+}
+
+project.ext.lwjglVersion = "3.3.3"
+project.ext.jomlVersion = "1.10.5"
+project.ext.lwjglNatives = lwjglNativesValue
+project.ext.imguiVersion = "1.86.11"
+
+dependencies {
+    implementation "io.github.spair:imgui-java-binding:$imguiVersion"
+    implementation "io.github.spair:imgui-java-lwjgl3:$imguiVersion"
+    runtimeOnly "io.github.spair:imgui-java-natives-${imguiNativesSuffix}:$imguiVersion"
+
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-glfw"
+    implementation "org.lwjgl:lwjgl-opengl"
+    implementation "org.lwjgl:lwjgl-stb"
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+
+    implementation "org.joml:joml:$jomlVersion"
+
+    implementation "org.apache.pdfbox:pdfbox:2.0.31"
+    
+    // MongoDB driver for cloud persistence
+    implementation "org.mongodb:mongodb-driver-sync:5.0.0"
+}
+
+application {
+    mainClass = 'fraymus.FraymusApp'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'fraymus.FraymusApp'
+    }
+}
+
+run {
+    jvmArgs = ['-Djava.awt.headless=false']
+}

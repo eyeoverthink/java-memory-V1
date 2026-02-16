@@ -1,0 +1,9 @@
+  {
+    "id": "GEN_99_1770678635672",
+    "generation": 99,
+    "timestamp": 1770678635672,
+    "circuitDNA": "NAND-NOT-XOR-OR-OR-",
+    "circuitSize": 5,
+    "fitness": 0.50,
+    "parentId": "GEN_98"
+  }

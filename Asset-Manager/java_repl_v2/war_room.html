@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS // WAR ROOM // GEN 190</title>
+    <style>
+        /* --- AESTHETIC: COMMAND CENTER --- */
+        body { margin: 0; background: #050505; font-family: 'Consolas', monospace; color: #00FF00; display: grid; grid-template-columns: 1fr 2fr 1fr; height: 100vh; overflow: hidden; }
+        
+        /* PANELS */
+        .panel { border: 1px solid #004400; background: #080808; display: flex; flex-direction: column; padding: 10px; }
+        .header { background: #002200; padding: 8px; font-weight: bold; letter-spacing: 2px; border-bottom: 1px solid #00FF00; margin-bottom: 10px; text-align: center; }
+        
+        /* CODE EDITOR (READ ONLY) */
+        #code-display { 
+            flex-grow: 1; background: #000; color: #aaa; border: 1px solid #222; 
+            font-family: inherit; font-size: 11px; resize: none; padding: 10px; 
+            white-space: pre; overflow: auto; line-height: 1.4;
+        }
+        
+        /* VISUALIZER (CENTER) */
+        #vis-container { position: relative; background: #000; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* LOGS (RIGHT) */
+        #log-display { flex-grow: 1; font-size: 10px; overflow-y: auto; color: #008800; padding: 5px; }
+        .log-entry { margin-bottom: 3px; padding: 2px 0; border-bottom: 1px solid #111; }
+        .err { color: #FF4444; }
+        .suc { color: #44FF44; }
+        
+        /* CONTROLS */
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { 
+            flex: 1; background: #002200; color: #00FF00; border: 1px solid #00FF00; 
+            padding: 12px; font-weight: bold; cursor: pointer; letter-spacing: 1px;
+            transition: 0.2s;
+        }
+        .btn:hover { background: #00FF00; color: #000; }
+        .btn-red { background: #220000; border-color: #FF0000; color: #FF0000; }
+        .btn-red:hover { background: #FF0000; color: #000; }
+        
+        /* STATUS HUD */
+        #hud { 
+            position: absolute; top: 10px; left: 10px; pointer-events: none; 
+            background: rgba(0,0,0,0.7); padding: 10px; border: 1px solid #004400;
+        }
+        #hud div { margin-bottom: 5px; font-size: 12px; }
+        #hud span { color: #00FF00; font-weight: bold; }
+        
+        /* CENTER TITLE */
+        #center-title {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            font-size: 10px; color: #333; letter-spacing: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+        <div class="header">SOURCE TARGET</div>
+        <textarea id="code-display" readonly>// CONNECTING TO BRIDGE...
+
+// Run: python bridge.py
+// Then click IGNITE EVOLUTION</textarea>
+        <div class="btn-row">
+            <button class="btn" onclick="ignite()">IGNITE EVOLUTION</button>
+            <button class="btn btn-red" onclick="reset()">RESET</button>
+        </div>
+    </div>
+
+    <div class="panel" style="padding:0; border:none;">
+        <div id="vis-container">
+            <div id="hud">
+                <div>GEN: <span id="gen-val">0</span></div>
+                <div>FITNESS: <span id="fit-val">0.0</span></div>
+                <div>STATUS: <span id="status-val">OFFLINE</span></div>
+            </div>
+            <div id="center-title">NEURAL BATTLEFIELD</div>
+            <canvas id="simCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="header">COMPILER LOGS</div>
+        <div id="log-display">
+            <div class="log-entry">[AWAITING CONNECTION]</div>
+        </div>
+    </div>
+
+<script>
+/**
+ * 🧬 FRAYMUS WAR ROOM // GEN 190
+ * Real-time Code Evolution Visualization
+ */
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+let nodes = [];
+let lastNodeCount = 0;
+
+function resize() {
+    width = document.getElementById('vis-container').clientWidth;
+    height = document.getElementById('vis-container').clientHeight;
+    canvas.width = width;
+    canvas.height = height;
+}
+window.addEventListener('resize', resize);
+
+// PARTICLE LOGIC
+function updateVis(dataNodes) {
+    if (dataNodes.length > lastNodeCount) {
+        let latest = dataNodes[dataNodes.length - 1];
+        let col = (latest.type === "ERR") ? "#FF0000" : "#00FF00";
+        let size = (latest.type === "ERR") ? 3 : 5;
+        
+        // Spawn explosion cluster
+        for (let i = 0; i < 20; i++) {
+            let angle = (Math.PI * 2 / 20) * i;
+            let speed = 3 + Math.random() * 5;
+            nodes.push({
+                x: width / 2,
+                y: height / 2,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                col: col,
+                size: size,
+                life: 80 + Math.random() * 40
+            });
+        }
+        lastNodeCount = dataNodes.length;
+    }
+}
+
+function loop() {
+    // Trail fade
+    ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+    ctx.fillRect(0, 0, width, height);
+    
+    // Central core
+    let pulse = (Math.sin(Date.now() / 300) + 1) / 2;
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(0, 255, 0, ${0.1 + pulse * 0.2})`;
+    ctx.lineWidth = 2;
+    ctx.arc(width / 2, height / 2, 50 + pulse * 20, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Update particles
+    for (let i = nodes.length - 1; i >= 0; i--) {
+        let p = nodes[i];
+        
+        // Physics
+        p.x += p.vx;
+        p.y += p.vy;
+        
+        // Gravity to center
+        p.vx += (width / 2 - p.x) * 0.002;
+        p.vy += (height / 2 - p.y) * 0.002;
+        
+        // Friction
+        p.vx *= 0.99;
+        p.vy *= 0.99;
+        
+        // Draw particle
+        ctx.globalAlpha = p.life / 100;
+        ctx.fillStyle = p.col;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw connections
+        ctx.strokeStyle = p.col;
+        ctx.lineWidth = 0.5;
+        for (let j = 0; j < nodes.length; j++) {
+            if (i !== j) {
+                let p2 = nodes[j];
+                let d = Math.sqrt((p.x - p2.x) ** 2 + (p.y - p2.y) ** 2);
+                if (d < 60) {
+                    ctx.globalAlpha = (p.life / 100) * (1 - d / 60) * 0.3;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                }
+            }
+        }
+        ctx.globalAlpha = 1;
+        
+        p.life--;
+        if (p.life <= 0) nodes.splice(i, 1);
+    }
+    
+    requestAnimationFrame(loop);
+}
+
+// --- DATA LINK ---
+async function sync() {
+    try {
+        let res = await fetch('http://localhost:8000/data');
+        let data = await res.json();
+        
+        // Update code display
+        document.getElementById('code-display').value = data.code;
+        
+        // Update HUD
+        document.getElementById('gen-val').innerText = data.generation;
+        document.getElementById('fit-val').innerText = data.fitness.toFixed(1);
+        document.getElementById('status-val').innerText = data.status;
+        
+        // Color status
+        let statusEl = document.getElementById('status-val');
+        if (data.status === "EVOLVING") statusEl.style.color = "#FFFF00";
+        else if (data.status === "STABLE") statusEl.style.color = "#00FF00";
+        else if (data.status === "ERROR") statusEl.style.color = "#FF0000";
+        else statusEl.style.color = "#888";
+        
+        // Update logs
+        let logHTML = "";
+        data.logs.slice().reverse().forEach(l => {
+            let cls = "";
+            if (l.includes("❌")) cls = "err";
+            else if (l.includes("✅")) cls = "suc";
+            logHTML += `<div class="log-entry ${cls}">${l}</div>`;
+        });
+        document.getElementById('log-display').innerHTML = logHTML;
+        
+        // Update visuals
+        updateVis(data.nodes);
+        
+    } catch (e) {
+        document.getElementById('status-val').innerText = "OFFLINE";
+        document.getElementById('status-val').style.color = "#FF0000";
+    }
+}
+
+function ignite() {
+    fetch('http://localhost:8000/ignite')
+        .then(() => {
+            document.getElementById('status-val').innerText = "IGNITING...";
+            document.getElementById('status-val').style.color = "#FFFF00";
+        })
+        .catch(e => alert("Bridge not running!\n\nRun: python bridge.py"));
+}
+
+function reset() {
+    fetch('http://localhost:8000/reset')
+        .then(() => {
+            nodes = [];
+            lastNodeCount = 0;
+        });
+}
+
+// BOOT
+resize();
+loop();
+setInterval(sync, 500); // 2Hz Sync
+
+console.log('⚔️ FRAYMUS WAR ROOM // GEN 190');
+console.log('   Connect to bridge.py on port 8000');
+
+</script>
+</body>
+</html>

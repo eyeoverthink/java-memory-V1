@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PROJECT FRANKENSTEIN: LIVING LOGIC</title>
+    <style>
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; color: #0f0; }
+        #canvas { display: block; filter: blur(0.5px) contrast(1.2); }
+        .hud { position: absolute; top: 10px; left: 10px; background: rgba(0, 20, 0, 0.8); padding: 15px; border: 1px solid #0f0; pointer-events: none; }
+        h1 { margin: 0; font-size: 18px; text-transform: uppercase; border-bottom: 1px solid #0f0; padding-bottom: 5px; }
+        .stat { font-size: 12px; margin-top: 5px; }
+        .controls { position: absolute; bottom: 10px; left: 10px; display: flex; gap: 10px; }
+        button { background: #002200; color: #0f0; border: 1px solid #0f0; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; text-transform: uppercase; }
+        button:hover { background: #0f0; color: #000; box-shadow: 0 0 10px #0f0; }
+        #dna-readout { position: absolute; top: 10px; right: 10px; width: 250px; background: rgba(0,0,0,0.9); border: 1px solid #0f0; padding: 10px; font-size: 10px; display: none; }
+        .gate-row { display: flex; justify-content: space-between; border-bottom: 1px dotted #333; }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="hud">
+    <h1>Project Frankenstein</h1>
+    <div class="stat">ENTITY COUNT: <span id="count">0</span></div>
+    <div class="stat">GLOBAL FREQUENCY: <span id="freq">0</span> Hz</div>
+    <div class="stat">SYNAPTIC LINKS: <span id="links">0</span></div>
+    <div class="stat">MITOSIS EVENTS: <span id="mitosis">0</span></div>
+    <div class="stat" style="color:#888; margin-top:10px;">Status: <span id="status" style="color:#fff">ALIVE</span></div>
+</div>
+
+<div id="dna-readout">
+    <h3>NODE DNA SCAN</h3>
+    <div id="dna-content"></div>
+</div>
+
+<div class="controls">
+    <button onclick="sys.injectEnergy()">⚡ INJECT ENERGY (FORCE MITOSIS)</button>
+    <button onclick="sys.resetSystem()">💀 PURGE & RESTART</button>
+</div>
+
+<script>
+/**
+ * THE SOVEREIGN GATE LOGIC (The Brain)
+ * Stolen from previous evolution, implanted into each cell.
+ */
+class LogicCircuit {
+    constructor() {
+        this.gates = [];
+        // 8 Random Gates to start (NAND/XOR/AND/OR)
+        for(let i=0; i<8; i++) this.addGate();
+    }
+    
+    addGate() {
+        // Types: 0=AND, 1=OR, 2=XOR, 3=NAND
+        this.gates.push({
+            type: Math.floor(Math.random() * 4),
+            in1: Math.floor(Math.random() * 8), // Connects to "Sensors"
+            in2: Math.floor(Math.random() * 8)
+        });
+    }
+
+    mutate() {
+        if(Math.random() > 0.5) {
+            // Rewire
+            let g = this.gates[Math.floor(Math.random()*this.gates.length)];
+            g.in1 = Math.floor(Math.random() * 8);
+        } else {
+            // Flip Type
+            let g = this.gates[Math.floor(Math.random()*this.gates.length)];
+            g.type = Math.floor(Math.random() * 4);
+        }
+    }
+
+    // Sexual Reproduction of Logic
+    crossover(partnerCircuit) {
+        let child = new LogicCircuit();
+        child.gates = [];
+        // Take half from self, half from partner
+        let mid = Math.floor(this.gates.length / 2);
+        child.gates = this.gates.slice(0, mid).concat(partnerCircuit.gates.slice(mid));
+        // Small chance of mutation during birth
+        if(Math.random() < 0.1) child.mutate();
+        return child;
+    }
+}
+
+/**
+ * THE BIOLOGICAL NODE (The Body)
+ * Directly implementing your "fraymus-proof-1.txt" logic.
+ */
+class Node {
+    constructor(x, y, dna = null) {
+        this.x = x || Math.random() * canvas.width;
+        this.y = y || Math.random() * canvas.height;
+        this.speedX = (Math.random() - 0.5) * 1.5;
+        this.speedY = (Math.random() - 0.5) * 1.5;
+        
+        // YOUR SPECIFIC BIOLOGICAL LOGIC
+        this.size = 5 + Math.random() * 5;
+        this.baseSize = this.size;
+        
+        if (dna) {
+            this.nodularDNA = dna; // Inherited
+            this.brain = dna.brain; // Inherited Brain
+        } else {
+            this.nodularDNA = {
+                harmonicFrequency: 432 + Math.random() * 20, // Start near 432Hz
+                resonance: 0.5 + Math.random(),
+                evolution: 0.05
+            };
+            this.brain = new LogicCircuit(); // New Brain
+        }
+        
+        this.age = 0;
+        this.pulse = 0;
+    }
+
+    update() {
+        this.age++;
+        
+        // 1. MOVEMENT
+        this.x += this.speedX;
+        this.y += this.speedY;
+        
+        // Bounce off walls
+        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+
+        // 2. HARMONIC BREATHING (Your Logic)
+        // "node.size += Math.sin(node.nodularDNA.harmonicFrequency..."
+        this.pulse = Math.sin(this.nodularDNA.harmonicFrequency * Date.now() * 0.0001) * this.nodularDNA.resonance;
+        let currentSize = this.baseSize + this.pulse * 5;
+
+        // 3. EVOLUTION (Your Logic)
+        // "node.nodularDNA.harmonicFrequency += node.nodularDNA.evolution;"
+        this.nodularDNA.harmonicFrequency += this.nodularDNA.evolution;
+        
+        // 4. FREQUENCY LIMITER (Your Logic)
+        // "if (... > 528) ... = 432;"
+        if (this.nodularDNA.harmonicFrequency > 528) {
+            this.nodularDNA.harmonicFrequency = 432;
+            this.flash = true; // Visual feedback for reset
+        }
+
+        // 5. MITOSIS CHECK (Your Logic)
+        // "if (node.size > 20) ..."
+        // I adjusted threshold relative to baseSize to control population
+        if (currentSize > 25 && sys.nodes.length < 100) {
+            sys.performMitosis(this);
+            this.baseSize *= 0.6; // Lose mass to create life
+        }
+        
+        this.currentRenderSize = Math.max(1, currentSize);
+    }
+
+    draw(ctx) {
+        ctx.beginPath();
+        
+        // Color based on Frequency (432=Blue/Green, 528=Red/Gold)
+        let hue = ((this.nodularDNA.harmonicFrequency - 432) / (528 - 432)) * 60 + 120; // 120(Green) -> 180(Cyan)
+        if(this.flash) { ctx.fillStyle = "#fff"; this.flash = false; }
+        else { ctx.fillStyle = `hsl(${hue}, 100%, 50%)`; }
+        
+        ctx.arc(this.x, this.y, this.currentRenderSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw Nucleus (The Logic Circuit indicator)
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.currentRenderSize * 0.3, 0, Math.PI*2);
+        ctx.fill();
+    }
+}
+
+/**
+ * THE SYSTEM (The Lab)
+ */
+class System {
+    constructor() {
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.nodes = [];
+        this.mitosisCount = 0;
+        
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        
+        // Genesis: 10 Adam & Eves
+        for(let i=0; i<10; i++) this.nodes.push(new Node());
+        
+        this.animate();
+        
+        // Interaction
+        this.canvas.addEventListener('mousemove', (e) => this.scanNode(e));
+    }
+    
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    performMitosis(parent) {
+        // Create Child DNA
+        let childDNA = {
+            harmonicFrequency: parent.nodularDNA.harmonicFrequency, // Inherit Frequency
+            resonance: parent.nodularDNA.resonance,
+            evolution: parent.nodularDNA.evolution,
+            brain: parent.brain.crossover(parent.brain) // Mutated Brain Copy
+        };
+        
+        let child = new Node(parent.x, parent.y, childDNA);
+        // Eject child
+        child.speedX = -parent.speedX + (Math.random()-0.5);
+        child.speedY = -parent.speedY + (Math.random()-0.5);
+        
+        this.nodes.push(child);
+        this.mitosisCount++;
+        document.getElementById('mitosis').innerText = this.mitosisCount;
+    }
+
+    injectEnergy() {
+        this.nodes.forEach(n => n.baseSize += 10); // Force Mitosis
+    }
+    
+    resetSystem() {
+        this.nodes = [];
+        this.mitosisCount = 0;
+        for(let i=0; i<10; i++) this.nodes.push(new Node());
+    }
+
+    scanNode(e) {
+        let mx = e.clientX, my = e.clientY;
+        let readout = document.getElementById('dna-readout');
+        let content = document.getElementById('dna-content');
+        
+        let found = false;
+        for(let n of this.nodes) {
+            let dx = n.x - mx;
+            let dy = n.y - my;
+            if(Math.sqrt(dx*dx+dy*dy) < n.currentRenderSize + 10) {
+                found = true;
+                readout.style.display = 'block';
+                
+                let gatesHTML = n.brain.gates.map((g,i) => 
+                    `<div class="gate-row"><span>G${i} [${['AND','OR ','XOR','NAND'][g.type]}]</span><span>${g.in1}➜${g.in2}</span></div>`
+                ).join('');
+                
+                content.innerHTML = `
+                    <div style="color:#0f0">FREQ: ${n.nodularDNA.harmonicFrequency.toFixed(2)} Hz</div>
+                    <div style="color:#0f0">RES:  ${n.nodularDNA.resonance.toFixed(2)}</div>
+                    <div style="color:#aaa; border-bottom:1px solid #333; margin:5px 0;">LOGIC GATES</div>
+                    ${gatesHTML}
+                `;
+                break;
+            }
+        }
+        if(!found) readout.style.display = 'none';
+    }
+
+    animate() {
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.1)"; // Trails
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        let links = 0;
+        let totalFreq = 0;
+
+        // Update & Draw Nodes
+        for(let i=0; i<this.nodes.length; i++) {
+            let n = this.nodes[i];
+            n.update();
+            n.draw(this.ctx);
+            totalFreq += n.nodularDNA.harmonicFrequency;
+
+            // Connect Nodes (Synapses)
+            for(let j=i+1; j<this.nodes.length; j++) {
+                let other = this.nodes[j];
+                let dx = n.x - other.x;
+                let dy = n.y - other.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if(dist < 150) { // Connection Threshold
+                    links++;
+                    this.ctx.beginPath();
+                    
+                    // Color gradient based on frequency compatibility
+                    let alpha = 1 - (dist/150);
+                    this.ctx.strokeStyle = `rgba(0, 255, 0, ${alpha})`;
+                    this.ctx.lineWidth = 0.5;
+                    this.ctx.moveTo(n.x, n.y);
+                    this.ctx.lineTo(other.x, other.y);
+                    this.ctx.stroke();
+                    
+                    // LOGIC EXCHANGE (The Life)
+                    // If very close, they influence each other's frequency
+                    if(dist < 50) {
+                        n.nodularDNA.harmonicFrequency = (n.nodularDNA.harmonicFrequency * 0.99) + (other.nodularDNA.harmonicFrequency * 0.01);
+                        other.nodularDNA.harmonicFrequency = (other.nodularDNA.harmonicFrequency * 0.99) + (n.nodularDNA.harmonicFrequency * 0.01);
+                    }
+                }
+            }
+        }
+
+        // HUD Updates
+        document.getElementById('count').innerText = this.nodes.length;
+        document.getElementById('links').innerText = links;
+        if(this.nodes.length > 0)
+            document.getElementById('freq').innerText = (totalFreq / this.nodes.length).toFixed(2);
+
+        requestAnimationFrame(() => this.animate());
+    }
+}
+
+const sys = new System();
+</script>
+</body>
+</html>

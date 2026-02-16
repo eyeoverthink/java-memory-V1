@@ -1,0 +1,8 @@
+NAME                                ID              SIZE      MODIFIED     
+eyeoverthink/eyeoverthink:latest    daab879768ca    2.0 GB    19 hours ago    
+llama3.2:latest                     a80c4f17acd5    2.0 GB    19 hours ago    
+eyeoverthink/gemeni:latest          a80c4f17acd5    2.0 GB    19 hours ago    
+fraymus-oracle:latest               a5de06eabfec    2.0 GB    19 hours ago    
+eyeoverthink/Fraymus:latest         07b9c1f1ddb6    2.0 GB    44 hours ago    
+llama3:latest                       365c0bd3c000    4.7 GB    3 days ago      
+gpt-oss:120b                        a951a23b46a1    65 GB     4 days ago      

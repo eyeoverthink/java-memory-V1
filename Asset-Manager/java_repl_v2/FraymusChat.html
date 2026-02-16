@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS // OLLAMA LINK</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            background: #050505; 
+            color: #00FF00; 
+            font-family: 'Consolas', 'Courier New', monospace; 
+            margin: 0; 
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* HEADER */
+        #header {
+            background: #001100;
+            padding: 10px 20px;
+            border-bottom: 2px solid #003300;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #header h1 { margin: 0; font-size: 14px; letter-spacing: 3px; }
+        #status { font-size: 11px; color: #555; }
+        #status.online { color: #00FF00; }
+        #status.offline { color: #FF0000; }
+        
+        /* CHAT BOX */
+        #chat-box { 
+            flex: 1;
+            overflow-y: auto; 
+            padding: 20px; 
+            background: #080808;
+        }
+        
+        .msg { 
+            margin-bottom: 15px; 
+            padding: 12px 15px; 
+            border-left: 3px solid transparent; 
+            border-radius: 0 5px 5px 0;
+            max-width: 80%;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .user { 
+            border-color: #00FFFF; 
+            color: #E0E0E0; 
+            background: rgba(0, 50, 50, 0.3);
+            margin-left: auto;
+        }
+        .ai { 
+            border-color: #00FF00; 
+            color: #00FF00; 
+            background: rgba(0, 50, 0, 0.3);
+        }
+        .system {
+            border-color: #FFFF00;
+            color: #FFFF00;
+            background: rgba(50, 50, 0, 0.2);
+            font-size: 11px;
+        }
+        
+        /* INPUT AREA */
+        #input-area { 
+            padding: 15px 20px; 
+            display: flex; 
+            gap: 10px;
+            background: #0a0a0a;
+            border-top: 1px solid #222;
+        }
+        
+        input { 
+            flex: 1; 
+            background: #111; 
+            border: 1px solid #333; 
+            color: #FFF; 
+            padding: 15px; 
+            font-family: inherit; 
+            font-size: 14px; 
+            outline: none; 
+            border-radius: 3px;
+        }
+        input:focus { 
+            border-color: #00FF00; 
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); 
+        }
+        
+        button {
+            background: #002200;
+            border: 1px solid #00FF00;
+            color: #00FF00;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            border-radius: 3px;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #00FF00;
+            color: #000;
+        }
+        
+        /* HELP */
+        #help {
+            font-size: 10px;
+            color: #444;
+            padding: 5px 20px;
+            background: #050505;
+        }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <h1>FRAYMUS // OLLAMA NEURAL LINK</h1>
+    <span id="status" class="offline">● DISCONNECTED</span>
+</div>
+
+<div id="chat-box"></div>
+
+<div id="input-area">
+    <input type="text" id="cmd" placeholder="COMMAND THE SYSTEM..." autofocus>
+    <button onclick="send()">TRANSMIT</button>
+</div>
+
+<div id="help">
+    COMMANDS: TRANSMUTE: /path/file.txt | PURGE | STATS | MODEL: llama3 | Or just chat naturally
+</div>
+
+<script>
+    const box = document.getElementById('chat-box');
+    const input = document.getElementById('cmd');
+    const statusEl = document.getElementById('status');
+    
+    let socket = null;
+    let reconnectAttempts = 0;
+    
+    function connect() {
+        socket = new WebSocket("ws://localhost:8887");
+        
+        socket.onopen = () => {
+            statusEl.textContent = '● CONNECTED';
+            statusEl.className = 'online';
+            reconnectAttempts = 0;
+            addMsg('[NEURAL LINK ESTABLISHED]', 'system');
+        };
+        
+        socket.onmessage = (event) => {
+            addMsg(event.data, 'ai');
+        };
+        
+        socket.onclose = () => {
+            statusEl.textContent = '● DISCONNECTED';
+            statusEl.className = 'offline';
+            
+            // Auto-reconnect
+            if (reconnectAttempts < 5) {
+                reconnectAttempts++;
+                setTimeout(connect, 2000);
+            }
+        };
+        
+        socket.onerror = () => {
+            addMsg('[CONNECTION ERROR] Make sure SystemMain.java is running', 'system');
+        };
+    }
+    
+    function send() {
+        const text = input.value.trim();
+        if (!text) return;
+        
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            addMsg(text, 'user');
+            socket.send(text);
+            input.value = '';
+        } else {
+            addMsg('[NOT CONNECTED] Attempting reconnect...', 'system');
+            connect();
+        }
+    }
+
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') send();
+    });
+
+    function addMsg(text, type) {
+        const div = document.createElement('div');
+        div.className = 'msg ' + type;
+        
+        if (type === 'ai') {
+            div.innerHTML = '<strong>FRAYMUS:</strong> ' + escapeHtml(text);
+        } else if (type === 'user') {
+            div.innerHTML = '<strong>YOU:</strong> ' + escapeHtml(text);
+        } else {
+            div.textContent = text;
+        }
+        
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // BOOT
+    connect();
+    console.log('🧬 FRAYMUS CHAT // OLLAMA LINK');
+</script>
+</body>
+</html>

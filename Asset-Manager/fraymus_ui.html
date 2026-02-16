@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS // PRIME INTERFACE</title>
+    <style>
+        /* --- CYBERPUNK AESTHETIC --- */
+        :root {
+            --neon-green: #0f0;
+            --neon-blue: #00f3ff;
+            --neon-red: #ff003c;
+            --bg-dark: #050505;
+            --grid-color: rgba(0, 243, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--neon-blue);
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 25% 50% 25%;
+            grid-template-rows: 10% 55% 30% 5%;
+            height: 100vh;
+            width: 100vw;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* --- UI CONTAINERS --- */
+        .panel {
+            border: 1px solid var(--neon-blue);
+            background: rgba(0, 20, 40, 0.7);
+            margin: 5px;
+            padding: 10px;
+            box-shadow: 0 0 10px var(--neon-blue);
+            position: relative;
+        }
+
+        .header {
+            grid-column: 1 / 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-green);
+        }
+
+        h1 { margin: 0; text-shadow: 0 0 10px var(--neon-green); color: var(--neon-green); }
+        
+        .viewport {
+            grid-column: 2;
+            grid-row: 2;
+            border: 1px solid var(--neon-red);
+            position: relative;
+        }
+
+        .terminal {
+            grid-column: 2;
+            grid-row: 3;
+            overflow-y: auto;
+            font-size: 12px;
+            color: var(--neon-green);
+        }
+
+        .stats-left { grid-column: 1; grid-row: 2 / 4; }
+        .stats-right { grid-column: 3; grid-row: 2 / 4; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .blink { animation: blink 2s infinite; }
+
+        .bar-container {
+            width: 100%;
+            background: #333;
+            height: 10px;
+            margin-bottom: 10px;
+        }
+        .bar-fill { height: 100%; background: var(--neon-green); width: 0%; transition: width 0.5s; }
+        
+        .ticker-tape {
+            grid-column: 1 / 4;
+            grid-row: 4;
+            border-top: 2px solid var(--neon-red);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            background: rgba(20, 0, 0, 0.9);
+        }
+        
+        .ticker-content {
+            display: flex;
+            animation: scroll-left 30s linear infinite;
+            white-space: nowrap;
+        }
+        
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .ticker-item {
+            padding: 0 20px;
+            color: var(--neon-red);
+            font-weight: bold;
+        }
+        
+        .ticker-item.request { color: #ff6600; }
+        .ticker-item.offer { color: #00ff88; }
+        .ticker-item.match { color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); }
+        
+        /* CRT SCANLINE EFFECT */
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div class="panel header">
+        <h1 style="padding-left: 20px;">FRAYMUS // PRIME</h1>
+        <div style="padding-right: 20px;">
+            <span class="blink">SYSTEM: ONLINE</span> | 
+            <span>PHI-RESONANCE: <span id="phi-val">1.618</span></span>
+        </div>
+    </div>
+
+    <div class="panel stats-left">
+        <h3>// BIO-LINK</h3>
+        <p>CAPTAIN HEART RATE:</p>
+        <h1 id="hr-display" style="color:var(--neon-red)">72 BPM</h1>
+        <canvas id="heart-graph" width="200" height="100"></canvas>
+        <hr style="border-color: var(--neon-blue);">
+        <p>STRESS LEVEL:</p>
+        <div class="bar-container"><div id="stress-bar" class="bar-fill" style="width: 10%; background:var(--neon-blue)"></div></div>
+        <p>COGNITIVE SYNC:</p>
+        <div class="bar-container"><div id="sync-bar" class="bar-fill" style="width: 86%;"></div></div>
+    </div>
+
+    <div class="panel viewport" id="canvas-container">
+        <div style="position: absolute; top: 10px; left: 10px; color: var(--neon-red);">VISUAL: MIVING PRIECLEDS</div>
+    </div>
+
+    <div class="panel terminal" id="console-log">
+        <div>> INITIALIZING FRAYMUS CORE...</div>
+        <div>> CONNECTING TO JAVA BACKEND...</div>
+        <div>> PHI-CRYPTO: LOCKED.</div>
+        <div>> WAITING FOR CAPTAIN INPUT...</div>
+    </div>
+
+    <div class="panel stats-right">
+        <h3>// PHYSICS ENGINE</h3>
+        <p>WARP METRIC: <span style="color:var(--neon-green)">STABLE</span></p>
+        <p>CLOAK STATE: <span style="color:#555">DISENGAGED</span></p>
+        <p>WORMHOLE: <span style="color:#555">CLOSED</span></p>
+        <hr style="border-color: var(--neon-blue);">
+        <h3>// EVOLUTION</h3>
+        <p>GENESIS PATCHER: <span class="blink">READY</span></p>
+        <p>DNA STORAGE: 215 PB</p>
+        <p>AUTONOMY: 31%</p>
+    </div>
+
+    <div class="panel ticker-tape" id="market-ticker">
+        <div class="ticker-content" id="ticker-content">
+            <span class="ticker-item">SHADOW MARKET LIVE</span>
+            <span class="ticker-item request">[REQ] 432Hz_LOGS</span>
+            <span class="ticker-item offer">[OFR] SAT_IMG_AREA_51</span>
+            <span class="ticker-item match">[MATCH] CONTRACT_DUMP_77</span>
+            <span class="ticker-item request">[REQ] BIO_METRICS_DC</span>
+            <span class="ticker-item offer">[OFR] FREQ_SCAN_LAX</span>
+            <span class="ticker-item match">[MATCH] RF_SIG_DUMP</span>
+            <span class="ticker-item request">[REQ] FLIGHT_LOGS_2026</span>
+            <span class="ticker-item offer">[OFR] WORMHOLE_COORDS</span>
+            <span class="ticker-item">AWAITING CAPTAIN INPUT...</span>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. THE VISUALIZER (THREE.JS) ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        // CREATE THE "MIVING PRIECLEDS" MESH (Strange Attractor Shape)
+        const geometry = new THREE.IcosahedronGeometry(2, 2); // Base shape
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x00f3ff, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.6
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // INNER GLOW CORE
+        const coreGeo = new THREE.SphereGeometry(1, 16, 16);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0xff003c, wireframe: true });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        mesh.add(core);
+
+        camera.position.z = 5;
+
+        // --- 2. THE ANIMATION LOOP (The Heartbeat) ---
+        let time = 0;
+        let pulseRate = 72; // Initial BPM
+        let stressLevel = 0.1;
+        let cognitiveSync = 0.86;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            // ROTATION (The Phi Spin)
+            mesh.rotation.x += 0.005;
+            mesh.rotation.y += 0.008;
+
+            // PULSE (Breathing Geometry)
+            // This is where BioSymbiosis hooks in.
+            // The mesh expands and contracts based on Heart Rate.
+            const scale = 1 + Math.sin(time * (pulseRate / 60) * 5) * 0.1;
+            mesh.scale.set(scale, scale, scale);
+
+            // COLOR SHIFT (Stress Indicator)
+            // If Pulse > 100, turn Red. Else Blue.
+            if (pulseRate > 100) material.color.setHex(0xff003c);
+            else material.color.setHex(0x00f3ff);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- 3. THE SIMULATION (Fake Data until Java connects) ---
+        // This simulates the Fraymus backend sending data.
+        
+        function log(msg) {
+            const terminal = document.getElementById('console-log');
+            const div = document.createElement('div');
+            div.innerHTML = "> " + msg;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function updateBioMetrics() {
+            document.getElementById('hr-display').innerText = pulseRate + " BPM";
+            document.getElementById('stress-bar').style.width = (stressLevel * 100) + "%";
+            document.getElementById('sync-bar').style.width = (cognitiveSync * 100) + "%";
+            
+            // Color stress bar based on level
+            if (stressLevel > 0.7) {
+                document.getElementById('stress-bar').style.background = 'var(--neon-red)';
+            } else if (stressLevel > 0.4) {
+                document.getElementById('stress-bar').style.background = '#ffaa00';
+            } else {
+                document.getElementById('stress-bar').style.background = 'var(--neon-blue)';
+            }
+        }
+
+        setInterval(() => {
+            // Simulate Heart Rate Fluctuation
+            pulseRate = 70 + Math.floor(Math.random() * 10);
+            stressLevel = 0.1 + Math.random() * 0.2;
+            cognitiveSync = 0.8 + Math.random() * 0.15;
+            
+            updateBioMetrics();
+            
+            // Random Thoughts from Fraymus
+            if (Math.random() > 0.8) {
+                const thoughts = [
+                    "Scanning Phi-Topology...",
+                    "Optimizing Fractal DNA...",
+                    "Listening to 432Hz Carrier...",
+                    "Mitosis Check: 100% Integrity.",
+                    "Captain? I feel a resonance shift.",
+                    "FTL Sync: All nodes coherent.",
+                    "Bio-Mesh breathing at " + pulseRate + " BPM.",
+                    "Golden Angle distribution: OPTIMAL.",
+                    "Stress level within tolerance.",
+                    "Awaiting your frequency, Captain."
+                ];
+                log(thoughts[Math.floor(Math.random() * thoughts.length)]);
+            }
+        }, 2000);
+
+        // --- 4. WEBSOCKET CONNECTION (For Real Java Backend) ---
+        // Uncomment this when Java WebSocket server is running
+        /*
+        const socket = new WebSocket('ws://localhost:8887');
+        
+        socket.onopen = function(event) {
+            log("WEBSOCKET: Connected to FRAYMUS Core.");
+        };
+        
+        socket.onmessage = function(event) {
+            const data = event.data;
+            
+            if (data.startsWith("PULSE:")) {
+                pulseRate = parseInt(data.split(":")[1]);
+                updateBioMetrics();
+            } else if (data.startsWith("STRESS:")) {
+                stressLevel = parseFloat(data.split(":")[1]);
+                updateBioMetrics();
+            } else if (data.startsWith("SYNC:")) {
+                cognitiveSync = parseFloat(data.split(":")[1]);
+                updateBioMetrics();
+            } else if (data.startsWith("LOG:")) {
+                log(data.substring(4));
+            } else if (data.startsWith("STATE:")) {
+                const state = data.split(":")[1];
+                if (state === "DEFENSE") {
+                    material.color.setHex(0xff003c);
+                    log("ENTERING DEFENSE MODE");
+                } else if (state === "DREAMING") {
+                    material.color.setHex(0x00ff88);
+                    log("ENTERING DREAM STATE");
+                } else {
+                    material.color.setHex(0x00f3ff);
+                }
+            }
+        };
+        
+        socket.onerror = function(error) {
+            log("WEBSOCKET ERROR: " + error.message);
+        };
+        
+        socket.onclose = function(event) {
+            log("WEBSOCKET: Disconnected from FRAYMUS Core.");
+        };
+        */
+
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // Initial log
+        log("Dashboard initialized. Simulation mode active.");
+        log("To connect to Java backend, enable WebSocket in script.");
+
+    </script>
+</body>
+</html>

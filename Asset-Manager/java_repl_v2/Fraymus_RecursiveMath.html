@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS RECURSIVE // GEN 183</title>
+    <style>
+        /* --- AESTHETIC: THE MATHEMATICAL VOID --- */
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Consolas', monospace; user-select: none; }
+        
+        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        /* HEADER */
+        #header {
+            position: absolute; top: 0; width: 100%; height: 60px;
+            background: linear-gradient(to bottom, rgba(20,0,40,0.9), transparent);
+            border-bottom: 1px solid #8800FF;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+        }
+        .title { font-size: 18px; font-weight: bold; color: #CC88FF; letter-spacing: 4px; text-shadow: 0 0 10px #AA00FF; }
+        
+        /* DATA PANEL */
+        #stats {
+            position: absolute; top: 70px; left: 20px; width: 280px;
+            background: rgba(10, 0, 20, 0.8); border: 1px solid #8800FF;
+            padding: 15px; pointer-events: auto; color: #E0E0E0;
+        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+        .val { color: #FF00FF; font-weight: bold; }
+        
+        /* DISCOVERY LOG */
+        #log {
+            position: absolute; top: 70px; right: 20px; width: 250px;
+            background: rgba(10, 0, 20, 0.8); border: 1px solid #8800FF;
+            padding: 15px; pointer-events: auto; color: #E0E0E0; max-height: 300px; overflow-y: auto;
+        }
+        .log-entry { font-size: 10px; margin-bottom: 3px; border-bottom: 1px dotted #333; padding-bottom: 3px; }
+        .log-eureka { color: #FFD700; font-weight: bold; }
+        
+        /* CONTROLS */
+        #controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; pointer-events: auto;
+        }
+        .btn {
+            background: #110022; border: 1px solid #8800FF; color: #CC88FF;
+            padding: 10px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; transition: 0.2s;
+        }
+        .btn:hover { border-color: #FF00FF; color: #FF00FF; box-shadow: 0 0 15px #FF00FF; }
+        
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        <div id="header">
+            <div class="title">FRAYMUS // RECURSIVE</div>
+            <div style="font-size:11px; color:#CC88FF;">PROCESS: EMERGENT MATH</div>
+        </div>
+        
+        <div id="stats">
+            <div style="border-bottom:1px dashed #8800FF; margin-bottom:10px; color:#FFF;">SYSTEM COMPLEXITY</div>
+            <div class="stat-row"><span>NODES ACTIVE:</span> <span class="val" id="count">0</span></div>
+            <div class="stat-row"><span>HIGHEST VALUE:</span> <span class="val" id="max-val">0</span></div>
+            <div class="stat-row"><span>ABSTRACTIONS (φ/π/e):</span> <span class="val" id="abs-count">0</span></div>
+            <div class="stat-row"><span>MATH OPS/SEC:</span> <span class="val" id="ops">0</span></div>
+            <div class="stat-row"><span>TOTAL COLLISIONS:</span> <span class="val" id="total-ops">0</span></div>
+        </div>
+
+        <div id="log">
+            <div style="border-bottom:1px dashed #8800FF; margin-bottom:10px; color:#FFF;">DISCOVERY LOG</div>
+            <div id="log-entries"></div>
+        </div>
+
+        <div id="controls">
+            <button class="btn" onclick="seedNumbers()">INJECT PRIMES</button>
+            <button class="btn" onclick="seedPrimes()">INJECT TRUE PRIMES</button>
+            <button class="btn" onclick="triggerReset()">ENTROPY RESET</button>
+        </div>
+    </div>
+
+    <canvas id="simCanvas"></canvas>
+
+<script>
+/**
+ * 🧬 FRAYMUS RECURSIVE // GEN 183
+ * Logic: Collision -> Combination -> Abstraction -> Evolution
+ * 
+ * THE THEORY:
+ * - Numbers are "ideas" floating in space
+ * - Collision = Synthesis of knowledge
+ * - When math accidentally hits constants (π, φ, e), EUREKA!
+ * - Abstractions become "pillars" - slower, glowing, attracting others
+ */
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- CONSTANTS (The Targets) ---
+const PHI = 161;  // 1.618 * 100
+const PI = 314;   // 3.141 * 100
+const E = 271;    // 2.718 * 100
+const SQRT2 = 141; // 1.414 * 100
+
+// --- CONFIG ---
+let width, height;
+let nodes = [];
+let particles = [];
+let abstractions = 0;
+let opsPerSec = 0;
+let totalOps = 0;
+let maxVal = 0;
+let logEntries = [];
+
+// --- CLASSES ---
+
+class MathNode {
+    constructor(x, y, value, tier) {
+        this.pos = { x: x, y: y };
+        this.vel = { x: (Math.random()-0.5)*3, y: (Math.random()-0.5)*3 };
+        this.value = value;
+        this.tier = tier || 1;
+        this.radius = 8 + (this.tier * 3);
+        this.color = this.getColor();
+        this.cooldown = 0;
+        this.label = null; // For constants
+    }
+
+    getColor() {
+        if (this.label === 'π') return "#FF6600";
+        if (this.label === 'φ') return "#FFD700";
+        if (this.label === 'e') return "#00FF88";
+        if (this.label === '√2') return "#00FFFF";
+        if (this.tier === 1) return "#4488FF";
+        if (this.tier === 2) return "#44FF88";
+        if (this.tier === 3) return "#FF44FF";
+        if (this.tier >= 4) return "#FFFFFF";
+        return "#888";
+    }
+
+    update() {
+        // Abstractions are gravitational anchors
+        if (this.tier >= 4) {
+            this.vel.x *= 0.95;
+            this.vel.y *= 0.95;
+            // Attract nearby nodes
+            for (let other of nodes) {
+                if (other !== this && other.tier < 4) {
+                    let d = dist(this.pos, other.pos);
+                    if (d < 150 && d > this.radius + other.radius) {
+                        let dx = this.pos.x - other.pos.x;
+                        let dy = this.pos.y - other.pos.y;
+                        other.vel.x += (dx / d) * 0.05;
+                        other.vel.y += (dy / d) * 0.05;
+                    }
+                }
+            }
+        }
+
+        // Movement
+        this.pos.x += this.vel.x;
+        this.pos.y += this.vel.y;
+
+        // Wall Bounce
+        if (this.pos.x < this.radius || this.pos.x > width - this.radius) this.vel.x *= -1;
+        if (this.pos.y < this.radius || this.pos.y > height - this.radius) this.vel.y *= -1;
+        this.pos.x = Math.max(this.radius, Math.min(width - this.radius, this.pos.x));
+        this.pos.y = Math.max(this.radius, Math.min(height - this.radius, this.pos.y));
+
+        // Friction
+        this.vel.x *= 0.999;
+        this.vel.y *= 0.999;
+
+        if (this.cooldown > 0) this.cooldown--;
+
+        // Collision Detection
+        for (let other of nodes) {
+            if (other !== this && other.cooldown === 0 && this.cooldown === 0) {
+                let d = dist(this.pos, other.pos);
+                if (d < this.radius + other.radius) {
+                    this.combine(other);
+                    break;
+                }
+            }
+        }
+    }
+
+    combine(other) {
+        let newVal = this.value + other.value;
+        let newTier = Math.max(this.tier, other.tier);
+        let operation = '+';
+
+        // MUTATION: Chance to multiply (more interesting math)
+        if (Math.random() > 0.7 && this.value < 100 && other.value < 100) {
+            newVal = this.value * other.value;
+            newTier = Math.max(this.tier, other.tier) + 1;
+            operation = '×';
+        }
+
+        // Square root discovery
+        if (Math.random() > 0.9 && this.value > 1) {
+            newVal = Math.floor(Math.sqrt(this.value * other.value) * 10);
+            operation = '√';
+        }
+
+        let txt = `${Math.floor(this.value)}${operation}${Math.floor(other.value)}`;
+
+        // ABSTRACTION CHECK
+        let isAbstract = false;
+        let label = null;
+
+        if (Math.abs(newVal - PI) < 15) { 
+            newVal = PI; label = 'π'; isAbstract = true; 
+            addLog(`DISCOVERED π (${this.value}${operation}${other.value})`, true);
+        }
+        else if (Math.abs(newVal - PHI) < 15) { 
+            newVal = PHI; label = 'φ'; isAbstract = true; 
+            addLog(`DISCOVERED φ (${this.value}${operation}${other.value})`, true);
+        }
+        else if (Math.abs(newVal - E) < 15) { 
+            newVal = E; label = 'e'; isAbstract = true; 
+            addLog(`DISCOVERED e (${this.value}${operation}${other.value})`, true);
+        }
+        else if (Math.abs(newVal - SQRT2) < 10) { 
+            newVal = SQRT2; label = '√2'; isAbstract = true; 
+            addLog(`DISCOVERED √2 (${this.value}${operation}${other.value})`, true);
+        }
+
+        if (isAbstract) {
+            newTier = 5;
+            abstractions++;
+            createParticle(this.pos.x, this.pos.y, "EUREKA!", "#FFD700", 24);
+            createParticle(this.pos.x, this.pos.y + 20, label, "#FFFFFF", 30);
+        } else {
+            createParticle(this.pos.x, this.pos.y, txt, "#AAA", 10);
+            if (newTier >= 3) {
+                addLog(`Tier ${newTier}: ${newVal}`, false);
+            }
+        }
+
+        // Spawn Child
+        let child = new MathNode(this.pos.x, this.pos.y, newVal, newTier);
+        child.vel.x = (this.vel.x + other.vel.x) / 2;
+        child.vel.y = (this.vel.y + other.vel.y) / 2;
+        child.cooldown = 30;
+        child.label = label;
+        child.color = child.getColor();
+
+        // Remove parents
+        nodes = nodes.filter(n => n !== this && n !== other);
+        nodes.push(child);
+
+        opsPerSec++;
+        totalOps++;
+        if (newVal > maxVal) maxVal = Math.floor(newVal);
+    }
+
+    draw() {
+        // Glow for abstractions
+        if (this.tier >= 4) {
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = this.color;
+            
+            // Attraction field
+            ctx.strokeStyle = `${this.color}33`;
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, 150, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Label
+        ctx.fillStyle = this.tier >= 4 ? "#000" : "#FFF";
+        ctx.font = `bold ${this.tier >= 4 ? 14 : 10}px Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        let displayLabel = this.label || Math.floor(this.value);
+        ctx.fillText(displayLabel, this.pos.x, this.pos.y);
+    }
+}
+
+// --- VISUAL FX ---
+function createParticle(x, y, text, col, size) {
+    particles.push({ x, y, text, col, size, life: 80, vy: -1.5 });
+}
+
+function addLog(msg, isEureka) {
+    logEntries.unshift({ msg, isEureka, time: Date.now() });
+    if (logEntries.length > 20) logEntries.pop();
+    renderLog();
+}
+
+function renderLog() {
+    const el = document.getElementById('log-entries');
+    el.innerHTML = logEntries.map(e => 
+        `<div class="log-entry ${e.isEureka ? 'log-eureka' : ''}">${e.msg}</div>`
+    ).join('');
+}
+
+// --- SYSTEM ---
+
+function init() {
+    resize();
+    seedNumbers();
+    loop();
+}
+
+function seedNumbers() {
+    for (let i = 0; i < 25; i++) {
+        let val = Math.floor(Math.random() * 50) + 1;
+        nodes.push(new MathNode(Math.random() * width, Math.random() * height, val, 1));
+    }
+    addLog("Injected random integers 1-50", false);
+}
+
+function seedPrimes() {
+    const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
+    for (let p of primes) {
+        nodes.push(new MathNode(Math.random() * width, Math.random() * height, p, 2));
+    }
+    addLog("Injected prime numbers", false);
+}
+
+let frame = 0;
+
+function loop() {
+    // Trail effect
+    ctx.fillStyle = "rgba(0, 0, 10, 0.15)";
+    ctx.fillRect(0, 0, width, height);
+
+    // Connection lines
+    ctx.strokeStyle = "rgba(136, 0, 255, 0.08)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+            let d = dist(nodes[i].pos, nodes[j].pos);
+            if (d < 120) {
+                ctx.globalAlpha = 1 - (d / 120);
+                ctx.beginPath();
+                ctx.moveTo(nodes[i].pos.x, nodes[i].pos.y);
+                ctx.lineTo(nodes[j].pos.x, nodes[j].pos.y);
+                ctx.stroke();
+            }
+        }
+    }
+    ctx.globalAlpha = 1;
+
+    // Update & Draw Nodes
+    for (let i = nodes.length - 1; i >= 0; i--) {
+        if (nodes[i]) {
+            nodes[i].update();
+            if (nodes[i]) nodes[i].draw();
+        }
+    }
+
+    // Particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += (Math.random() - 0.5) * 2;
+        p.y += p.vy;
+        p.life--;
+
+        ctx.globalAlpha = p.life / 80;
+        ctx.fillStyle = p.col;
+        ctx.font = `bold ${p.size}px Consolas`;
+        ctx.textAlign = "center";
+        ctx.fillText(p.text, p.x, p.y);
+        ctx.globalAlpha = 1;
+
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    // Auto-inject if population too low
+    if (nodes.length < 5 && frame % 60 === 0) {
+        nodes.push(new MathNode(Math.random() * width, Math.random() * height, Math.floor(Math.random() * 30) + 1, 1));
+    }
+
+    // Telemetry
+    document.getElementById('count').innerText = nodes.length;
+    document.getElementById('max-val').innerText = maxVal;
+    document.getElementById('abs-count').innerText = abstractions;
+    document.getElementById('ops').innerText = opsPerSec;
+    document.getElementById('total-ops').innerText = totalOps;
+
+    if (frame % 60 === 0) opsPerSec = 0;
+
+    frame++;
+    requestAnimationFrame(loop);
+}
+
+// --- UTILS ---
+function triggerReset() {
+    nodes = [];
+    particles = [];
+    abstractions = 0;
+    maxVal = 0;
+    totalOps = 0;
+    logEntries = [];
+    renderLog();
+    seedNumbers();
+}
+
+function dist(a, b) {
+    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+}
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+
+// BOOT
+init();
+console.log('🧬 FRAYMUS RECURSIVE // GEN 183');
+console.log('   EMERGENT MATH ENGINE ACTIVE');
+console.log('   TARGETS: π(314) φ(161) e(271) √2(141)');
+
+</script>
+</body>
+</html>

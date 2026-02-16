@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS // OLLAMA LINK // GEN 185</title>
+    <style>
+        /* --- AESTHETIC: TERMINAL OBSIDIAN --- */
+        body { margin: 0; overflow: hidden; background: #080808; font-family: 'Consolas', monospace; color: #00FF00; display: flex; height: 100vh; }
+        
+        #input-panel, #output-panel {
+            width: 30%; height: 100%; background: #050505; border-right: 1px solid #333;
+            display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; z-index: 10;
+        }
+        #output-panel { border-right: none; border-left: 1px solid #333; }
+        
+        #sim-container { flex-grow: 1; position: relative; background: #000; overflow: hidden; }
+        
+        textarea {
+            flex-grow: 1; background: #111; border: 1px solid #333; color: #AAA; 
+            font-family: inherit; font-size: 12px; padding: 10px; resize: none; outline: none;
+        }
+        textarea:focus { border-color: #00FF00; color: #FFF; }
+        
+        .header { font-weight: bold; margin-bottom: 10px; color: #00FF00; letter-spacing: 2px; }
+        
+        #transmute-btn {
+            background: #004400; color: #00FF00; border: 1px solid #00FF00; padding: 15px; 
+            font-weight: bold; cursor: pointer; margin-top: 10px; text-transform: uppercase;
+            transition: 0.2s; letter-spacing: 2px;
+        }
+        #transmute-btn:hover { background: #00FF00; color: #000; box-shadow: 0 0 20px #00FF00; }
+        #transmute-btn.processing { background: #333; color: #888; border-color: #555; cursor: not-allowed; }
+
+        /* MODEL SELECTOR */
+        #model-select {
+            background: #111; border: 1px solid #333; color: #00FF00; padding: 8px;
+            margin-top: 10px; font-family: inherit; outline: none;
+        }
+        #model-select:focus { border-color: #00FF00; }
+
+        /* HUD */
+        #hud {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            text-align: center; pointer-events: none; width: 300px;
+        }
+        #model-status { font-size: 10px; color: #555; margin-bottom: 5px; }
+        #progress-bar { width: 100%; height: 4px; background: #333; margin-top: 5px; }
+        #progress-fill { width: 0%; height: 100%; background: #00FF00; box-shadow: 0 0 10px #00FF00; transition: width 0.1s; }
+        
+        /* STATS */
+        #stats { 
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            font-size: 10px; color: #555; text-align: center;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="input-panel">
+        <div class="header">SOURCE CODE</div>
+        <textarea id="code-in" placeholder="// Paste raw code here...
+
+function example() {
+  var x = 1
+  console.log('hello')
+}"></textarea>
+        <select id="model-select">
+            <option value="eyeoverthink/Fraymus">eyeoverthink/Fraymus</option>
+            <option value="codellama:7b">codellama:7b</option>
+            <option value="deepseek-coder:6.7b">deepseek-coder:6.7b</option>
+            <option value="qwen2.5-coder:7b">qwen2.5-coder:7b</option>
+            <option value="llama3.2:latest">llama3.2:latest</option>
+        </select>
+        <button id="transmute-btn" onclick="connectToOllama()">TRANSMUTE</button>
+    </div>
+
+    <div id="sim-container">
+        <div id="hud">
+            <div id="model-status">TARGET: localhost:11434</div>
+            <div style="font-size:12px; color:#888;">NEURAL LINK STATUS</div>
+            <div id="progress-bar"><div id="progress-fill"></div></div>
+            <div id="status-text" style="font-size:10px; margin-top:5px; color:#00FF00;">READY</div>
+        </div>
+        <div id="stats">
+            <span id="latency">LATENCY: --</span> | <span id="tokens">TOKENS: --</span>
+        </div>
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <div id="output-panel">
+        <div class="header">FRAYMUS OUTPUT</div>
+        <textarea id="code-out" readonly placeholder="WAITING FOR LOCALHOST...
+
+PREREQUISITE:
+Run this command first:
+OLLAMA_ORIGINS=&quot;*&quot; ollama serve"></textarea>
+    </div>
+
+<script>
+/**
+ * 🧬 FRAYMUS NEURAL LINK // GEN 185
+ * Connects directly to Localhost:11434/api/generate
+ * 
+ * PREREQUISITE:
+ * OLLAMA_ORIGINS="*" ollama serve
+ */
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+// --- STATE ---
+let agents = [], particles = [];
+let isProcessing = false;
+let startTime = 0;
+const API_URL = "http://localhost:11434/api/generate";
+
+// --- VISUAL ENGINE (The Swarm) ---
+class Agent {
+    constructor(type) {
+        this.type = type; 
+        this.pos = { x: width/2, y: height/2 };
+        this.vel = { x: (Math.random()-0.5)*10, y: (Math.random()-0.5)*10 };
+        this.trail = [];
+    }
+    update() {
+        // Store trail
+        this.trail.push({x: this.pos.x, y: this.pos.y});
+        if (this.trail.length > 10) this.trail.shift();
+
+        this.pos.x += this.vel.x; 
+        this.pos.y += this.vel.y;
+        
+        if(this.pos.x<0||this.pos.x>width) this.vel.x*=-1;
+        if(this.pos.y<0||this.pos.y>height) this.vel.y*=-1;
+
+        // Attract to center (Neural core)
+        this.vel.x += (width/2 - this.pos.x) * 0.001;
+        this.vel.y += (height/2 - this.pos.y) * 0.001;
+
+        // Speed limit
+        let speed = Math.sqrt(this.vel.x**2 + this.vel.y**2);
+        if (speed > 8) {
+            this.vel.x *= 0.95;
+            this.vel.y *= 0.95;
+        }
+    }
+    draw() {
+        // Trail
+        ctx.strokeStyle = this.type==='REQ' ? 'rgba(0,255,0,0.2)' : 'rgba(0,136,255,0.2)';
+        ctx.beginPath();
+        for(let i=0; i<this.trail.length-1; i++) {
+            ctx.moveTo(this.trail[i].x, this.trail[i].y);
+            ctx.lineTo(this.trail[i+1].x, this.trail[i+1].y);
+        }
+        ctx.stroke();
+
+        // Dot
+        ctx.fillStyle = this.type==='REQ' ? '#00FF00' : '#0088FF';
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, 3, 0, Math.PI*2);
+        ctx.fill();
+    }
+}
+
+// --- THE REAL CONNECTION ---
+async function connectToOllama() {
+    const inputCode = document.getElementById('code-in').value;
+    if(!inputCode) return;
+
+    const modelName = document.getElementById('model-select').value;
+
+    // 1. UI LOCK
+    isProcessing = true;
+    startTime = performance.now();
+    document.getElementById('transmute-btn').classList.add('processing');
+    document.getElementById('transmute-btn').innerText = "TRANSMITTING...";
+    document.getElementById('status-text').innerText = `SENDING TO ${modelName}...`;
+    document.getElementById('status-text').style.color = "#FFFF00";
+    document.getElementById('code-out').value = "";
+    document.getElementById('progress-fill').style.width = "0%";
+    document.getElementById('latency').innerText = "LATENCY: ...";
+    document.getElementById('tokens').innerText = "TOKENS: ...";
+    spawnSwarm(50);
+
+    // 2. CONSTRUCT PAYLOAD
+    const promptText = `You are a code optimizer. Refactor and optimize this code for clarity and performance. Return ONLY the improved code, no explanations or markdown:
+
+${inputCode}`;
+    
+    const payload = {
+        model: modelName,
+        prompt: promptText,
+        stream: false
+    };
+
+    try {
+        // 3. HIT THE API
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const latency = ((performance.now() - startTime) / 1000).toFixed(2);
+        
+        // 4. SUCCESS
+        let output = data.response || "No response received";
+        // Strip markdown code blocks if present
+        output = output.replace(/^```[\w]*\n?/gm, '').replace(/\n?```$/gm, '');
+
+        document.getElementById('code-out').value = output;
+        document.getElementById('status-text').innerText = "TRANSMUTATION COMPLETE";
+        document.getElementById('status-text').style.color = "#00FF00";
+        document.getElementById('latency').innerText = `LATENCY: ${latency}s`;
+        document.getElementById('tokens').innerText = `TOKENS: ${data.eval_count || '?'}`;
+        createExplosion();
+
+    } catch (error) {
+        // 5. ERROR HANDLING
+        document.getElementById('code-out').value = `ERROR: ${error.message}
+
+Could not connect to Ollama.
+
+TROUBLESHOOTING:
+1. Make sure Ollama is running
+2. Run with CORS enabled:
+   OLLAMA_ORIGINS="*" ollama serve
+
+3. Verify model is installed:
+   ollama list`;
+        document.getElementById('status-text').innerText = "CONNECTION FAILED";
+        document.getElementById('status-text').style.color = "#FF0000";
+    } finally {
+        isProcessing = false;
+        document.getElementById('transmute-btn').classList.remove('processing');
+        document.getElementById('transmute-btn').innerText = "TRANSMUTE";
+        document.getElementById('progress-fill').style.width = "100%";
+        agents = [];
+    }
+}
+
+// --- VISUAL LOOP ---
+function spawnSwarm(count) {
+    agents = [];
+    for(let i=0; i<count; i++) agents.push(new Agent(i % 2 === 0 ? 'REQ' : 'RES'));
+}
+
+function createExplosion() {
+    for(let i=0; i<100; i++) {
+        let angle = (Math.PI * 2 / 100) * i;
+        particles.push({
+            x: width/2, y: height/2,
+            vx: Math.cos(angle) * (5 + Math.random()*15),
+            vy: Math.sin(angle) * (5 + Math.random()*15),
+            life: 60, col: '#00FF00'
+        });
+    }
+}
+
+function drawNeuralCore() {
+    // Central processing visualization
+    let pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+    
+    // Outer ring
+    ctx.strokeStyle = `rgba(0, 255, 0, ${0.2 + pulse * 0.3})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(width/2, height/2, 50 + pulse * 10, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Inner core
+    ctx.fillStyle = `rgba(0, 255, 0, ${0.1 + pulse * 0.1})`;
+    ctx.beginPath();
+    ctx.arc(width/2, height/2, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Data streams to agents
+    if (isProcessing) {
+        ctx.strokeStyle = "rgba(0, 255, 0, 0.05)";
+        for (let a of agents) {
+            if (Math.random() > 0.7) {
+                ctx.beginPath();
+                ctx.moveTo(width/2, height/2);
+                ctx.lineTo(a.pos.x, a.pos.y);
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+function loop() {
+    // Fade Trail
+    ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
+    ctx.fillRect(0, 0, width, height);
+
+    drawNeuralCore();
+
+    if(isProcessing) {
+        // Progress Bar Animation
+        const bar = document.getElementById('progress-fill');
+        let curr = parseFloat(bar.style.width) || 0;
+        if(curr < 90) bar.style.width = (curr + 0.3) + "%";
+        
+        // Swarm Logic
+        for(let a of agents) {
+            a.update();
+            a.draw();
+        }
+    }
+
+    // Particles
+    for(let i=particles.length-1; i>=0; i--) {
+        let p = particles[i];
+        p.x+=p.vx; p.y+=p.vy; 
+        p.vx *= 0.95; p.vy *= 0.95;
+        p.life--;
+        
+        ctx.globalAlpha = p.life / 60;
+        ctx.fillStyle = p.col;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        
+        if(p.life<=0) particles.splice(i,1);
+    }
+
+    requestAnimationFrame(loop);
+}
+
+function resize() {
+    width = document.getElementById('sim-container').clientWidth;
+    height = document.getElementById('sim-container').clientHeight;
+    canvas.width = width; 
+    canvas.height = height;
+}
+
+window.addEventListener('resize', resize);
+resize();
+loop();
+
+console.log('🧬 FRAYMUS NEURAL LINK // GEN 185');
+console.log('   OLLAMA BRIDGE ACTIVE');
+console.log('   TARGET: localhost:11434');
+
+</script>
+</body>
+</html>

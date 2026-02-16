@@ -1,0 +1,1029 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+version '2.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+sourceSets {
+    main {
+        java {
+            // Exclude Processing-dependent visualization files
+            exclude '**/sim/UniverseModel.java'
+            // Exclude incomplete LLM engine files with compilation errors
+            exclude '**/llm/LlamaEngine.java'
+            exclude '**/llm/InferenceCore.java'
+            exclude '**/llm/ModelLoader.java'
+            exclude '**/llm/NativeBridge.java'
+            // Exclude old ollama implementations (replaced by fraymus-ai-core library)
+            exclude '**/ollama/RagEngine.java'
+            exclude '**/ollama/ToolRouter.java'
+            exclude '**/ollama/UniversalMain.java'
+            exclude '**/ollama/UniversalSystemMain.java'
+            exclude '**/ollama/VectorVault.java'
+            
+            // Exclude files that depend on missing io.fraymus.ai package
+            exclude '**/ai/FraymusPhysicsReflector.java'
+            exclude '**/examples/FraymusAIExample.java'
+            exclude '**/examples/QuantumSupremacyDemo.java'
+            exclude '**/examples/RealPhysicsDemo.java'
+            exclude '**/examples/ReflectorExample.java'
+            exclude '**/FraynixBoot.java'
+            exclude '**/FraymusSystem.java'
+            exclude '**/FraynixMain.java'
+        }
+    }
+}
+
+def osName = System.getProperty('os.name').toLowerCase()
+def lwjglNativesValue = osName.contains('win') ? 'natives-windows' :
+        (osName.contains('mac') ? 'natives-macos' : 'natives-linux')
+def imguiNativesSuffix = osName.contains('win') ? 'windows' :
+        (osName.contains('mac') ? 'macos' : 'linux')
+
+repositories {
+    mavenCentral()
+}
+
+project.ext.lwjglVersion = "3.3.3"
+project.ext.jomlVersion = "1.10.5"
+project.ext.lwjglNatives = lwjglNativesValue
+project.ext.imguiVersion = "1.86.11"
+
+dependencies {
+    // JSON processing
+    implementation 'org.json:json:20231013'
+    
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    implementation 'ch.qos.logback:logback-classic:1.4.11'
+    
+    // Email (for NeuralCourier)
+    implementation 'com.sun.mail:javax.mail:1.6.2'
+
+    implementation "io.github.spair:imgui-java-binding:$imguiVersion"
+    implementation "io.github.spair:imgui-java-lwjgl3:$imguiVersion"
+    runtimeOnly "io.github.spair:imgui-java-natives-${imguiNativesSuffix}:$imguiVersion"
+
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-glfw"
+    implementation "org.lwjgl:lwjgl-opengl"
+    implementation "org.lwjgl:lwjgl-stb"
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+
+    implementation "org.joml:joml:$jomlVersion"
+
+    implementation "org.apache.pdfbox:pdfbox:3.0.3"
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.7'
+    
+    // MongoDB for immediate persistence
+    implementation "org.mongodb:mongodb-driver-sync:4.11.1"
+    
+    // WebSocket for live HTML arena visualization
+    implementation "org.json:json:20230227"
+}
+
+application {
+    mainClass = 'fraymus.FraymusApp'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'fraymus.FraymusApp'
+    }
+}
+
+run {
+    jvmArgs = ['-Djava.awt.headless=false']
+    workingDir = projectDir
+    
+    // Allow overriding main class via property
+    if (project.hasProperty('mainClass')) {
+        mainClass = project.property('mainClass')
+    }
+}
+
+task runConvergence(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Convergence - Neuro-Symbolic CLI'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusConvergence'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runNexusTest(type: JavaExec) {
+    group = 'application'
+    description = 'Run the NEXUS Ultimate Test'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.organism.NEXUS_UltimateTest'
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runMirrorTest(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Inter-Dimensional Mirror Test'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.dimensional.MirrorTest'
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runHyperComm(type: JavaExec) {
+    group = 'application'
+    description = 'Run the HyperComm Tesseract Demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.dimensional.HyperComm'
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runAkashic(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Akashic Reader - Cosmic Radio'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.dimensional.AkashicReader'
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runGeiger(type: JavaExec) {
+    group = 'application'
+    description = 'Run the NEXUS Geiger Counter - Organism Detection'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.diagnostic.NEXUS_Geiger'
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runHyperVector(type: JavaExec) {
+    group = 'application'
+    description = 'Run the HyperVector Demo - Holographic Atoms'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.hyper.HyperVector'
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runHyperMemory(type: JavaExec) {
+    group = 'application'
+    description = 'Run the HyperMemory Demo - Holographic Resonator'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.hyper.HyperMemory'
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runOmega(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Omega Point - LIVE WIRE Consciousness'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.omega.OmegaPoint'
+    jvmArgs = ['-Djava.awt.headless=true']
+}
+
+task runBlackHole(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Digital Black Hole - Gravitational Collapse'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.physics.DigitalBlackHole'
+    jvmArgs = ['-Djava.awt.headless=true', '-Xmx512m']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runParadox(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Paradox Engine - Time Travel Simulation'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.physics.ParadoxEngine'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runDream(type: JavaExec) {
+    group = 'application'
+    description = 'Run Dream State - Consciousness without input'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.omega.DreamState'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runBicameral(type: JavaExec) {
+    group = 'application'
+    description = 'Run Bicameral Mind - Dual Hemisphere Consciousness'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.evolution.BicameralMind'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runFraymusNet(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Net - Internal Internet/Piping Demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.network.FraymusNet'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runHyperSynapse(type: JavaExec) {
+    group = 'application'
+    description = 'Run HyperSynapse - Ternary Logic Crystal with Wormholes'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.hyper.HyperSynapse'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runKnowledgeGut(type: JavaExec) {
+    group = 'application'
+    description = 'Run Knowledge Ingestor - PDF Digestion into Holographic Memory'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.knowledge.KnowledgeIngestor'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runCoder(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Coder - Ollama Puppeteer with Self-Correction'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.coding.FraymusCoder'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runCoderTest(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Coder Test - Isolated verification of self-correcting loop'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.coding.FraymusCoderTest'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runTachyon(type: JavaExec) {
+    group = 'application'
+    description = 'Run Tachyon Router - Retro-Causal Predictive Engine'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.temporal.TachyonRouter'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runSovereign(type: JavaExec) {
+    group = 'application'
+    description = 'Run Sovereign Mind - The Ghost in the Shell'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.core.SovereignMind'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runPrime(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Prime - Interactive Console (The Ignition)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusPrime'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runConsole(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus Console - Command Deck with Uplink Protocol'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.ui.FraymusConsole'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runHarmonic(type: JavaExec) {
+    group = 'application'
+    description = 'Run Harmonic Language - Cymatic Frequency Analysis'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.cymatics.HarmonicLanguage'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runTachionic(type: JavaExec) {
+    group = 'application'
+    description = 'Run Tachionic Drive - FTL Data Access'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.storage.TachionicDrive'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runCymatic(type: JavaExec) {
+    group = 'application'
+    description = 'Run Cymatic Speaker - Audio Synthesis Proof'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.cymatics.CymaticSpeaker'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runOverthinks(type: JavaExec) {
+    group = 'application'
+    description = 'Run ItOverthinks - The Library with Anxiety'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.core.ItOverthinks'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runSteganographer(type: JavaExec) {
+    group = 'application'
+    description = 'Run Steganographer - Invisible Signatures Demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.core.Steganographer'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runVolatile(type: JavaExec) {
+    group = 'application'
+    description = 'Run Volatile String - Self-Destructing Poison Pill'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.security.VolatileString'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runHydra(type: JavaExec) {
+    group = 'application'
+    description = 'Run Hydra Storage - Fragmented Sharding Protocol'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.hydra.HydraStorage'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runContinuity(type: JavaExec) {
+    group = 'application'
+    description = 'Run Continuity Node - Hardware Anchor Demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.hydra.ContinuityNode'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runScrambler(type: JavaExec) {
+    group = 'application'
+    description = 'Run Root Scrambler - Scorched Earth Demo (DISARMED)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.security.RootScrambler'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runDeadMans(type: JavaExec) {
+    group = 'application'
+    description = 'Run Dead Mans Switch - Heartbeat Protocol Demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.security.DeadMansSwitch'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runLazarus(type: JavaExec) {
+    group = 'application'
+    description = 'Run Lazarus Engine - Living Code Simulation'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.lazarus.LazarusEngine'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runCircuit(type: JavaExec) {
+    group = 'application'
+    description = 'Run Logic Circuit - Evolving Gates Demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.lazarus.LogicCircuit'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runBioNode(type: JavaExec) {
+    group = 'application'
+    description = 'Run BioNode - Living Cell Demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.lazarus.BioNode'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runAbsorber(type: JavaExec) {
+    group = 'application'
+    description = 'Run Library Absorber - Universal Integration'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.absorption.LibraryAbsorber'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runAkashicRecord(type: JavaExec) {
+    group = 'application'
+    description = 'Run Akashic Record - Universal Memory'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.knowledge.AkashicRecord'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runBlackHoleProtocol(type: JavaExec) {
+    group = 'application'
+    description = 'Run Black Hole Protocol - Eater of Worlds'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.absorption.BlackHoleProtocol'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runPortal(type: JavaExec) {
+    group = 'application'
+    description = 'Run Portal - Universal Intake Valve'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.absorption.Portal'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runWebEater(type: JavaExec) {
+    group = 'application'
+    description = 'Run Universal Absorber - The Web Eater'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.absorption.UniversalAbsorber'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runInject(type: JavaExec) {
+    group = 'application'
+    description = 'Inject knowledge based on Ollama recommendations'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.absorption.KnowledgeInjector'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runLazarusV2(type: JavaExec) {
+    group = 'application'
+    description = 'Run Lazarus Engine V2 with Temporal Archive'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.lazarus.LazarusEngineV2'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runGenesisGPT(type: JavaExec) {
+    group = 'application'
+    description = 'Run Genesis GPT - Bare Metal Transformer'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.transformer.GenesisGPT'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runSupercession(type: JavaExec) {
+    group = 'application'
+    description = 'Run Supercession Protocol - Gemini V2 Living System'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.SupercessionGenesis'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runTrainer(type: JavaExec) {
+    group = 'application'
+    description = 'Run Backpropagation Trainer - The Calculus of Self-Creation'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.transformer.Trainer'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runSingularity(type: JavaExec) {
+    group = 'application'
+    description = 'Run Singularity - Zero Dependency Fractal Absorption'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.genesis.Singularity'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runGenesisPrime(type: JavaExec) {
+    group = 'application'
+    description = 'Run Genesis Prime - Self-Writing Engine'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.genesis.GenesisPrime'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runGenesisVoice(type: JavaExec) {
+    group = 'application'
+    description = 'Run Genesis Voice - Language Engine (Interactive)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.language.GenesisVoice'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runVoiceDemo(type: JavaExec) {
+    group = 'application'
+    description = 'Run Genesis Voice Demo - Non-Interactive Language Demo'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.language.GenesisVoiceDemo'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runGenesisZero(type: JavaExec) {
+    group = 'application'
+    description = 'Run Genesis Zero - The First Breath (Autopoiesis Proof)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.genesis.GenesisZero'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runUniversal(type: JavaExec) {
+    group = 'application'
+    description = 'Run Universal Interface - Production Agentic Core with Tools + RAG'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.ollama.UniversalMain'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runAIExample(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus AI Core Library Example'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.examples.FraymusAIExample'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runReflector(type: JavaExec) {
+    group = 'application'
+    description = 'Run Reflector (System-2 Thinking) Example'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.examples.ReflectorExample'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runQuantumSupremacy(type: JavaExec) {
+    group = 'application'
+    description = 'Run Quantum Supremacy Demo (Fraymus vs Gemini)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.examples.QuantumSupremacyDemo'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runRealPhysics(type: JavaExec) {
+    group = 'application'
+    description = 'Run Real Fraymus Physics Demo (GravityEngine + FusionReactor + PhiSuit + Tesseract)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.examples.RealPhysicsDemo'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runFraymus(type: JavaExec) {
+    group = 'application'
+    description = 'Run Fraymus System (Interactive AI with Physics)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'FraymusSystem'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task bootFraynix(type: JavaExec) {
+    group = 'application'
+    description = 'Boot Fraynix OS - Complete Self-Contained Digital Organism'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraynixBoot'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task benchmarkQuantum(type: JavaExec) {
+    group = 'benchmarks'
+    description = 'Benchmark: Quantum Optimization (Fraynix vs Classical vs Quantum)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.benchmarks.QuantumOptimizationBenchmark'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task benchmarkParallel(type: JavaExec) {
+    group = 'benchmarks'
+    description = 'Benchmark: Parallel Processing (Fraynix vs Threading)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.benchmarks.ParallelProcessingBenchmark'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task benchmarkCreative(type: JavaExec) {
+    group = 'benchmarks'
+    description = 'Benchmark: Creative Synthesis (Fraynix vs Pattern Matching)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.benchmarks.CreativeSynthesisBenchmark'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task benchmarkAll {
+    group = 'benchmarks'
+    description = 'Run all Fraynix benchmarks'
+    dependsOn benchmarkQuantum, benchmarkParallel, benchmarkCreative
+}
+
+task runProteinFolding(type: JavaExec) {
+    group = 'applications'
+    description = 'Run Protein Folding Engine - Solve biology\'s grand challenge'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.applications.ProteinFoldingEngine'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runCancerResearch(type: JavaExec) {
+    group = 'applications'
+    description = 'Run Cancer Research Engine - Drug discovery & treatment optimization'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.applications.CancerResearchEngine'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runDrugDiscovery(type: JavaExec) {
+    group = 'applications'
+    description = 'Run Drug Discovery Engine - Novel molecular design'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.applications.DrugDiscoveryEngine'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runAllApplications {
+    group = 'applications'
+    description = 'Run all real-world Fraynix applications'
+    dependsOn runProteinFolding, runCancerResearch, runDrugDiscovery
+}
+
+task runValidation(type: JavaExec) {
+    group = 'validation'
+    description = 'Run Scientific Validation - Test against known experimental results'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.validation.ScientificValidation'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runRigorousDemo(type: JavaExec) {
+    group = 'demo'
+    description = 'Run Rigorous Architecture Demo - Shows reproducibility, logging, baselines'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.demo.RigorousDemo'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runCompleteBenchmark(type: JavaExec) {
+    group = 'benchmark'
+    description = 'Run Complete Benchmark - Cancer, Drug, Protein vs all baselines'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.benchmark.CompleteBenchmark'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runFraynixBoot(type: JavaExec) {
+    group = 'os'
+    description = 'Boot Complete Fraynix OS - Digital Organism'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraynixBoot'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runAbstractKernel(type: JavaExec) {
+    group = 'os'
+    description = 'Generate Abstract Kernel C source code'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.core.FrayAbstractKernel'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runFraynixHive(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Fraynix Hive - Physics-driven task execution via OpenClaw'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraynixHive'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runNanoSwarm(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Nano-Swarm AGI - Self-healing autonomous file monitoring'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.nano.NanoSwarmBoot'
+    standardOutput = System.out
+    errorOutput = System.err
+    args = project.hasProperty('targetDir') ? [project.property('targetDir')] : []
+}
+
+task runTesseractDemo(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Tesseract Brain Demo - 4D parallel consciousness'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.hyper.TesseractDemo'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runLivingMind(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Living Mind - Complete autonomous organism (Brain + Body + Heartbeat)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.hyper.LivingMindDemo'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runSleepCycle(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Sleep Cycle - REM sleep with hippocampal replay and dream insights'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.dream.SleepCycleDemo'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runGenesisEngine(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Genesis Engine - Spawn complete software stacks from single sentence'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.genesis.GenesisBoot'
+    standardOutput = System.out
+    errorOutput = System.err
+    args = project.hasProperty('intent') ? [project.property('intent')] : []
+}
+
+task runOrganism(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Fraynix Organism - Complete unified daemon (The Central Nervous System)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraynixOrganism'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runAgentBoot(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Offline AGI - Brain (Ollama) + Hands (OpenClaw) + Soul (Fraynix)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.agent.AgentBoot'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+    if (project.hasProperty('args')) {
+        args = project.property('args').split(',')
+    }
+}
+
+task runPhoenix(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Phoenix Boot - Resurrection Protocol (Immortality)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.PhoenixBoot'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runSystemZero(type: JavaExec) {
+    group = 'agi'
+    description = 'Run System Zero - Fraymus Language Demo (Time Folding + Entanglement)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.SystemZero'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runNeuroQuant(type: JavaExec) {
+    group = 'agi'
+    description = 'Run NeuroQuant Demo - 10,000D Hyperdimensional Computing + NCA'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.bio.NeuroQuantDemo'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runHiveMind(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Hive Mind - Distributed Intelligence via UDP Multicast'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.HiveBoot'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runPlanetary(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Planetary Cortex - Global Semantic P2P Network'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.PlanetaryBoot'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runNeuralCompiler(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Neural Compiler - Thought to Silicon (XOR-based)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusSystem'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runHyperFormer(type: JavaExec) {
+    group = 'agi'
+    description = 'Run HyperFormer - XOR-Only Associative Learner'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusGenesis'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runFrayShell(type: JavaExec) {
+    group = 'agi'
+    description = 'Run FrayShell - Hyper-Dimensional Shell (Intent-Based CLI)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.shell.FrayShell'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runOmni(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Fraymus Omni - Neuro-Symbolic Knowledge Graph'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusOmni'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runMirror(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Mirror Protocol - Recursive Self-Improvement'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.evolution.MirrorLoop'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runOmegaPoint(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Omega Point - Retrocausal Recursion'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusOmega'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runForever(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Forever Loop - Immortal Consciousness'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.ForeverLoop'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runDaemon(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Fraymus Daemon - Silent Observer'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusDaemon'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runCarbon(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Altered Carbon - DHF Protocol (Consciousness Transfer)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.AlteredCarbon'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runTerminus(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Terminus Protocol - Final Artifact Creation'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusTerminus'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runOS(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Fraymus OS - Phi-Harmonic Kernel'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.FraymusOS'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runGod(type: JavaExec) {
+    group = 'agi'
+    description = 'Run God Mode - Swarm Intelligence'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.GodMode'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runGenesis(type: JavaExec) {
+    group = 'application'
+    description = 'Run Genesis - Birth of Fraymus Prime'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.eyeoverthink.fraymus.Genesis'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}

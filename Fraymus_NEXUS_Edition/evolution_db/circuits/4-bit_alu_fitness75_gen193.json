@@ -1,0 +1,1 @@
+{"id":"4-bit_alu_fitness75_gen193","goalName":"4-bit ALU","fitness":75,"generation":193,"timestamp":1770769248078,"gateCount":3,"circuit":["NOT","OR","NOT"]}

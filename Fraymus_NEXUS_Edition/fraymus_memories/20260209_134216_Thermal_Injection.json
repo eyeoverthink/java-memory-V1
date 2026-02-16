@@ -1,0 +1,130 @@
+{
+  "generation": 101,
+  "population": 37,
+  "running": true,
+  "avgFrequency": 446.48,
+  "avgResonance": 0.88,
+  "totalGates": 296,
+  "nodes": [
+    {
+      "id": 0,
+      "frequency": 448.15,
+      "resonance": 0.67,
+      "gates": 8
+    },
+    {
+      "id": 1,
+      "frequency": 453.48,
+      "resonance": 0.74,
+      "gates": 8
+    },
+    {
+      "id": 2,
+      "frequency": 442.67,
+      "resonance": 1.29,
+      "gates": 8
+    },
+    {
+      "id": 3,
+      "frequency": 450.21,
+      "resonance": 0.64,
+      "gates": 8
+    },
+    {
+      "id": 4,
+      "frequency": 438.05,
+      "resonance": 1.17,
+      "gates": 8
+    },
+    {
+      "id": 5,
+      "frequency": 444.38,
+      "resonance": 1.00,
+      "gates": 8
+    },
+    {
+      "id": 6,
+      "frequency": 441.01,
+      "resonance": 0.76,
+      "gates": 8
+    },
+    {
+      "id": 7,
+      "frequency": 448.18,
+      "resonance": 0.63,
+      "gates": 8
+    },
+    {
+      "id": 8,
+      "frequency": 440.74,
+      "resonance": 1.29,
+      "gates": 8
+    },
+    {
+      "id": 9,
+      "frequency": 448.56,
+      "resonance": 0.71,
+      "gates": 8
+    },
+    {
+      "id": 10,
+      "frequency": 450.21,
+      "resonance": 0.64,
+      "gates": 8
+    },
+    {
+      "id": 11,
+      "frequency": 444.38,
+      "resonance": 1.00,
+      "gates": 8
+    },
+    {
+      "id": 12,
+      "frequency": 444.38,
+      "resonance": 1.00,
+      "gates": 8
+    },
+    {
+      "id": 13,
+      "frequency": 453.48,
+      "resonance": 0.74,
+      "gates": 8
+    },
+    {
+      "id": 14,
+      "frequency": 448.56,
+      "resonance": 0.71,
+      "gates": 8
+    },
+    {
+      "id": 15,
+      "frequency": 453.48,
+      "resonance": 0.74,
+      "gates": 8
+    },
+    {
+      "id": 16,
+      "frequency": 444.38,
+      "resonance": 1.00,
+      "gates": 8
+    },
+    {
+      "id": 17,
+      "frequency": 448.18,
+      "resonance": 0.63,
+      "gates": 8
+    },
+    {
+      "id": 18,
+      "frequency": 444.38,
+      "resonance": 1.00,
+      "gates": 8
+    },
+    {
+      "id": 19,
+      "frequency": 444.38,
+      "resonance": 1.00,
+      "gates": 8
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+FRAYNIX OPERATING SYSTEM v1.0
+Kernel: Ring 0 Access
+File System: FrayFS (Linear Linked-List)
+Architecture: x86 (32-bit)
+Boot: Multiboot-compliant

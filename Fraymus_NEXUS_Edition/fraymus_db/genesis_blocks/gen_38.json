@@ -1,0 +1,9 @@
+  {
+    "id": "GEN_38_1770678635588",
+    "generation": 38,
+    "timestamp": 1770678635588,
+    "circuitDNA": "NOT-NAND-NAND-NOT-NOT-NOT-OR-XOR-",
+    "circuitSize": 8,
+    "fitness": 0.50,
+    "parentId": "GEN_37"
+  }

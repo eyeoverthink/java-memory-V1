@@ -1,0 +1,4 @@
+Circuit output: HIGH
+Input A: true
+Input B: false
+This file exists because the circuit output TRUE.

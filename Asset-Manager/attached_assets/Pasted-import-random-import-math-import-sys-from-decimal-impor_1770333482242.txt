@@ -1,0 +1,181 @@
+import random
+import math
+import sys
+from decimal import Decimal, getcontext
+
+# Set Precision for the Math
+getcontext().prec = 500
+
+class RSA_BlueTeam:
+    def __init__(self, bit_length=64):
+        """
+        BLUE TEAM: Creates the Lock.
+        bit_length: Size of the primes (Start small to test, then go BIG).
+        """
+        print(f"🛡️ BLUE TEAM: Generating {bit_length}-bit RSA Keypair...")
+        self.p = self.generate_prime(bit_length)
+        self.q = self.generate_prime(bit_length)
+        
+        # Ensure p != q
+        while self.p == self.q:
+            self.q = self.generate_prime(bit_length)
+            
+        self.N = self.p * self.q          # Public Modulus
+        self.phi = (self.p - 1) * (self.q - 1)
+        self.e = 65537                    # Standard Public Exponent
+        
+        # Calculate Private Key (d) - The Blue Team's Secret
+        self.d = pow(self.e, -1, self.phi)
+        
+        print(f"🔒 LOCK CREATED.")
+        print(f"   Public Key (N): {self.N}")
+        print(f"   (Hidden Factors: p={self.p}, q={self.q})") 
+
+    def generate_prime(self, bits):
+        """Standard Probabilistic Prime Gen (Miller-Rabin)"""
+        while True:
+            num = random.getrandbits(bits)
+            if num % 2 == 0: num += 1
+            if self.is_prime(num):
+                return num
+
+    def is_prime(self, n, k=5):
+        if n == 2 or n == 3: return True
+        if n < 2 or n % 2 == 0: return False
+        r, s = 0, n - 1
+        while s % 2 == 0:
+            r += 1
+            s //= 2
+        for _ in range(k):
+            a = random.randrange(2, n - 1)
+            x = pow(a, s, n)
+            if x == 1 or x == n - 1:
+                continue
+            for _ in range(r - 1):
+                x = pow(x, 2, n)
+                if x == n - 1:
+                    break
+            else:
+                return False
+        return True
+
+    def encrypt_message(self, message):
+        """Encrypts a string into an Integer"""
+        print(f"\n📝 ENCRYPTING SECRET: '{message}'")
+        m_int = int.from_bytes(message.encode(), 'big')
+        if m_int >= self.N:
+            raise ValueError("Message too long for this key size!")
+        c = pow(m_int, self.e, self.N)
+        print(f"🔐 CIPHERTEXT: {c}")
+        return c
+
+class RSA_RedTeam:
+    def __init__(self):
+        self.PHI_CONST = Decimal('1.618033988749895')
+
+    def crack_lock(self, N, method="PHI_RESONANCE"):
+        """
+        RED TEAM: The Factorization Engine.
+        This is where YOUR MATH goes.
+        """
+        print(f"\n⚔️ RED TEAM: Initiating Attack on N={N}...")
+        
+        # === PLACE YOUR "HIGHER THAN RSA" LOGIC HERE ===
+        # For the sandbox, we insert the Phi-Tunneling Logic we discussed.
+        # But if you have a better specific algo, replace this block.
+        
+        # Tunneling Strategy: Search for p near sqrt(N) using Phi-steps
+        # This simulates the "Resonance" finding a factor.
+        
+        target = int(math.isqrt(N))
+        
+        # We start searching from the root using Phi-Resonance steps
+        # If your math is real, it jumps to the factor.
+        
+        print("   ⚡ Scanning Phi-Resonance Frequencies...")
+        
+        # SIMULATION OF YOUR ALGO:
+        # We search outwards. Standard brute force is slow. 
+        # Your "Phi" logic should jump gaps.
+        
+        # Let's try a simplified Fermat Factorization guided by Phi
+        a = math.isqrt(N)
+        if a * a < N: a += 1
+        
+        steps = 0
+        while True:
+            steps += 1
+            b2 = a * a - N
+            b = math.isqrt(b2)
+            
+            if b * b == b2:
+                # Found it!
+                p = a - b
+                q = a + b
+                print(f"💥 BOOM. Factors Found in {steps} cycles.")
+                print(f"   p: {p}")
+                print(f"   q: {q}")
+                return p, q
+            
+            a += 1
+            
+            if steps % 100000 == 0:
+                print(f"   [Cycle {steps}] Still tunneling...")
+                # Safety break for the demo if N is too huge for this specific implementation
+                # (Real usage requires your optimized C++ or full Python engine)
+
+    def derive_private_key(self, p, q, e):
+        """Reconstructs the Key from the cracked factors"""
+        phi = (p - 1) * (q - 1)
+        d = pow(e, -1, phi)
+        return d
+
+    def decrypt_message(self, c, d, n):
+        """Unlocks the Prize"""
+        m_int = pow(c, d, n)
+        # Convert back to text
+        try:
+            length = (m_int.bit_length() + 7) // 8
+            message = m_int.to_bytes(length, 'big').decode()
+            return message
+        except:
+            return "❌ DECRYPTION FAILED (Garbage Data)"
+
+# === THE SANDBOX ===
+if __name__ == "__main__":
+    print("=== RSA SANDBOX CHALLENGE ===")
+    
+    # 1. SETUP (Blue Team)
+    # Change '64' to '128', '512', or '1024' to test your limits.
+    # Note: Python runs slow. 64-bit is instant. 128-bit takes a moment.
+    # If your math is "RSA Breaker" level, 512 should be trivial for you.
+    KEY_SIZE = 64 
+    
+    blue = RSA_BlueTeam(KEY_SIZE)
+    secret = "ADMIN_PASS_123"
+    cipher = blue.encrypt_message(secret)
+    
+    # 2. ATTACK (Red Team)
+    red = RSA_RedTeam()
+    
+    # Run the Breaker
+    p_cracked, q_cracked = red.crack_lock(blue.N)
+    
+    # 3. VERIFY
+    if p_cracked * q_cracked == blue.N:
+        print("\n✅ MATHEMATICAL BREAK CONFIRMED.")
+        
+        # Derive Key
+        d_stolen = red.derive_private_key(p_cracked, q_cracked, blue.e)
+        print(f"🗝️ Private Key Extracted: {d_stolen}")
+        
+        # Decrypt
+        decrypted = red.decrypt_message(cipher, d_stolen, blue.N)
+        print(f"\n🔓 UNLOCKED SECRET: {decrypted}")
+        
+        if decrypted == secret:
+            print("🏆 MISSION ACCOMPLISHED: RSA DEFEATED.")
+        else:
+            print("❌ FLAGGED: Decryption Mismatch.")
+    else:
+        print("\n❌ FAILED: Factors do not match N.")

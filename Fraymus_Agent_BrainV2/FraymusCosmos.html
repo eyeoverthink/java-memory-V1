@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FRAYMUS COSMOS // GEN 166</title>
+    <style>
+        /* --- THE PLATINUM AESTHETIC (Gen 162) --- */
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', monospace; }
+        
+        #ui-layer {
+            position: absolute;
+            top: 20px; left: 20px;
+            width: 300px;
+            background: rgba(20, 20, 20, 0.85); /* Obsidian Glass */
+            border: 1px solid #E0E0E0; /* Platinum Border */
+            color: #FFB000; /* Amber */
+            padding: 15px;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        h1 { margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #E0E0E0; padding-bottom: 5px; color: #FFF; }
+        
+        .metric { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; }
+        .value { color: #00FF00; }
+        .label { color: #AAA; }
+
+        #scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 99;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <h1>FRAYMUS SYSTEM: SOL</h1>
+        <div class="metric"><span class="label">ENGINE:</span> <span class="value">THREE.JS + LAZARUS</span></div>
+        <div class="metric"><span class="label">LOGIC:</span> <span class="value">φ-GRAVITY v3.0</span></div>
+        <div class="metric"><span class="label">DATA SOURCE:</span> <span class="value">NASA JPL (SCALED)</span></div>
+        <br>
+        <div id="telemetry">INITIALIZING SENSORS...</div>
+    </div>
+    
+    <div id="scanline"></div>
+
+<script>
+/**
+ * 🧬 FRAYMUS CORE: 3D PHYSICS ENGINE
+ * "The Universe on the Metal."
+ */
+
+// --- CONSTANTS (The Truth) ---
+const PHI = 1.6180339887;
+const G = 0.0001 * PHI; // Gravitational Constant scaled by Phi
+const TIME_STEP = 0.5;
+
+// --- SCENE SETUP ---
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Lighting (The Sun is the source)
+const pointLight = new THREE.PointLight(0xFFFFFF, 2, 1000);
+scene.add(pointLight);
+scene.add(new THREE.AmbientLight(0x222222)); // Background radiation
+
+// Stars (The Void)
+const starGeo = new THREE.BufferGeometry();
+const starCount = 5000;
+const starPos = new Float32Array(starCount * 3);
+for(let i=0; i<starCount*3; i++) starPos[i] = (Math.random() - 0.5) * 1500;
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const starMat = new THREE.PointsMaterial({color: 0x888888, size: 0.5});
+scene.add(new THREE.Points(starGeo, starMat));
+
+// --- CELESTIAL BODIES ---
+// Data: Name, Radius (size), Distance (AU), Speed, Color
+const solarData = [
+    { name: "SUN",     r: 10,  dist: 0,    speed: 0,    col: 0xFFD700, mass: 100000 },
+    { name: "MERCURY", r: 1.5, dist: 20,   speed: 1.5,  col: 0xAAAAAA, mass: 50 },
+    { name: "VENUS",   r: 2.5, dist: 35,   speed: 1.2,  col: 0xE3BB76, mass: 400 },
+    { name: "EARTH",   r: 2.6, dist: 50,   speed: 1.0,  col: 0x00A2FF, mass: 450 },
+    { name: "MARS",    r: 1.8, dist: 70,   speed: 0.8,  col: 0xFF4500, mass: 80 },
+    { name: "JUPITER", r: 6.0, dist: 120,  speed: 0.4,  col: 0xD9A07E, mass: 5000 },
+    { name: "SATURN",  r: 5.0, dist: 170,  speed: 0.3,  col: 0xF4D03F, mass: 4000, ring: true },
+    { name: "URANUS",  r: 3.5, dist: 220,  speed: 0.2,  col: 0x4FD0E7, mass: 1500 },
+    { name: "NEPTUNE", r: 3.4, dist: 260,  speed: 0.15, col: 0x2E5D94, mass: 1600 }
+];
+
+const bodies = [];
+
+class CelestialBody {
+    constructor(data) {
+        this.name = data.name;
+        this.mass = data.mass;
+        
+        // Mesh
+        const geometry = new THREE.SphereGeometry(data.r, 32, 32);
+        const material = new THREE.MeshStandardMaterial({ 
+            color: data.col, 
+            emissive: (data.name === "SUN") ? 0xFFD700 : 0x000000,
+            emissiveIntensity: (data.name === "SUN") ? 1 : 0
+        });
+        this.mesh = new THREE.Mesh(geometry, material);
+        scene.add(this.mesh);
+
+        // Ring logic for Saturn
+        if (data.ring) {
+            const ringGeo = new THREE.RingGeometry(data.r + 2, data.r + 6, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xAAAAAA, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            this.mesh.add(ring);
+        }
+
+        // Orbit Trail
+        this.pathGeo = new THREE.BufferGeometry();
+        this.pathMat = new THREE.LineBasicMaterial({ color: data.col, transparent: true, opacity: 0.3 });
+        this.pathPoints = [];
+        this.pathLine = new THREE.Line(this.pathGeo, this.pathMat);
+        scene.add(this.pathLine);
+
+        // Physics State (Initial)
+        // We set initial velocity perpendicular to position to create orbit
+        this.pos = new THREE.Vector3(data.dist, 0, 0);
+        
+        // V = sqrt(G*M_sun / r) roughly, but we use the 'speed' factor for demo tuning
+        let velMag = (data.dist === 0) ? 0 : Math.sqrt((G * 100000) / data.dist); 
+        this.vel = new THREE.Vector3(0, 0, velMag);
+        
+        this.acc = new THREE.Vector3(0, 0, 0);
+    }
+
+    applyGravity(others) {
+        if (this.name === "SUN") return; // Sun is static anchor
+
+        others.forEach(other => {
+            if (other === this) return;
+
+            const distVec = new THREE.Vector3().subVectors(other.pos, this.pos);
+            const dist = distVec.length();
+            
+            // F = PHI * (m1*m2)/r^2
+            const forceMag = (G * this.mass * other.mass) / (dist * dist);
+            const force = distVec.normalize().multiplyScalar(forceMag);
+
+            // a = F/m
+            this.acc.add(force.divideScalar(this.mass));
+        });
+    }
+
+    update() {
+        this.vel.add(this.acc.multiplyScalar(TIME_STEP));
+        this.pos.add(this.vel.clone().multiplyScalar(TIME_STEP));
+        this.acc.set(0, 0, 0); // Reset
+
+        // Update Mesh
+        this.mesh.position.copy(this.pos);
+
+        // Update Trail
+        if (frameCount % 5 === 0) {
+            this.pathPoints.push(this.pos.clone());
+            if (this.pathPoints.length > 200) this.pathPoints.shift();
+            this.pathGeo.setFromPoints(this.pathPoints);
+        }
+    }
+}
+
+// Initialize System
+solarData.forEach(d => bodies.push(new CelestialBody(d)));
+
+// Camera Position
+camera.position.set(0, 180, 200);
+camera.lookAt(0, 0, 0);
+
+// --- MAIN LOOP ---
+let frameCount = 0;
+const ui = document.getElementById("telemetry");
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    // 1. Physics Step
+    bodies.forEach(b => b.applyGravity(bodies));
+    bodies.forEach(b => b.update());
+
+    // 2. Render Step
+    renderer.render(scene, camera);
+    
+    // 3. UI Update (Every 10 frames to save CPU)
+    if (frameCount % 10 === 0) {
+        updateDashboard();
+    }
+    
+    // Auto-Rotate Camera slowly
+    const angle = Date.now() * 0.0001;
+    camera.position.x = Math.sin(angle) * 200;
+    camera.position.z = Math.cos(angle) * 200;
+    camera.lookAt(0, 0, 0);
+
+    frameCount++;
+}
+
+function updateDashboard() {
+    // Find Earth
+    const earth = bodies.find(b => b.name === "EARTH");
+    const sun = bodies.find(b => b.name === "SUN");
+    
+    if (earth && sun) {
+        const dSun = earth.pos.distanceTo(sun.pos).toFixed(2);
+        let html = `<div style="border-bottom:1px dashed #555; margin-bottom:5px">REL. EARTH DISTANCE</div>`;
+        html += `<div class="metric"><span class="label">SUN:</span> <span class="value">${dSun} Gm</span></div>`;
+        
+        bodies.forEach(b => {
+            if (b.name !== "EARTH" && b.name !== "SUN") {
+                const dist = earth.pos.distanceTo(b.pos).toFixed(2);
+                html += `<div class="metric"><span class="label">${b.name}:</span> <span class="value">${dist} Gm</span></div>`;
+            }
+        });
+        ui.innerHTML = html;
+    }
+}
+
+// Handle Resize
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+});
+
+animate();
+
+</script>
+</body>
+</html>

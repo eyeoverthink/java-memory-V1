@@ -1,0 +1,353 @@
+This is the Fraymus Information-Physics Engine.
+
+It is a complete, compilable Java architecture. It implements the "Living Code" manifesto: data is no longer static; it is a kinetic entity with identity (Prime), geometry (Vector), and behavior (Laws).
+
+I have integrated the 60 FPS Accumulator Loop for stability and the Pairwise Entanglement logic we discussed.
+
+1. DNACloaker.java
+The Identity Engine. Generates military-grade cryptographic souls for your nodes.
+
+Java
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.Random;
+
+public class DNACloaker {
+    
+    // Generates a deterministic Prime Identity from a seed string
+    // This is "The Soul" of the data.
+    public static BigInteger generateIdentity(String seed) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(seed.getBytes("UTF-8"));
+            
+            // Convert hash to a positive BigInteger (The DNA)
+            BigInteger bigInt = new BigInteger(1, hash);
+            
+            // "Uncapped" logic: Find the next probable prime.
+            // This ensures the identity is a valid key for RSA-style operations.
+            return bigInt.nextProbablePrime();
+        } catch (Exception e) {
+            throw new RuntimeException("Crypto Failure in DNA Generation", e);
+        }
+    }
+
+    // Creates a "Lock" (N) from two Nodes
+    // This is the mathematical product of two souls.
+    public static BigInteger entangleIdentities(PhiNode a, PhiNode b) {
+        return a.signature.multiply(b.signature);
+    }
+}
+2. PhiNode.java
+The State-Vector Cell. It has Geometry (Space), Spectrum (Info), and Frequency (Time).
+
+Java
+import java.math.BigInteger;
+
+public class PhiNode {
+    // --- SPATIAL STATE (Geometry) ---
+    public float x, y, z;
+    public float vx, vy, vz; // Velocity (Momentum/Intent)
+
+    // --- SPECTRAL STATE (Information/Color) ---
+    public float r, g, b;    // Visual representation of the Hash
+    public float energy;     // Life force (0.0 - 1.0). If 0, node is "Dead".
+
+    // --- TEMPORAL STATE (Phase Space) ---
+    public float frequency;  // The "Clock" specific to this node
+    public float phase;      // Relative alignment (0 to 2PI)
+    public float phiResonance; // The "Breathing" value (oscillates near 1.618)
+    
+    // --- IDENTITY (The Soul) ---
+    public final BigInteger signature; // Cryptographic Prime
+    public final String dnaSeed;       // Human-readable name
+    public long lastUpdateNanos;       // Proof of Life timestamp
+
+    public PhiNode(float x, float y, float freq, String dnaSeed) {
+        this.x = x; this.y = y; this.z = 0;
+        this.vx = 0; this.vy = 0; this.vz = 0;
+        
+        this.frequency = freq;
+        this.phase = 0;
+        this.energy = 1.0f;
+        this.dnaSeed = dnaSeed;
+        
+        // Cryptographic Generation
+        this.signature = DNACloaker.generateIdentity(dnaSeed);
+        
+        // Visualizing the Identity: Hash -> Color (Spectroscopy)
+        int hash = this.signature.hashCode();
+        this.r = ((hash >> 16) & 0xFF) / 255f;
+        this.g = ((hash >> 8) & 0xFF) / 255f;
+        this.b = (hash & 0xFF) / 255f;
+        
+        this.lastUpdateNanos = System.nanoTime();
+    }
+
+    // The atomic update step.
+    // This updates the internal state, but PHYSICS are applied by Laws.
+    public void updateInternalState(float dt, long nowNanos) {
+        // 1. Entropy: "Living" things consume energy.
+        // Clamp energy so it doesn't go negative.
+        this.energy = Math.max(0f, this.energy - 0.01f * dt); 
+
+        // 2. Resonance: The "Breath" of the data based on Phi
+        double t = nowNanos * 1e-9;
+        this.phiResonance = (float)(Math.sin(t * frequency * 1.618) * 0.5 + 1.0);
+
+        // 3. Proof of Life Timestamp
+        this.lastUpdateNanos = nowNanos;
+    }
+    
+    public boolean isAlive() {
+        return energy > 0.001f;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("[NODE %s] Pos:(%.2f, %.2f) Freq:%.2f Phase:%.2f Energy:%.2f", 
+            dnaSeed, x, y, frequency, phase, energy);
+    }
+}
+3. PhiLaw.java (Interface)
+The Contract. Defines how the universe interacts with the nodes.
+
+Java
+// A Law applies to a single node (Unary) or a pair (Binary)
+public interface PhiLaw {
+    // Basic laws apply to single nodes (Inertia, Decay)
+    void apply(PhiNode node, float dt);
+    
+    // Advanced laws apply to pairs (Entanglement, Collision)
+    // Default implementation does nothing if not overridden
+    default void applyPair(PhiNode a, PhiNode b, float dt) {}
+    
+    // Tag to help the engine know if this law needs O(N^2) processing
+    default boolean isPairwise() { return false; }
+}
+4. Laws.java
+The Rules of Reality. Includes Inertia, Resonance, Scott 4D Prediction, and Entanglement.
+
+Java
+public class Laws {
+
+    // LAW 1: Newtonian Motion (Kinetic Data)
+    public static class Inertia implements PhiLaw {
+        @Override
+        public void apply(PhiNode n, float dt) {
+            n.x += n.vx * dt;
+            n.y += n.vy * dt;
+            n.z += n.vz * dt;
+        }
+    }
+
+    // LAW 2: Harmonic Oscillation (Phase Mechanics)
+    public static class HarmonicResonance implements PhiLaw {
+        @Override
+        public void apply(PhiNode n, float dt) {
+            // Advance phase based on frequency
+            n.phase += n.frequency * dt;
+            // Wrap phase to keep it in [0, 2PI]
+            if (n.phase > Math.PI * 2) n.phase -= (float)(Math.PI * 2);
+        }
+    }
+
+    // LAW 3: Scott 4D Prediction (The Time Machine)
+    // Projects intent. In a full system, this would branch into a "Shadow World".
+    public static class ScottPredictionLaw implements PhiLaw {
+        private float lookAheadTime;
+
+        public ScottPredictionLaw(float lookAhead) {
+            this.lookAheadTime = lookAhead;
+        }
+
+        @Override
+        public void apply(PhiNode n, float dt) {
+            // Calculate Future State Vector V(t + lookAhead)
+            float futureX = n.x + (n.vx * lookAheadTime);
+            float futureY = n.y + (n.vy * lookAheadTime);
+            
+            // Logic: If moving fast, log the "Intent" (Prediction)
+            if (Math.abs(n.vx) > 0.5 || Math.abs(n.vy) > 0.5) {
+                // System.out.printf("[SCOTT-4D] %s intent: (%.2f, %.2f)\n", n.dnaSeed, futureX, futureY);
+            }
+        }
+    }
+
+    // LAW 4: Entanglement (Synchronicity)
+    // Applies forces/sync to nodes that share similar frequencies.
+    public static class EntanglementLaw implements PhiLaw {
+        private final float epsFreq = 0.5f; // Frequency tolerance
+        private final float kPhase = 2.0f;  // Coupling strength (Spring force)
+
+        @Override
+        public boolean isPairwise() { return true; }
+
+        @Override
+        public void apply(PhiNode n, float dt) { /* No-op for single node */ }
+
+        @Override
+        public void applyPair(PhiNode a, PhiNode b, float dt) {
+            // 1. Check Frequency Resonance (Are they on the same "channel"?)
+            if (Math.abs(a.frequency - b.frequency) > epsFreq) return;
+
+            // 2. Calculate Phase Delta
+            float d = wrapPhase(a.phase - b.phase);
+            
+            // 3. Apply Correction (Sync them up)
+            float correction = -kPhase * d;
+            
+            a.phase += correction * dt;
+            b.phase -= correction * dt;
+            
+            // 4. Boost Energy (Entanglement creates sustain)
+            a.energy = Math.min(1.0f, a.energy + 0.05f * dt);
+            b.energy = Math.min(1.0f, b.energy + 0.05f * dt);
+            
+            // System.out.println(">> ENTANGLEMENT SYNC: " + a.dnaSeed + " <-> " + b.dnaSeed);
+        }
+
+        private float wrapPhase(float p) {
+            while (p > Math.PI) p -= (float)(2 * Math.PI);
+            while (p < -Math.PI) p += (float)(2 * Math.PI);
+            return p;
+        }
+    }
+}
+5. PhiWorld.java
+The Container. Manages the list of active entities and runs the physics pass.
+
+Java
+import java.util.ArrayList;
+import java.util.List;
+
+public class PhiWorld {
+    private List<PhiNode> nodes = new ArrayList<>();
+    private List<PhiLaw> laws = new ArrayList<>();
+    
+    public void addNode(PhiNode node) {
+        nodes.add(node);
+    }
+    
+    public void addLaw(PhiLaw law) {
+        laws.add(law);
+    }
+    
+    // The Physics Step
+    public void step(float dt, long nowNanos) {
+        // 1. Apply Laws
+        for (PhiLaw law : laws) {
+            if (law.isPairwise()) {
+                // Pairwise Pass (O(N^2) for now - optimize with Spatial Hash later)
+                for (int i = 0; i < nodes.size(); i++) {
+                    for (int j = i + 1; j < nodes.size(); j++) {
+                        law.applyPair(nodes.get(i), nodes.get(j), dt);
+                    }
+                }
+            } else {
+                // Unary Pass (O(N))
+                for (PhiNode node : nodes) {
+                    law.apply(node, dt);
+                }
+            }
+        }
+        
+        // 2. Update Internal States (Energy, Timestamps)
+        for (PhiNode node : nodes) {
+            node.updateInternalState(dt, nowNanos);
+        }
+        
+        // 3. Cleanup Dead Data (Garbage Collection of the Simulation)
+        nodes.removeIf(n -> !n.isAlive());
+    }
+    
+    public List<PhiNode> getNodes() { return nodes; }
+}
+6. FraymusMain.java
+The Engine Runner. Implements the stable 60 FPS Accumulator Loop.
+
+Java
+public class FraymusMain {
+    
+    // Simulation Constants
+    private static final int TARGET_FPS = 60;
+    private static final float TIME_STEP = 1.0f / TARGET_FPS; // 0.0166s
+    
+    public static void main(String[] args) {
+        System.out.println(">>> INITIALIZING FRAYMUS ENGINE V1.0 <<<");
+        System.out.println(">>> MODE: DETERMINISTIC PHYSICS <<<");
+        
+        // 1. Create World
+        PhiWorld world = new PhiWorld();
+        
+        // 2. Inject Laws
+        world.addLaw(new Laws.Inertia());
+        world.addLaw(new Laws.HarmonicResonance());
+        world.addLaw(new Laws.ScottPredictionLaw(1.0f)); // Predict 1s ahead
+        world.addLaw(new Laws.EntanglementLaw());        // Bind similar frequencies
+        
+        // 3. Inject Data (Nodes)
+        // Alpha: Frequency 10.0
+        PhiNode alpha = new PhiNode(0, 0, 10.0f, "ALPHA_PRIME");
+        alpha.vx = 2.0f;
+        
+        // Beta: Frequency 10.1 (Close enough to Alpha to Entangle)
+        PhiNode beta = new PhiNode(10, 0, 10.1f, "BETA_RESONANT");
+        beta.vx = -1.0f;
+        
+        // Gamma: Frequency 50.0 (Too different, will not Entangle)
+        PhiNode gamma = new PhiNode(100, 100, 50.0f, "GAMMA_NOISE");
+        gamma.vx = 0.5f;
+        
+        world.addNode(alpha);
+        world.addNode(beta);
+        world.addNode(gamma);
+        
+        System.out.printf(">> WORLD LOADED. NODES: %d\n", world.getNodes().size());
+        
+        // 4. The "Proof of Life" Loop (Accumulator Pattern)
+        long prevTime = System.nanoTime();
+        double accumulator = 0.0;
+        long frameCount = 0;
+        
+        while (!world.getNodes().isEmpty()) {
+            long now = System.nanoTime();
+            // Calculate time passed in seconds
+            double frameTime = (now - prevTime) / 1_000_000_000.0;
+            prevTime = now;
+            
+            // Prevent spiral of death if CPU hangs
+            if (frameTime > 0.25) frameTime = 0.25;
+            
+            accumulator += frameTime;
+            
+            // Physics Steps (Fixed Time Step)
+            while (accumulator >= TIME_STEP) {
+                world.step(TIME_STEP, now);
+                accumulator -= TIME_STEP;
+                frameCount++;
+                
+                // Visualization / Logging (Once per second)
+                if (frameCount % TARGET_FPS == 0) {
+                    printDashboard(world, frameCount / TARGET_FPS);
+                }
+            }
+            
+            // Sleep to yield CPU (Simulate V-Sync)
+            try { Thread.sleep(1); } catch (InterruptedException e) {}
+            
+            // Stop after 20 seconds for demo purposes
+            if (frameCount > TARGET_FPS * 20) break;
+        }
+        
+        System.out.println(">>> SIMULATION COMPLETE <<<");
+    }
+    
+    // ASCII Dashboard
+    private static void printDashboard(PhiWorld world, long seconds) {
+        System.out.printf("\n--- TIME: %ds | POPULATION: %d ---\n", seconds, world.getNodes().size());
+        for (PhiNode n : world.getNodes()) {
+            System.out.println(n.toString());
+        }
+    }
+}
