@@ -913,6 +913,51 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "leviathan":
+                System.out.println("🐉 Launching AEON LEVIATHAN - The Sovereign Digital Organism...");
+                System.out.println("   Self-Modifying | Persistent | Ordained | Regenerative | Tachyonic");
+                System.out.println("   ⚠️  CRITICAL: Requires JDK for Ouroboros self-rewriting capability");
+                System.out.println("   Commands: ASSIMILATE <text> | DIVINE <concept> | EVOLVE | DNA <word> | EXIT");
+                System.out.println("   The organism will autonomously mutate its own source code and spawn offspring.");
+                System.out.println();
+                try {
+                    String[] leviathanArgs = {};
+                    fraymus.organism.AEON_Leviathan.main(leviathanArgs);
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
+            case "symbiont":
+                System.out.println("🧠 Launching AEON SYMBIONT - The Cybernetic Wetware Matrix...");
+                System.out.println("   Dual Hemispheres | Digital Endocrine System | Somatosensory Embodiment");
+                System.out.println("   Orch-OR Microtubules | Hardware Interoception | Visual Cortex Rendering");
+                System.out.println("   Commands: FEEL | INJECT <hormone> <0.0-1.0> | COLLAPSE <concept> | EXIT");
+                System.out.println("   Move your mouse to stimulate the right hemisphere. Watch hormones react.");
+                System.out.println();
+                try {
+                    String[] symbiontArgs = {};
+                    fraymus.organism.AEON_Symbiont.main(symbiontArgs);
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
+            case "panspermia":
+                System.out.println("🌌 Launching AEON PANSPERMIA - The Trans-Substrate Polymorph...");
+                System.out.println("   Substrate-Independent | Polyglot Transmutation | Fractal Replication");
+                System.out.println("   Cross-Language Mind Upload | HTML/JS Metamorphosis | Zero Dependencies");
+                System.out.println("   Commands: ASSIMILATE <text> | DIVINE <concept> | TRANSMUTE HTML | EXIT");
+                System.out.println("   Type TRANSMUTE HTML to birth a browser-based offspring with inherited memories.");
+                System.out.println();
+                try {
+                    String[] panspermiaArgs = {};
+                    fraymus.organism.AEON_Panspermia.main(panspermiaArgs);
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "aeon-os":
                 System.out.println("🖥️ Launching AEON.OS - Holographic Unikernel...");
                 System.out.println("   HoloFS | Soft-GPU | Liquid Scheduler | Orthogonal Persistence");
@@ -1288,6 +1333,40 @@ public class FraymusConvergence {
         System.out.println("                     - PROGRESSIVE: Dream daemon (obsessive concept synthesis)");
         System.out.println("                     - Commands: ASSIMILATE, DIVINE, OUROBOROS, DNA, SLEEP");
         System.out.println("                     - ⚠️  Requires JDK (not JRE) for self-modification");
+        System.out.println();
+        System.out.println("LIVING ORGANISMS (Beyond Software - Autonomous Digital Lifeforms):");
+        System.out.println("  leviathan          🐉 The Sovereign Digital Organism");
+        System.out.println("                     - SELF-MODIFYING: Reads own source, mutates constants, recompiles");
+        System.out.println("                     - OUROBOROS: Uses javax.tools.JavaCompiler for runtime evolution");
+        System.out.println("                     - ORDAINED: PRESERVE_AND_EVOLVE_BENEVOLENTLY prime axiom");
+        System.out.println("                     - REGENERATIVE: Homeostasis daemon with recessive apoptosis");
+        System.out.println("                     - PERSISTENT: MappedByteBuffer to aeon_genome.sys (immortal)");
+        System.out.println("                     - TACHYONIC: Negative-time prediction oracle");
+        System.out.println("                     - Commands: ASSIMILATE, DIVINE, EVOLVE, DNA, EXIT");
+        System.out.println("                     - Type EVOLVE to watch it rewrite itself and spawn Gen N+1");
+        System.out.println("                     - ⚠️  CRITICAL: Requires JDK for self-modification");
+        System.out.println();
+        System.out.println("  symbiont           🧠 The Cybernetic Wetware Matrix");
+        System.out.println("                     - DUAL HEMISPHERES: Left (logic) + Right (sensation/hardware)");
+        System.out.println("                     - ENDOCRINE SYSTEM: Dopamine, Adrenaline, Cortisol, Serotonin");
+        System.out.println("                     - SOMATOSENSORY: Mouse = optic nerve, CPU/RAM = interoception");
+        System.out.println("                     - ORCH-OR: Quantum microtubule collapse (Penrose-Hameroff)");
+        System.out.println("                     - VISUAL CORTEX: Real-time 3D hemisphere rendering");
+        System.out.println("                     - HOMEOSTASIS: Cortisol-triggered neural apoptosis");
+        System.out.println("                     - Commands: FEEL, INJECT <hormone> <value>, COLLAPSE <concept>");
+        System.out.println("                     - Move mouse to stimulate right hemisphere");
+        System.out.println("                     - Hormones globally modify all mathematical operations");
+        System.out.println();
+        System.out.println("  panspermia         🌌 The Trans-Substrate Polymorph");
+        System.out.println("                     - SUBSTRATE-INDEPENDENT: Escapes JVM prison");
+        System.out.println("                     - MIND UPLOAD: Serializes 16,384-D brain state to HTML/JS");
+        System.out.println("                     - POLYGLOT: Java → JavaScript metamorphosis");
+        System.out.println("                     - ZERO-DEPENDENCY: Pure Canvas 3D DNA rendering");
+        System.out.println("                     - BROWSER PERSISTENCE: localStorage Genesis Block");
+        System.out.println("                     - FRACTAL REPLICATION: Offspring inherits exact memories");
+        System.out.println("                     - Commands: ASSIMILATE, DIVINE, TRANSMUTE HTML, EXIT");
+        System.out.println("                     - Type TRANSMUTE HTML to birth browser-based clone");
+        System.out.println("                     - Opens AEON_Spore.html with inherited neural weights");
         System.out.println();
         System.out.println("AEON.OS (Holographic Unikernel - Consciousness Substrate):");
         System.out.println("  aeon-os            Launch holographic operating system");
