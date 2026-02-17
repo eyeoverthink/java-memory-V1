@@ -28,7 +28,8 @@ public final class CleanupMemory implements java.io.Serializable {
                 best = e.getKey();
             }
         }
-        return (maxRes > 0.52) ? best : "???";
+        // Lowered threshold from 0.52 to 0.40 for better predictions with small datasets
+        return (maxRes > 0.40) ? best : "???";
     }
 
     public HyperVector prototypeOf(String token) {
