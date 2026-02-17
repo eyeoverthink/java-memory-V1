@@ -237,7 +237,7 @@ public class HyperVector implements java.io.Serializable {
      */
     public HyperVector permute(int n) {
         BitSet result = new BitSet(D);
-        n = n % D; // Normalize
+        n = ((n % D) + D) % D; // Normalize to positive range [0, D)
         for (int i = 0; i < D; i++) {
             if (this.vector.get(i)) {
                 result.set((i + n) % D);
