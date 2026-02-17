@@ -1108,6 +1108,12 @@ public class FraynixBoot {
         System.out.println("  babel <concept> [L] Transmute concept to C/ASM/PYTHON/GO/JS");
         System.out.println("  babel target <lang> Set default target substrate");
         System.out.println("  babel status        Babel telemetry (transmutations, lines, substrates)");
+        System.out.println("  willow              Enter Willow-Crusher REPL (Phi-Resonance Quantum Kernel)");
+        System.out.println("  willow hadamard <n> Inject n qubits into Φ-spaced coherent superposition");
+        System.out.println("  willow entangle q q Beat-frequency entanglement (CNOT gate)");
+        System.out.println("  willow echo         Φ-ratio temporal fractal error correction");
+        System.out.println("  willow measure <q>  Goertzel resonance filter (spin extraction)");
+        System.out.println("  willow spectrum     Waveform telemetry");
         System.out.println("  exit                Shutdown");
         System.out.println("  ───────────────────────────────────────────────────────────");
     }
