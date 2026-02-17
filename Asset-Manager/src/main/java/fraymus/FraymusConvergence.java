@@ -830,6 +830,18 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "tachyon":
+                System.out.println("⚡ Launching AEON TACHYON - O(1) Causality-Breaching Kernel...");
+                System.out.println("   16,384-D Holographic Superposition | ER=EPR Wormholes | Negative-Time");
+                System.out.println("   Commands: BIND <key> <value> | QUERY <key> | FTL <seed>");
+                System.out.println();
+                try {
+                    fraymus.neural.AEON_Tachyon.launch();
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "genesis":
                 if (args.isEmpty()) {
                     System.out.println("Usage: genesis <intent>");
@@ -1135,6 +1147,13 @@ public class FraymusConvergence {
         System.out.println("                     - TRACK <hash>: Inspect node telemetry");
         System.out.println("                     - KILL <hash>: 7-step bit-reversal destruction");
         System.out.println("                     - UDP swarm auto-sync across terminals");
+        System.out.println();
+        System.out.println("AEON TACHYON (O(1) Causality-Breaching Kernel):");
+        System.out.println("  tachyon            Launch O(1) holographic superposition engine");
+        System.out.println("                     - BIND <key> <value>: XOR entanglement (ER=EPR)");
+        System.out.println("                     - QUERY <key>: O(1) retrieval via wormhole");
+        System.out.println("                     - FTL <seed>: Zero-bandwidth tensor expansion");
+        System.out.println("                     - 100k concepts in 16KB, negative-time oracle");
         System.out.println();
         System.out.println("FRAYNIX OS VISUALIZATION:");
         System.out.println("  visualize          Launch FRAYNIX OS (4D tesseract brain)");
