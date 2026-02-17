@@ -235,47 +235,67 @@ public class DockerBox {
     }
     
     /**
-     * Fallback: Run Python directly when Docker API is broken
+     * Fallback: Run commands directly when Docker API is broken
+     * Supports Python, Node.js, and shell commands on the host system
      */
     private String runDirectFallback(String command, String image) {
         try {
             System.out.println("   ⚡ FALLBACK MODE: Running directly (Docker API broken)");
+            System.out.println("   ⚠️  WARNING: Running on host system (not sandboxed!)");
             
-            // Extract Python code if it's a python command
+            ProcessBuilder pb;
+            
+            // Python commands
             if (command.contains("python")) {
-                // Try to run Python directly
-                ProcessBuilder pb = new ProcessBuilder("python", "-c", extractPythonCode(command));
-                pb.redirectErrorStream(true);
-                Process p = pb.start();
-                
-                StringBuilder output = new StringBuilder();
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(p.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        output.append(line).append("\n");
-                    }
-                }
-                
-                boolean finished = p.waitFor(timeoutSeconds, TimeUnit.SECONDS);
-                if (!finished) {
-                    p.destroyForcibly();
-                    return "❌ TIMEOUT (" + timeoutSeconds + "s)";
-                }
-                
-                int exitCode = p.exitValue();
-                String result = "⚡ DIRECT EXECUTION (exit: " + exitCode + "):\n\n" + output.toString();
-                
-                if (exitCode == 0) {
-                    result = "✅ " + result;
-                } else {
-                    result = "⚠️  " + result;
-                }
-                
-                return result;
-            } else {
-                return "⚠️  FALLBACK: Only Python commands supported in fallback mode";
+                String pythonCode = extractPythonCode(command);
+                pb = new ProcessBuilder("python", "-c", pythonCode);
             }
+            // Node.js commands
+            else if (command.contains("node")) {
+                String nodeCode = extractNodeCode(command);
+                pb = new ProcessBuilder("node", "-e", nodeCode);
+            }
+            // Shell commands - use PowerShell on Windows, sh on Unix
+            else {
+                String os = System.getProperty("os.name").toLowerCase();
+                if (os.contains("win")) {
+                    // Windows: Use PowerShell for better command support
+                    pb = new ProcessBuilder("powershell.exe", "-Command", command);
+                } else {
+                    // Unix/Linux/Mac: Use sh
+                    pb = new ProcessBuilder("sh", "-c", command);
+                }
+            }
+            
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            
+            StringBuilder output = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(p.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+            
+            boolean finished = p.waitFor(timeoutSeconds, TimeUnit.SECONDS);
+            if (!finished) {
+                p.destroyForcibly();
+                return "❌ TIMEOUT (" + timeoutSeconds + "s)";
+            }
+            
+            int exitCode = p.exitValue();
+            String result = "⚡ DIRECT EXECUTION (exit: " + exitCode + "):\n\n" + output.toString();
+            
+            if (exitCode == 0) {
+                result = "✅ " + result;
+            } else {
+                result = "⚠️  " + result;
+            }
+            
+            return result;
+            
         } catch (Exception e) {
             return "❌ FALLBACK ERROR: " + e.getMessage();
         }
@@ -286,6 +306,27 @@ public class DockerBox {
      */
     private String extractPythonCode(String command) {
         // Extract code between quotes in python -c "code" format
+        int start = command.indexOf("\"");
+        int end = command.lastIndexOf("\"");
+        if (start != -1 && end != -1 && start < end) {
+            return command.substring(start + 1, end);
+        }
+        
+        // Try single quotes
+        start = command.indexOf("'");
+        end = command.lastIndexOf("'");
+        if (start != -1 && end != -1 && start < end) {
+            return command.substring(start + 1, end);
+        }
+        
+        return command;
+    }
+    
+    /**
+     * Extract Node.js code from command string
+     */
+    private String extractNodeCode(String command) {
+        // Extract code between quotes in node -e "code" format
         int start = command.indexOf("\"");
         int end = command.lastIndexOf("\"");
         if (start != -1 && end != -1 && start < end) {
