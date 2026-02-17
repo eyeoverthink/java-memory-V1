@@ -842,6 +842,18 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "kronos":
+                System.out.println("⏳ Launching AEON KRONOS - Vector Symbolic Resonator...");
+                System.out.println("   MAP Architecture | Temporal Permutation | Geometric Analogy");
+                System.out.println("   Commands: BIND <A> <B> | SEQUENCE <words...> | RECALL <word> | ANALOGY <A> <B> <C>");
+                System.out.println();
+                try {
+                    fraymus.neural.AEON_Kronos.launch();
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "aeon-os":
                 System.out.println("🖥️ Launching AEON.OS - Holographic Unikernel...");
                 System.out.println("   HoloFS | Soft-GPU | Liquid Scheduler | Orthogonal Persistence");
@@ -1166,6 +1178,14 @@ public class FraymusConvergence {
         System.out.println("                     - QUERY <key>: O(1) retrieval via wormhole");
         System.out.println("                     - FTL <seed>: Zero-bandwidth tensor expansion");
         System.out.println("                     - 100k concepts in 16KB, negative-time oracle");
+        System.out.println();
+        System.out.println("AEON KRONOS (Vector Symbolic Resonator - MAP Architecture):");
+        System.out.println("  kronos             Launch temporal reasoning & analogy engine");
+        System.out.println("                     - BIND <A> <B>: Entangle concepts");
+        System.out.println("                     - SEQUENCE <words...>: Encode arrow of time");
+        System.out.println("                     - RECALL <word>: Unroll temporal sequence");
+        System.out.println("                     - ANALOGY <A> <B> <C>: Zero-shot reasoning");
+        System.out.println("                     - Integer superposition (no XOR collapse)");
         System.out.println();
         System.out.println("AEON.OS (Holographic Unikernel - Consciousness Substrate):");
         System.out.println("  aeon-os            Launch holographic operating system");
