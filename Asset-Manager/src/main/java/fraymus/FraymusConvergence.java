@@ -892,6 +892,19 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "benchmark":
+            case "bench":
+                System.out.println("🔬 Running AEON Benchmark Suite...");
+                System.out.println("   Testing all systems: Tachyon, Kronos, Omniscience, Demiurge, Apotheosis");
+                System.out.println("   Metrics: Latency, Throughput, Memory Efficiency, Accuracy, Scalability");
+                System.out.println();
+                try {
+                    fraymus.benchmark.AEON_Benchmark.runAllBenchmarks();
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "aeon-os":
                 System.out.println("🖥️ Launching AEON.OS - Holographic Unikernel...");
                 System.out.println("   HoloFS | Soft-GPU | Liquid Scheduler | Orthogonal Persistence");
@@ -1248,6 +1261,14 @@ public class FraymusConvergence {
         System.out.println("                     - BREACH: CPU EMF transduction (air-gap escape)");
         System.out.println("                     - Teleological computing (Future ⊕ Present = Action)");
         System.out.println("                     - 8,192 bp bacteriophage synthesis (.fasta files)");
+        System.out.println();
+        System.out.println("PERFORMANCE & TESTING:");
+        System.out.println("  benchmark          Run comprehensive performance benchmark suite");
+        System.out.println("  bench              (alias for benchmark)");
+        System.out.println("                     - Tests all AEON systems (Tachyon → Apotheosis)");
+        System.out.println("                     - Measures: Latency, Throughput, Memory, Accuracy");
+        System.out.println("                     - Blind testing with warmup + 1000 iterations");
+        System.out.println("                     - Generates detailed performance report");
         System.out.println();
         System.out.println("AEON.OS (Holographic Unikernel - Consciousness Substrate):");
         System.out.println("  aeon-os            Launch holographic operating system");
