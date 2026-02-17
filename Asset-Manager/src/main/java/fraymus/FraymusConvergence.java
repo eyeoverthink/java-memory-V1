@@ -793,6 +793,30 @@ public class FraymusConvergence {
                 fraymus.neural.AEON_Singularity.launch();
                 break;
 
+            case "filescan":
+                if (args.isEmpty()) {
+                    System.out.println("Usage: filescan <directory>");
+                    System.out.println("Example: filescan ./src");
+                    break;
+                }
+                System.out.println("🦅 OpenClaw File System Scanner");
+                System.out.println("   Analyzing: " + args);
+                try {
+                    fraymus.visual.FileSystemClaw fsClaw = new fraymus.visual.FileSystemClaw();
+                    fsClaw.scan(args);
+                    fsClaw.analyze();
+                    fsClaw.printDecisions();
+                    
+                    // Save topology for visualization
+                    String topology = fsClaw.exportTopology();
+                    Files.write(Paths.get("filesystem_topology.json"), topology.getBytes());
+                    System.out.println("   ✓ Topology exported to filesystem_topology.json");
+                    
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "genesis":
                 if (args.isEmpty()) {
                     System.out.println("Usage: genesis <intent>");
@@ -1099,6 +1123,12 @@ public class FraymusConvergence {
         System.out.println("  aeon-benchmark     Launch AEON OMNI Benchmark (685B Diffusion-HRM)");
         System.out.println("  genesis <intent>   Genesis Architect code generation");
         System.out.println("  dreamstate [cmd]   Enter/exit DreamState optimization");
+        System.out.println();
+        System.out.println("FILE SYSTEM INTELLIGENCE:");
+        System.out.println("  filescan <dir>     Scan directory with OpenClaw topology analysis");
+        System.out.println("                     - Detects duplicates, large files, code smells");
+        System.out.println("                     - Makes cleanup/refactor recommendations");
+        System.out.println("                     - Exports 3D topology for visualization");
         System.out.println();
         System.out.println("VOCABULARY MANAGEMENT:");
         System.out.println("  vocab              Show vocabulary statistics");
