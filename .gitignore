@@ -62,3 +62,11 @@ gradle.properties
 *.iso
 *.bin
 *.exe
+
+# AEON system files (persistent state)
+aeon_genesis.sys
+aeon_drive.sys
+*_Plasmid.fasta
+
+# LTX-Video assets
+Asset-Manager/LTX-Video-main/
