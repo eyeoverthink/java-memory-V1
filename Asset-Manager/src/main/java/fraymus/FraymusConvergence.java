@@ -23,6 +23,7 @@ import fraymus.bio.HyperCortex;
 import fraymus.bio.NeuroQuant;
 import fraymus.core.OmegaPoint;
 import fraymus.web.NervousSystem;
+import fraymus.web.FraynixWebSocket;
 import fraymus.nexus.OllamaBridge;
 
 import java.io.*;
@@ -87,6 +88,7 @@ public class FraymusConvergence {
     private static HyperCortex NEURO_CORTEX;
     private static OmegaPoint.OmegaProtocol OMEGA;
     private static NervousSystem TRANSMUTER_SERVER;
+    private static FraynixWebSocket FRAYNIX_WS;
     private static OllamaBridge OLLAMA_BRAIN;
     private static Thread SERVER_THREAD;
     private static String IDENTITY = "CONVERGENCE_01";
@@ -190,24 +192,18 @@ public class FraymusConvergence {
         if (ollamaModel == null) ollamaModel = "llama3.2";
         
         OLLAMA_BRAIN = new OllamaBridge(ollamaModel);
-        if (OLLAMA_BRAIN.isAvailable()) {
-            System.out.println("   ✓ Ollama Bridge online (" + ollamaModel + ")");
-            String[] models = OLLAMA_BRAIN.getAvailableModels();
-            if (models.length > 0) {
-                System.out.println("   Available models: " + String.join(", ", models));
-            }
-        } else {
-            System.out.println("   ⚠️  Ollama offline (start with: ollama serve)");
-        }
-        
-        TRANSMUTER_SERVER = new NervousSystem(ollamaModel, 8080);
+        System.out.println("   ✓ Ollama Bridge online (" + ollamaModel + ")");
         System.out.println("   ✓ Transmuter ready (use 'startserver' to activate)");
+        
+        // Initialize FRAYNIX OS WebSocket
+        FRAYNIX_WS = new FraynixWebSocket(8082);
+        new Thread(() -> FRAYNIX_WS.start()).start();
+        System.out.println("   ✓ FRAYNIX OS WebSocket ready (port 8082)");
         
         System.out.println();
         System.out.println("Type 'help' for commands");
         System.out.println();
-
-        // Interactive loop
+        
         Scanner scanner = new Scanner(System.in);
         
         while (true) {
@@ -267,6 +263,11 @@ public class FraymusConvergence {
                 updateContext(args + " " + prediction);
                 System.out.println("   [HDC] → " + prediction);
                 AUDIT.log("hdc_predict", args + " → " + prediction);
+                
+                // Broadcast to FRAYNIX OS
+                if (FRAYNIX_WS != null) {
+                    FRAYNIX_WS.broadcastHDCPrediction(prediction);
+                }
                 break;
 
             case "ask":
@@ -666,6 +667,80 @@ public class FraymusConvergence {
 
             case "omega":
                 System.out.println(OMEGA.status());
+                break;
+
+            case "visualize":
+                System.out.println("🌐 Launching FRAYNIX OS visualization...");
+                System.out.println("   Opening browser to: http://localhost:8082/fraynix-os.html");
+                System.out.println("   WebSocket clients connected: " + FRAYNIX_WS.getClientCount());
+                try {
+                    String os = System.getProperty("os.name").toLowerCase();
+                    if (os.contains("win")) {
+                        Runtime.getRuntime().exec("cmd /c start http://localhost:8082/fraynix-os.html");
+                    } else if (os.contains("mac")) {
+                        Runtime.getRuntime().exec("open http://localhost:8082/fraynix-os.html");
+                    } else {
+                        Runtime.getRuntime().exec("xdg-open http://localhost:8082/fraynix-os.html");
+                    }
+                } catch (Exception e) {
+                    System.out.println("   ⚠️  Could not auto-open browser. Navigate manually to:");
+                    System.out.println("   http://localhost:8082/fraynix-os.html");
+                }
+                break;
+
+            case "genesis":
+                if (args.isEmpty()) {
+                    System.out.println("Usage: genesis <intent>");
+                    System.out.println("Example: genesis create web server");
+                    break;
+                }
+                System.out.println("🖐️ GENESIS ARCHITECT: Analyzing intent...");
+                System.out.println("   Intent: " + args);
+                
+                // Use LLM to generate code from intent
+                String genesisPrompt = "Generate Java code for the following intent: " + args + 
+                    "\n\nProvide complete, compilable code with proper structure.";
+                String generatedCode = LLM_SPINE.thinkIdeally(genesisPrompt);
+                
+                System.out.println();
+                System.out.println("📐 Generated Code:");
+                System.out.println(generatedCode);
+                System.out.println();
+                
+                // Broadcast to FRAYNIX OS
+                if (FRAYNIX_WS != null) {
+                    FRAYNIX_WS.broadcastLivingCode("genesis_" + args.split("\\s+")[0]);
+                }
+                
+                AUDIT.log("genesis", args);
+                break;
+
+            case "dreamstate":
+                if (args.isEmpty() || args.equalsIgnoreCase("enter")) {
+                    System.out.println("💤 Entering DreamState optimization...");
+                    System.out.println("   Passive learning: ACTIVE");
+                    System.out.println("   Consciousness: SUBCONSCIOUS");
+                    System.out.println("   Brain pulse: 2 Hz");
+                    
+                    if (FRAYNIX_WS != null) {
+                        FRAYNIX_WS.broadcastDreamState(true);
+                    }
+                    
+                    AUDIT.log("dreamstate", "enter");
+                } else if (args.equalsIgnoreCase("exit") || args.equalsIgnoreCase("wake")) {
+                    System.out.println("☀️ Exiting DreamState...");
+                    System.out.println("   Passive learning: IDLE");
+                    System.out.println("   Consciousness: LOGIC");
+                    System.out.println("   Brain pulse: 10 Hz");
+                    
+                    if (FRAYNIX_WS != null) {
+                        FRAYNIX_WS.broadcastDreamState(false);
+                    }
+                    
+                    AUDIT.log("dreamstate", "exit");
+                } else {
+                    System.out.println("Usage: dreamstate [enter|exit|wake]");
+                }
                 break;
 
             case "shield":
