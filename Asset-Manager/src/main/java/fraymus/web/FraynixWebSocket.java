@@ -15,6 +15,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -34,27 +35,48 @@ public class FraynixWebSocket extends WebSocketServer {
         // Start HTTP server for serving HTML
         try {
             httpServer = HttpServer.create(new InetSocketAddress(port + 1), 0);
-            httpServer.createContext("/fraynix-os.html", new FraynixHTMLHandler());
+            httpServer.createContext("/fraynix-os.html", new HTMLHandler("fraynix-os.html"));
+            httpServer.createContext("/openclaw-core.html", new HTMLHandler("openclaw-core.html"));
+            httpServer.createContext("/aeon-benchmark.html", new HTMLHandler("aeon-benchmark.html"));
             httpServer.setExecutor(null);
             httpServer.start();
             System.out.println("   🌐 HTTP server started on port " + (port + 1));
+            System.out.println("   📡 FRAYNIX OS: http://localhost:" + (port + 1) + "/fraynix-os.html");
+            System.out.println("   📡 OpenClaw Core: http://localhost:" + (port + 1) + "/openclaw-core.html");
+            System.out.println("   📡 AEON Benchmark: http://localhost:" + (port + 1) + "/aeon-benchmark.html");
         } catch (IOException e) {
             System.err.println("   ⚠️  Failed to start HTTP server: " + e.getMessage());
         }
     }
     
-    private static class FraynixHTMLHandler implements HttpHandler {
+    private static class HTMLHandler implements HttpHandler {
+        private final String filename;
+        
+        public HTMLHandler(String filename) {
+            this.filename = filename;
+        }
+        
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             try {
-                byte[] response = Files.readAllBytes(Paths.get("./fraynix-os.html"));
+                // Try multiple paths to find the HTML file
+                Path htmlPath = Paths.get(filename);
+                if (!Files.exists(htmlPath)) {
+                    htmlPath = Paths.get("Asset-Manager/" + filename);
+                }
+                if (!Files.exists(htmlPath)) {
+                    htmlPath = Paths.get("../" + filename);
+                }
+                
+                byte[] response = Files.readAllBytes(htmlPath);
                 exchange.getResponseHeaders().set("Content-Type", "text/html");
+                exchange.getResponseHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate");
                 exchange.sendResponseHeaders(200, response.length);
                 OutputStream os = exchange.getResponseBody();
                 os.write(response);
                 os.close();
             } catch (Exception e) {
-                String error = "Error loading fraynix-os.html: " + e.getMessage();
+                String error = "Error loading " + filename + ": " + e.getMessage();
                 exchange.sendResponseHeaders(500, error.length());
                 OutputStream os = exchange.getResponseBody();
                 os.write(error.getBytes());
@@ -159,11 +181,27 @@ public class FraynixWebSocket extends WebSocketServer {
     /**
      * Broadcast dreamstate change
      */
-    public void broadcastDreamState(boolean active) {
-        JSONObject msg = new JSONObject();
-        msg.put("type", "dreamstate");
-        msg.put("active", active);
-        broadcastToClients(msg.toString());
+    public void broadcastDreamState(boolean entering) {
+        String msg = String.format("{\"type\":\"dreamstate\",\"active\":%b}", entering);
+        broadcastToClients(msg);
+    }
+
+    public void broadcastAeonSwarmStatus(long cycle, long entropy, int activeCores, int maxCores) {
+        String msg = String.format("{\"type\":\"aeon_swarm\",\"cycle\":%d,\"entropy\":%d,\"activeCores\":%d,\"maxCores\":%d}", 
+            cycle, entropy, activeCores, maxCores);
+        broadcastToClients(msg);
+    }
+
+    public void broadcastAeonLearning(String source, String topic, double weight) {
+        String msg = String.format("{\"type\":\"aeon_learning\",\"source\":\"%s\",\"topic\":\"%s\",\"weight\":%.3f}", 
+            source, topic, weight);
+        broadcastToClients(msg);
+    }
+
+    public void broadcastAeonDiffusion(int step, String status) {
+        String msg = String.format("{\"type\":\"aeon_diffusion\",\"step\":%d,\"status\":\"%s\"}", 
+            step, status);
+        broadcastToClients(msg);
     }
     
     /**

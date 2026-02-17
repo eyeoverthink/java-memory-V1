@@ -16,15 +16,13 @@ import fraymus.SelfCodeEvolver;
 import fraymus.LivingCodeGenerator;
 import fraymus.evolution.CodeReflector;
 import fraymus.evolution.DarwinianLoop;
-import fraymus.hyper.HyperVector;
-import fraymus.PassiveLearner;
-import fraymus.InfiniteMemory;
-import fraymus.bio.HyperCortex;
-import fraymus.bio.NeuroQuant;
-import fraymus.core.OmegaPoint;
-import fraymus.web.NervousSystem;
 import fraymus.web.FraynixWebSocket;
+import fraymus.web.NervousSystem;
+import fraymus.visual.OpenClaw;
 import fraymus.nexus.OllamaBridge;
+import fraymus.bio.HyperCortex;
+import fraymus.hyper.HyperVector;
+import fraymus.neural.AEON_Absolute;
 
 import java.io.*;
 import java.nio.file.*;
@@ -86,10 +84,12 @@ public class FraymusConvergence {
     private static PassiveLearner LEARNER;
     private static InfiniteMemory MEMORY;
     private static HyperCortex NEURO_CORTEX;
-    private static OmegaPoint.OmegaProtocol OMEGA;
+    // private static OmegaPoint.OmegaProtocol OMEGA;
     private static NervousSystem TRANSMUTER_SERVER;
     private static FraynixWebSocket FRAYNIX_WS;
     private static OllamaBridge OLLAMA_BRAIN;
+    private static OpenClaw OPENCLAW_NATIVE;
+    private static AEON_Absolute AEON_SWARM;
     private static Thread SERVER_THREAD;
     private static String IDENTITY = "CONVERGENCE_01";
     private static final List<String> CONTEXT_WINDOW = new ArrayList<>();
@@ -181,8 +181,8 @@ public class FraymusConvergence {
         NEURO_CORTEX = new HyperCortex(AUDIT);
         System.out.println("   ✓ HyperCortex ready (10,000D NCA)");
         
-        OMEGA = new OmegaPoint.OmegaProtocol();
-        System.out.println("   ✓ Omega Point ready (Shield + Brain + Memory)");
+        // OMEGA = new OmegaPoint.OmegaProtocol();
+        // System.out.println("   ✓ Omega Point ready (Shield + Brain + Memory)");
         
         // Initialize Transmuter components
         System.out.println();
@@ -267,6 +267,11 @@ public class FraymusConvergence {
                 // Broadcast to FRAYNIX OS
                 if (FRAYNIX_WS != null) {
                     FRAYNIX_WS.broadcastHDCPrediction(prediction);
+                }
+                
+                // Notify native OpenClaw if running
+                if (OPENCLAW_NATIVE != null) {
+                    OPENCLAW_NATIVE.onHDCPrediction(prediction);
                 }
                 break;
 
@@ -666,25 +671,117 @@ public class FraymusConvergence {
                 break;
 
             case "omega":
-                System.out.println(OMEGA.status());
+                // System.out.println(OMEGA.status());
+                System.out.println("⚠️  Omega Point not available in this build");
                 break;
 
             case "visualize":
                 System.out.println("🌐 Launching FRAYNIX OS visualization...");
-                System.out.println("   Opening browser to: http://localhost:8082/fraynix-os.html");
+                System.out.println("   Opening browser to: http://localhost:8083/fraynix-os.html");
                 System.out.println("   WebSocket clients connected: " + FRAYNIX_WS.getClientCount());
                 try {
                     String os = System.getProperty("os.name").toLowerCase();
                     if (os.contains("win")) {
-                        Runtime.getRuntime().exec("cmd /c start http://localhost:8082/fraynix-os.html");
+                        Runtime.getRuntime().exec("cmd /c start http://localhost:8083/fraynix-os.html");
                     } else if (os.contains("mac")) {
-                        Runtime.getRuntime().exec("open http://localhost:8082/fraynix-os.html");
+                        Runtime.getRuntime().exec("open http://localhost:8083/fraynix-os.html");
                     } else {
-                        Runtime.getRuntime().exec("xdg-open http://localhost:8082/fraynix-os.html");
+                        Runtime.getRuntime().exec("xdg-open http://localhost:8083/fraynix-os.html");
                     }
                 } catch (Exception e) {
                     System.out.println("   ⚠️  Could not auto-open browser. Navigate manually to:");
-                    System.out.println("   http://localhost:8082/fraynix-os.html");
+                    System.out.println("   http://localhost:8083/fraynix-os.html");
+                }
+                break;
+
+            case "openclaw":
+                System.out.println("🦅 Launching OpenClaw Core visualization (WebGL)...");
+                System.out.println("   Opening browser to: http://localhost:8083/openclaw-core.html");
+                System.out.println("   WebSocket clients connected: " + FRAYNIX_WS.getClientCount());
+                try {
+                    String os = System.getProperty("os.name").toLowerCase();
+                    if (os.contains("win")) {
+                        Runtime.getRuntime().exec("cmd /c start http://localhost:8083/openclaw-core.html");
+                    } else if (os.contains("mac")) {
+                        Runtime.getRuntime().exec("open http://localhost:8083/openclaw-core.html");
+                    } else {
+                        Runtime.getRuntime().exec("xdg-open http://localhost:8083/openclaw-core.html");
+                    }
+                } catch (Exception e) {
+                    System.out.println("   ⚠️  Could not auto-open browser. Navigate manually to:");
+                    System.out.println("   http://localhost:8083/openclaw-core.html");
+                }
+                break;
+
+            case "openclaw-native":
+                System.out.println("🦅 Launching OpenClaw NATIVE (Pure Java DMA Engine)...");
+                System.out.println("   16,384 nodes | 4,096 packets | Direct Memory Access");
+                System.out.println("   Click & hold mouse to inject TRUE DATA");
+                if (OPENCLAW_NATIVE == null) {
+                    OPENCLAW_NATIVE = fraymus.visual.OpenClaw.launch();
+                    OPENCLAW_NATIVE.setWebSocket(FRAYNIX_WS);
+                    System.out.println("   ✓ OpenClaw DMA engine started");
+                } else {
+                    System.out.println("   ⚠️  OpenClaw already running");
+                }
+                break;
+
+            case "swarm":
+                if (args.isEmpty()) {
+                    System.out.println("Usage: swarm [start|stop|status]");
+                    break;
+                }
+                
+                if (args.equalsIgnoreCase("start")) {
+                    if (AEON_SWARM == null) {
+                        AEON_SWARM = new AEON_Absolute();
+                        AEON_SWARM.setWebSocket(FRAYNIX_WS);
+                        AEON_SWARM.start();
+                        System.out.println("   ✓ AEON ABSOLUTE swarm ignited");
+                        System.out.println("   📡 Broadcasting to WebSocket clients");
+                    } else {
+                        System.out.println("   ⚠️  Swarm already running");
+                    }
+                } else if (args.equalsIgnoreCase("stop")) {
+                    if (AEON_SWARM != null) {
+                        AEON_SWARM.stop();
+                        AEON_SWARM = null;
+                        System.out.println("   ✓ AEON ABSOLUTE swarm terminated");
+                    } else {
+                        System.out.println("   ⚠️  No swarm running");
+                    }
+                } else if (args.equalsIgnoreCase("status")) {
+                    if (AEON_SWARM != null) {
+                        System.out.println("   🧬 SWARM STATUS: " + AEON_SWARM.getStatus());
+                    } else {
+                        System.out.println("   ⚠️  No swarm running");
+                    }
+                } else {
+                    System.out.println("Usage: swarm [start|stop|status]");
+                }
+                break;
+
+            case "aeon-benchmark":
+                System.out.println("🧬 Launching AEON OMNI Benchmark (685B Diffusion-HRM)...");
+                System.out.println("   Opening browser to: http://localhost:8083/aeon-benchmark.html");
+                System.out.println("   WebSocket clients connected: " + FRAYNIX_WS.getClientCount());
+                if (AEON_SWARM != null) {
+                    System.out.println("   ✓ Live swarm data streaming enabled");
+                } else {
+                    System.out.println("   ⚠️  Swarm not running. Use 'swarm start' for live data.");
+                }
+                try {
+                    String os = System.getProperty("os.name").toLowerCase();
+                    if (os.contains("win")) {
+                        Runtime.getRuntime().exec("cmd /c start http://localhost:8083/aeon-benchmark.html");
+                    } else if (os.contains("mac")) {
+                        Runtime.getRuntime().exec("open http://localhost:8083/aeon-benchmark.html");
+                    } else {
+                        Runtime.getRuntime().exec("xdg-open http://localhost:8083/aeon-benchmark.html");
+                    }
+                } catch (Exception e) {
+                    System.out.println("   ⚠️  Could not auto-open browser. Navigate manually to:");
+                    System.out.println("   http://localhost:8083/aeon-benchmark.html");
                 }
                 break;
 
@@ -720,7 +817,6 @@ public class FraymusConvergence {
                     System.out.println("💤 Entering DreamState optimization...");
                     System.out.println("   Passive learning: ACTIVE");
                     System.out.println("   Consciousness: SUBCONSCIOUS");
-                    System.out.println("   Brain pulse: 2 Hz");
                     
                     if (FRAYNIX_WS != null) {
                         FRAYNIX_WS.broadcastDreamState(true);
@@ -744,37 +840,15 @@ public class FraymusConvergence {
                 break;
 
             case "shield":
-                if (args.isEmpty()) {
-                    System.out.println("Usage: shield <data>");
-                    break;
-                }
-                String encrypted = OMEGA.secure(args);
-                System.out.println("🔒 ENCRYPTED: " + encrypted.substring(0, Math.min(50, encrypted.length())) + "...");
-                AUDIT.log("data_encrypted", "shield");
+                System.out.println("⚠️  Shield command not available in this build");
                 break;
 
             case "brain":
-                if (args.isEmpty()) {
-                    System.out.println("Usage: brain <initial_fitness>");
-                    break;
-                }
-                double initialFitness = Double.parseDouble(args);
-                double optimized = OMEGA.optimize(initialFitness);
-                System.out.println("🧠 OPTIMIZATION COMPLETE");
-                System.out.println("   Initial: " + initialFitness);
-                System.out.println("   Optimized: " + optimized);
-                AUDIT.log("fitness_optimized", String.valueOf(optimized));
+                System.out.println("⚠️  Brain optimization not available in this build");
                 break;
 
             case "memory":
-                if (args.isEmpty()) {
-                    String root = OMEGA.seal();
-                    System.out.println("📚 MEMORY SEALED");
-                    System.out.println("   Merkle Root: " + root);
-                    AUDIT.log("memory_sealed", root);
-                } else {
-                    System.out.println("Usage: memory (seals current history)");
-                }
+                System.out.println("⚠️  Memory sealing not available in this build");
                 break;
 
             case "transmute":
@@ -999,6 +1073,19 @@ public class FraymusConvergence {
         System.out.println("  shield <data>      Encrypt data (AES-256-GCM)");
         System.out.println("  brain <fitness>    Optimize fitness (Simulated Annealing)");
         System.out.println("  memory             Seal history (Merkle Tree)");
+        System.out.println();
+        System.out.println("AEON ABSOLUTE (Multi-Process Swarm Brain):");
+        System.out.println("  swarm start        Ignite AEON swarm (spawns N-1 child processes)");
+        System.out.println("  swarm stop         Terminate swarm and all children");
+        System.out.println("  swarm status       Show swarm entropy and core saturation");
+        System.out.println();
+        System.out.println("FRAYNIX OS VISUALIZATION:");
+        System.out.println("  visualize          Launch FRAYNIX OS (4D tesseract brain)");
+        System.out.println("  openclaw           Launch OpenClaw Core (WebGL)");
+        System.out.println("  openclaw-native    Launch OpenClaw NATIVE (Pure Java DMA)");
+        System.out.println("  aeon-benchmark     Launch AEON OMNI Benchmark (685B Diffusion-HRM)");
+        System.out.println("  genesis <intent>   Genesis Architect code generation");
+        System.out.println("  dreamstate [cmd]   Enter/exit DreamState optimization");
         System.out.println();
         System.out.println("VOCABULARY MANAGEMENT:");
         System.out.println("  vocab              Show vocabulary statistics");

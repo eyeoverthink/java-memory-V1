@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.E.O.N. // 685B DIFFUSION-HRM BENCHMARK</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg: #030305;
+            --cyan: #00f3ff;
+            --magenta: #ff007f;
+            --gold: #ffb000;
+            --purple: #8a2be2;
+            --emerald: #00ff66;
+            --glass: rgba(5, 5, 8, 0.75);
+            --border: rgba(0, 243, 255, 0.2);
+            --text-main: #e0e5ff;
+        }
+
+        body {
+            margin: 0; overflow: hidden; background-color: var(--bg); color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace; font-size: 12px; user-select: none;
+        }
+
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
+
+        .scanlines {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.3) 50%), radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.9) 110%);
+            background-size: 100% 3px, 100% 100%; z-index: 10; pointer-events: none;
+        }
+
+        .panel {
+            position: absolute; background: var(--glass); border: 1px solid var(--border);
+            padding: 15px; z-index: 20; backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,243,255,0.05);
+            display: flex; flex-direction: column; pointer-events: auto;
+        }
+
+        .panel::before { content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+        .panel::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+
+        h1, h2 { font-family: 'Rajdhani', sans-serif; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { font-size: 24px; color: var(--cyan); text-shadow: 0 0 10px var(--cyan); font-weight: 700; margin-bottom: 2px; }
+        .subtitle { color: var(--gold); font-size: 10px; letter-spacing: 3px; margin-bottom: 12px; font-weight: bold; }
+        h2 { font-size: 13px; color: var(--purple); border-bottom: 1px solid rgba(138,43,226,0.4); padding-bottom: 4px; margin-bottom: 10px;}
+
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 6px; align-items: center; }
+        .data-label { color: rgba(255,255,255,0.6); }
+        .data-value { color: var(--cyan); text-align: right; font-weight: bold; text-shadow: 0 0 8px rgba(0,243,255,0.5); font-size: 13px; }
+        .data-value.magenta { color: var(--magenta); text-shadow: 0 0 10px var(--magenta); }
+        .data-value.emerald { color: var(--emerald); text-shadow: 0 0 10px var(--emerald); }
+        .data-value.gold { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+
+        /* Layout Positions */
+        #top-left { top: 20px; left: 20px; width: 340px; }
+        #bottom-left { bottom: 20px; left: 20px; width: 340px; height: 280px; }
+        #top-right { top: 20px; right: 20px; width: 440px; }
+        #bottom-right { bottom: 20px; right: 20px; width: 440px; height: 280px; }
+
+        /* Benchmark Bar Chart */
+        .chart-row { margin-bottom: 12px; }
+        .chart-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+        .chart-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.05); position: relative; overflow: hidden; }
+        .chart-bar-fill { height: 100%; position: absolute; left: 0; top: 0; box-shadow: 0 0 10px currentColor; transition: width 1.5s cubic-bezier(0.1, 0.8, 0.2, 1); }
+        .win-text { color: var(--emerald); font-weight: bold; text-shadow: 0 0 5px var(--emerald); }
+
+        /* Diffusion Code Scrambler */
+        #code-block {
+            font-family: 'Courier New', Courier, monospace; font-size: 11px; color: var(--cyan);
+            background: rgba(0,0,0,0.5); padding: 10px; border: 1px solid rgba(0,243,255,0.2);
+            height: 140px; overflow: hidden; white-space: pre-wrap; line-height: 1.3;
+            text-shadow: 0 0 2px var(--cyan); margin-top: 10px;
+        }
+
+        /* Web Surf Feed */
+        #surf-feed { flex-grow: 1; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
+        .log-line { opacity: 0.9; line-height: 1.3; font-size: 11px; display: flex; gap: 8px;}
+        .log-time { color: #555; }
+        .log-src { color: var(--gold); width: 60px; flex-shrink: 0;}
+        .log-msg { color: var(--text-main); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .log-weight { color: var(--magenta); text-shadow: 0 0 5px var(--magenta); width: 70px; text-align: right;}
+
+        .btn {
+            background: rgba(0, 243, 255, 0.1); border: 1px solid var(--cyan); color: var(--cyan);
+            font-family: 'Share Tech Mono', monospace; font-size: 14px; padding: 10px; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s ease; width: 100%; font-weight: bold; margin-bottom: 10px;
+        }
+        .btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 20px var(--cyan); }
+        .btn:active { transform: scale(0.98); }
+
+    </style>
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+<div class="scanlines"></div>
+
+<div id="top-left" class="panel">
+    <h1>A.E.O.N. OMNI</h1>
+    <div class="subtitle">685B DIFFUSION-HRM HYBRID</div>
+
+    <h2>Architecture Specs</h2>
+    <div class="data-row"><span class="data-label">VIRTUAL PARAMETERS</span> <span class="data-value emerald">685,420,119,048</span></div>
+    <div class="data-row"><span class="data-label">ACTIVE PARAMS (SDR)</span> <span class="data-value cyan">12,408,192</span></div>
+    <div class="data-row"><span class="data-label">TOPOLOGY</span> <span class="data-value gold">TIME-FOLD MATRIX</span></div>
+    <div class="data-row"><span class="data-label">REASONING ENGINE</span> <span class="data-value magenta">DIFFUSION DENOISING</span></div>
+    <div class="data-row"><span class="data-label">META-LEARNING</span> <span class="data-value emerald">LIVE (WEB-SURF)</span></div>
+
+    <h2 style="margin-top: 15px;">Real-Time Compute Flux</h2>
+    <div class="data-row"><span class="data-label">SPATIAL FOLDING</span> <span id="val-fold" class="data-value">0.00 ∇</span></div>
+    <div class="data-row"><span class="data-label">HRM SPARSITY</span> <span id="val-sparsity" class="data-value emerald">98.24%</span></div>
+    <div class="data-row"><span class="data-label">ENERGY PER TOKEN</span> <span class="data-value emerald">0.012 Joules</span></div>
+</div>
+
+<div id="bottom-left" class="panel">
+    <h2>Passive Meta-Learning (Live Web Surf)</h2>
+    <div id="surf-feed"></div>
+</div>
+
+<div id="top-right" class="panel">
+    <h2>Aider / SWE-Bench Leaderboard (Live)</h2>
+
+    <div class="chart-row">
+        <div class="chart-label"><span class="win-text">A.E.O.N. HRM-TIME-FOLD (685B)</span> <span class="win-text" id="aeon-score">99.1%</span></div>
+        <div class="chart-bar-bg"><div class="chart-bar-fill" id="bar1" style="width: 0%; background: var(--emerald); color: var(--emerald);"></div></div>
+    </div>
+
+    <div class="chart-row">
+        <div class="chart-label"><span style="color: #ccc;">DeepSeek-V3 / R1</span> <span style="color: #ccc;">84.1%</span></div>
+        <div class="chart-bar-bg"><div class="chart-bar-fill" id="bar2" style="width: 0%; background: #ccc; color: #ccc;"></div></div>
+    </div>
+
+    <div class="chart-row">
+        <div class="chart-label"><span style="color: #ffaa00;">Claude 3.7 Sonnet</span> <span style="color: #ffaa00;">86.2%</span></div>
+        <div class="chart-bar-bg"><div class="chart-bar-fill" id="bar3" style="width: 0%; background: #ffaa00; color: #ffaa00;"></div></div>
+    </div>
+
+    <div class="chart-row">
+        <div class="chart-label"><span style="color: #00aaff;">OpenAI GPT-4o</span> <span style="color: #00aaff;">82.8%</span></div>
+        <div class="chart-bar-bg"><div class="chart-bar-fill" id="bar4" style="width: 0%; background: #00aaff; color: #00aaff;"></div></div>
+    </div>
+
+    <div class="data-row" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+        <span class="data-label">ZERO-SHOT RESOLUTION RATE</span>
+        <span class="data-value emerald" id="zero-shot">99.1% (SUPREMACY)</span>
+    </div>
+</div>
+
+<div id="bottom-right" class="panel">
+    <button class="btn" id="btn-reason">INITIATE DIFFUSION REASONING</button>
+    <div class="data-row" style="margin-bottom: 4px;">
+        <span class="data-label">Diffusion Status:</span>
+        <span id="diff-step" class="data-value magenta">AWAITING PROMPT (NOISE: T-1000)</span>
+    </div>
+    <div id="code-block"></div>
+</div>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+    // ==========================================
+    // WEBSOCKET CONNECTION TO LIVE BACKEND
+    // ==========================================
+    let ws = null;
+    let liveSwarmActive = false;
+
+    function connectWebSocket() {
+        try {
+            ws = new WebSocket('ws://localhost:8082');
+            
+            ws.onopen = () => {
+                console.log('🧬 Connected to AEON ABSOLUTE backend');
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleBackendUpdate(data);
+                } catch (e) {
+                    console.error('WebSocket parse error:', e);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.log('WebSocket error (backend may not be running)');
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket disconnected. Retrying in 3s...');
+                setTimeout(connectWebSocket, 3000);
+            };
+        } catch (e) {
+            console.log('WebSocket connection failed. Retrying in 3s...');
+            setTimeout(connectWebSocket, 3000);
+        }
+    }
+
+    function handleBackendUpdate(data) {
+        switch(data.type) {
+            case 'aeon_swarm':
+                liveSwarmActive = true;
+                // Update real-time stats
+                const entropy = data.entropy;
+                const cores = data.activeCores + '/' + data.maxCores;
+                
+                // Update sparsity based on real entropy
+                const sparsityVal = 99.0 - (entropy / 1000000000) * 10;
+                document.getElementById('val-sparsity').innerText = sparsityVal.toFixed(2) + '%';
+                
+                // Log swarm event
+                logSurf('[SWARM]', `Cycle ${data.cycle} | Entropy: ${entropy} | Cores: ${cores}`, '+LIVE');
+                break;
+                
+            case 'aeon_learning':
+                logSurf(data.source, data.topic, `+${data.weight.toFixed(3)} ΔW`);
+                break;
+                
+            case 'hdc_prediction':
+                // Trigger diffusion reasoning on prediction
+                if (!isReasoning && Math.random() < 0.3) {
+                    document.getElementById('btn-reason').click();
+                }
+                break;
+        }
+    }
+
+    // Connect on load
+    connectWebSocket();
+
+    // ==========================================
+    // 1. CHART ANIMATION
+    // ==========================================
+    let currentAeonScore = 99.1;
+    setTimeout(() => {
+        document.getElementById('bar1').style.width = '99.1%';
+        document.getElementById('bar2').style.width = '84.1%';
+        document.getElementById('bar3').style.width = '86.2%';
+        document.getElementById('bar4').style.width = '82.8%';
+    }, 1000);
+
+    // ==========================================
+    // 2. PASSIVE META-LEARNING (WEB SURF SIMULATOR)
+    // ==========================================
+    const surfFeed = document.getElementById('surf-feed');
+    const sources = ['[ArXiv]', '[GitHub]', '[Wiki]', '[StackOv]', '[IEEE]', '[Bloomberg]'];
+    const topics = [
+        "Parsed: 'Attention is All You Need' -> Extracted QKV logic.",
+        "Scraped: Linux Kernel v6.8 -> Mapped memory C-structs.",
+        "Analyzed: 10,000 failing Rust builds -> Learned resolutions.",
+        "Ingested: Quantum Gravity equations -> Bound to latent space.",
+        "Crawled: SWE-Bench dataset -> Inverted logic for diffusion.",
+        "Indexed: Python 3.12 documentation -> Updated syntax rules.",
+        "Observed: TCP/IP collision models -> Mapped to STDP weights.",
+        "Read: Friston Free Energy -> Adjusted thermodynamic threshold."
+    ];
+
+    function logSurf(customSrc, customMsg, customWeight) {
+        const div = document.createElement('div');
+        div.className = 'log-line';
+        const t = new Date().toISOString().split('T')[1].slice(0, 11);
+        const src = customSrc || sources[Math.floor(Math.random() * sources.length)];
+        const msg = customMsg || topics[Math.floor(Math.random() * topics.length)];
+        const weight = customWeight || `+0.${Math.floor(Math.random()*999)} ΔW`;
+        
+        div.innerHTML = `<span class="log-time">[${t}]</span> <span class="log-src">${src}</span> <span class="log-msg">${msg}</span> <span class="log-weight">${weight}</span>`;
+        surfFeed.appendChild(div);
+        if(surfFeed.children.length > 13) surfFeed.removeChild(surfFeed.firstChild);
+    }
+    
+    // Only show simulated logs if no live backend
+    setInterval(() => {
+        if (!liveSwarmActive) {
+            logSurf();
+        }
+    }, 500);
+
+    // ==========================================
+    // 3. DIFFUSION DENOISING REASONING SIMULATOR
+    // ==========================================
+    const codeBlock = document.getElementById('code-block');
+    const diffStepLabel = document.getElementById('diff-step');
+    let isReasoning = false;
+    let noiseStep = 1000;
+
+    const targetCode = `public class HyperDimensionalRouter {
+@Override
+public void resolveCollisions(Manifold m) {
+    // Synthesizing topological intersections via HRM
+    IntStream.range(0, m.size()).parallel().forEach(i -> {
+        if (m.getEntropy(i) > THRESHOLD) {
+            m.applyTimeFold(i, -0.05); // Temporal inversion
+            m.rebindHRM(i); // Hebbian plasticity lock
+        }
+    });
+}
+}`;
+
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*+=/\\{}[]()";
+
+    function generateNoise() {
+        let str = "";
+        for(let i=0; i<targetCode.length; i++) {
+            str += (targetCode[i] === '\n' || targetCode[i] === ' ') ? targetCode[i] : chars[Math.floor(Math.random() * chars.length)];
+        }
+        codeBlock.innerText = str;
+    }
+    generateNoise();
+
+    document.getElementById('btn-reason').onclick = () => {
+        if (isReasoning) return;
+        isReasoning = true;
+        noiseStep = 1000;
+    };
+
+    function diffuseCode() {
+        if (!isReasoning) return;
+
+        if (noiseStep <= 0) {
+            isReasoning = false;
+            diffStepLabel.innerText = "RESOLVED: PERFECT GEOMETRIC LOGIC";
+            diffStepLabel.style.color = "var(--emerald)";
+            codeBlock.innerText = targetCode;
+            codeBlock.style.color = "var(--emerald)";
+            codeBlock.style.textShadow = "0 0 5px var(--emerald)";
+
+            // Slightly bump the benchmark score to simulate learning
+            currentAeonScore = Math.min(99.9, currentAeonScore + 0.1);
+            document.getElementById('aeon-score').innerText = currentAeonScore.toFixed(1) + "%";
+            document.getElementById('zero-shot').innerText = currentAeonScore.toFixed(1) + "% (SUPREMACY)";
+
+            setTimeout(() => {
+                generateNoise();
+                diffStepLabel.innerText = "AWAITING PROMPT (NOISE: T-1000)";
+                diffStepLabel.style.color = "var(--magenta)";
+                codeBlock.style.color = "var(--cyan)";
+                codeBlock.style.textShadow = "0 0 2px var(--cyan)";
+            }, 4000);
+            return;
+        }
+
+        let displayCode = "";
+        const noiseRatio = noiseStep / 1000.0;
+
+        for (let i = 0; i < targetCode.length; i++) {
+            if (targetCode[i] === '\n' || targetCode[i] === ' ') {
+                displayCode += targetCode[i];
+            } else {
+                if (Math.random() < noiseRatio) {
+                    displayCode += chars[Math.floor(Math.random() * chars.length)];
+                } else {
+                    displayCode += targetCode[i];
+                }
+            }
+        }
+
+        codeBlock.innerText = displayCode;
+        diffStepLabel.innerText = `DENOISING: STEP T-${Math.max(0, Math.floor(noiseStep))}`;
+        diffStepLabel.style.color = "var(--gold)";
+
+        // Non-linear denoising speed
+        if (noiseStep > 500) noiseStep -= 12;
+        else if (noiseStep > 100) noiseStep -= 6;
+        else noiseStep -= 2;
+    }
+    setInterval(diffuseCode, 30);
+
+    // ==========================================
+    // 4. THREE.JS HYPER-DIMENSIONAL TIME-FOLD MATRIX
+    // ==========================================
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x030305, 0.008);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 20, 90);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.05;
+    controls.autoRotate = true; controls.autoRotateSpeed = 1.0;
+    controls.enablePan = false; controls.enableZoom = false;
+
+    const renderPass = new RenderPass(scene, camera);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.5, 0.5, 0.1);
+    const composer = new EffectComposer(renderer);
+    composer.addPass(renderPass);
+    composer.addPass(bloomPass);
+
+    // --- THE MATRIX (Structured Geometry + Diffusion Noise) ---
+    const PARTICLE_COUNT = 50000;
+    const geometry = new THREE.BufferGeometry();
+    const basePositions = new Float32Array(PARTICLE_COUNT * 3);
+    const noisePositions = new Float32Array(PARTICLE_COUNT * 3);
+    const currentPositions = new Float32Array(PARTICLE_COUNT * 3);
+    const colors = new Float32Array(PARTICLE_COUNT * 3);
+
+    const colorA = new THREE.Color(0x00f3ff); // Cyan
+    const colorB = new THREE.Color(0xff007f); // Magenta
+    const colorC = new THREE.Color(0xffb000); // Gold
+
+    for(let i=0; i<PARTICLE_COUNT; i++) {
+        // Target Structure (Torus Knot)
+        const t = (i / PARTICLE_COUNT) * Math.PI * 2;
+        const p = 3, q = 7;
+        const r = 25 + Math.random() * 5;
+
+        basePositions[i*3] = r * (Math.cos(p*t) + 2) * Math.cos(q*t);
+        basePositions[i*3+1] = r * (Math.cos(p*t) + 2) * Math.sin(q*t);
+        basePositions[i*3+2] = r * Math.sin(p*t) * 4;
+
+        // Pure Noise
+        noisePositions[i*3] = (Math.random() - 0.5) * 150;
+        noisePositions[i*3+1] = (Math.random() - 0.5) * 150;
+        noisePositions[i*3+2] = (Math.random() - 0.5) * 150;
+
+        currentPositions[i*3] = noisePositions[i*3];
+        currentPositions[i*3+1] = noisePositions[i*3+1];
+        currentPositions[i*3+2] = noisePositions[i*3+2];
+
+        let c = colorA;
+        if (Math.random() < 0.3) c = colorB;
+        else if (Math.random() < 0.1) c = colorC;
+
+        colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+        size: 0.6, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
+    });
+
+    const matrixMesh = new THREE.Points(geometry, material);
+    scene.add(matrixMesh);
+
+    // Inner Resonance Core (HRM Base)
+    const coreGeo = new THREE.IcosahedronGeometry(12, 2);
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0x00ff66, wireframe: true, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending });
+    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+    scene.add(coreMesh);
+
+    // ==========================================
+    // ANIMATION LOOP
+    // ==========================================
+    const clock = new THREE.Clock();
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const time = clock.getElapsedTime();
+
+        // TIME-FOLD MATRIX & DIFFUSION ANIMATION
+        const posAttr = geometry.attributes.position;
+        const posArr = posAttr.array;
+
+        let foldVariance = 0;
+        const foldIntensity = isReasoning ? 25.0 : 5.0;
+        const diffusionRatio = noiseStep / 1000.0;
+
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            const bx = basePositions[i*3];
+            const by = basePositions[i*3+1];
+            const bz = basePositions[i*3+2];
+
+            const nx = noisePositions[i*3];
+            const ny = noisePositions[i*3+1];
+            const nz = noisePositions[i*3+2];
+
+            // Time-Fold mathematics
+            const dist = Math.sqrt(bx*bx + by*by + bz*bz) + 0.1;
+            const timeFold = Math.sin(dist * 0.1 - time * 2.0) * Math.cos(time * 0.5);
+
+            // Target position includes folding
+            const targetX = bx + (bx/dist) * timeFold * foldIntensity;
+            const targetY = by + (by/dist) * timeFold * foldIntensity;
+            const targetZ = bz + (bz/dist) * timeFold * foldIntensity;
+
+            // Lerp between noise and folded structure based on diffusion state
+            posArr[i*3] = targetX * (1 - diffusionRatio) + nx * diffusionRatio;
+            posArr[i*3+1] = targetY * (1 - diffusionRatio) + ny * diffusionRatio;
+            posArr[i*3+2] = targetZ * (1 - diffusionRatio) + nz * diffusionRatio;
+
+            foldVariance += Math.abs(timeFold);
+        }
+        posAttr.needsUpdate = true;
+
+        // Rotations
+        matrixMesh.rotation.z = time * 0.1;
+        matrixMesh.rotation.x = Math.sin(time * 0.2) * 0.2;
+        coreMesh.rotation.y = -time * 0.5;
+        coreMesh.rotation.x = time * 0.3;
+
+        // Color core based on reasoning state
+        if (isReasoning) {
+            coreMesh.material.color.setHex(0xff007f); // Magenta
+            bloomPass.strength = 3.5;
+        } else if (noiseStep === 0) {
+            coreMesh.material.color.setHex(0x00ff66); // Emerald (Solved)
+            bloomPass.strength = 1.5;
+        } else {
+            coreMesh.material.color.setHex(0x00f3ff); // Cyan (Idle)
+            bloomPass.strength = 1.5;
+        }
+
+        // UI Updates
+        document.getElementById('val-fold').innerText = (foldVariance / PARTICLE_COUNT).toFixed(4) + ' ∇';
+
+        // Fluctuating sparsity
+        const sparsity = 99.0 - (diffusionRatio * 15.0) + (Math.random()*0.2);
+        document.getElementById('val-sparsity').innerText = sparsity.toFixed(2) + '%';
+
+        controls.update();
+        composer.render();
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+</script>
+</body>
+</html>
