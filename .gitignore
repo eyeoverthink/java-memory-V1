@@ -70,3 +70,6 @@ aeon_drive.sys
 
 # LTX-Video assets
 Asset-Manager/LTX-Video-main/
+
+# Large data files
+Asset-Manager-LLM-Dev/data/infinite_memory.dat
