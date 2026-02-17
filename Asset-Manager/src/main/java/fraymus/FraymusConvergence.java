@@ -785,6 +785,14 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "singularity":
+                System.out.println("🌌 Launching AEON SINGULARITY ENGINE...");
+                System.out.println("   8192-D HDC | 268MB Hopfield-HRM | Diffusion Denoising");
+                System.out.println("   Commands: LEARN <text> | DIFFUSE <text> | EXIT");
+                System.out.println();
+                fraymus.neural.AEON_Singularity.launch();
+                break;
+
             case "genesis":
                 if (args.isEmpty()) {
                     System.out.println("Usage: genesis <intent>");
@@ -1078,6 +1086,11 @@ public class FraymusConvergence {
         System.out.println("  swarm start        Ignite AEON swarm (spawns N-1 child processes)");
         System.out.println("  swarm stop         Terminate swarm and all children");
         System.out.println("  swarm status       Show swarm entropy and core saturation");
+        System.out.println();
+        System.out.println("AEON SINGULARITY (8192-D HDC-HRM Diffusion Engine):");
+        System.out.println("  singularity        Launch standalone diffusion reasoning engine");
+        System.out.println("                     - LEARN <text>: Hebbian one-shot learning");
+        System.out.println("                     - DIFFUSE <text>: Langevin denoising reasoning");
         System.out.println();
         System.out.println("FRAYNIX OS VISUALIZATION:");
         System.out.println("  visualize          Launch FRAYNIX OS (4D tesseract brain)");
