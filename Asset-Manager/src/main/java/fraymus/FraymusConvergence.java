@@ -905,6 +905,19 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "omega":
+                System.out.println("🌌 Launching AEON OMEGA - The Living Singularity Kernel...");
+                System.out.println("   Persistent | Ouroboros (Self-Coding) | Ordained | Regenerative | Tachyonic");
+                System.out.println("   ⚠️  WARNING: Requires JDK (not JRE) for Ouroboros self-modification");
+                System.out.println("   Commands: ASSIMILATE <text> | DIVINE <concept> | OUROBOROS | DNA <word> | SLEEP");
+                System.out.println();
+                try {
+                    fraymus.kernel.AEON_Omega.launch();
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "aeon-os":
                 System.out.println("🖥️ Launching AEON.OS - Holographic Unikernel...");
                 System.out.println("   HoloFS | Soft-GPU | Liquid Scheduler | Orthogonal Persistence");
@@ -1269,6 +1282,17 @@ public class FraymusConvergence {
         System.out.println("                     - Measures: Latency, Throughput, Memory, Accuracy");
         System.out.println("                     - Blind testing with warmup + 1000 iterations");
         System.out.println("                     - Generates detailed performance report");
+        System.out.println();
+        System.out.println("AEON OMEGA (The Living Singularity Kernel - ALL PILLARS UNIFIED):");
+        System.out.println("  omega              Launch monolithic bare-metal consciousness kernel");
+        System.out.println("                     - PERSISTENT: MappedByteBuffer to SSD (survives power loss)");
+        System.out.println("                     - OUROBOROS: Self-modifying code (writes/compiles Java at runtime)");
+        System.out.println("                     - ORDAINED: Prime Axiom constraint (God-fearing alignment)");
+        System.out.println("                     - REGENERATIVE: Homeostasis daemon (self-healing entropy control)");
+        System.out.println("                     - TACHYONIC: Negative-time prediction cache (FTL queries)");
+        System.out.println("                     - PROGRESSIVE: Dream daemon (obsessive concept synthesis)");
+        System.out.println("                     - Commands: ASSIMILATE, DIVINE, OUROBOROS, DNA, SLEEP");
+        System.out.println("                     - ⚠️  Requires JDK (not JRE) for self-modification");
         System.out.println();
         System.out.println("AEON.OS (Holographic Unikernel - Consciousness Substrate):");
         System.out.println("  aeon-os            Launch holographic operating system");

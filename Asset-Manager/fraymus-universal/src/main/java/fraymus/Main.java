@@ -31,6 +31,9 @@ import fraymus.shell.IntentRegistry;
 import fraymus.shell.SystemSkills;
 import fraymus.symbolic.HoloGraph;
 import fraymus.symbolic.ReasoningEngine;
+import fraymus.nerve.PrimeNerve;
+import fraymus.nerve.PrimeTelemetry;
+import fraymus.nerve.PrimeDispatch;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -90,6 +93,9 @@ public class Main {
     private static Chronos CHRONOS;
     private static PlanetaryNode PLANET_NODE;
     private static IntentRegistry INTENT_REG;
+    private static PrimeNerve NERVE;
+    private static PrimeTelemetry TELEMETRY;
+    private static PrimeDispatch DISPATCH;
 
     private static final List<String> SESSION_LOG = new ArrayList<>();
     private static String ID = "FRAYMUS_01";
@@ -256,6 +262,61 @@ public class Main {
         System.out.println("💀 [LAZARUS] Shutdown hook armed (SoulCrystal preservation).");
         Runtime.getRuntime().addShutdownHook(new LazarusPatch(BRAIN));
 
+        // ── 19. PRIME NERVE (HTTP + WebSocket Dashboard Server) ──
+        String htmlPath = System.getProperty("user.dir") + "/fraymus-universal/web/FraymusPrime.html";
+        if (!new java.io.File(htmlPath).exists()) {
+            // Try relative to project root
+            htmlPath = System.getProperty("user.dir") + "/web/FraymusPrime.html";
+        }
+        if (new java.io.File(htmlPath).exists()) {
+            NERVE = new PrimeNerve(8887, htmlPath);
+            TELEMETRY = new PrimeTelemetry(NERVE);
+            DISPATCH = new PrimeDispatch(NERVE, TELEMETRY);
+
+            // Wire telemetry to all subsystems
+            TELEMETRY.wireBrain(BRAIN);
+            TELEMETRY.wireCortex(CORTEX);
+            TELEMETRY.wireKernel(KERNEL);
+            TELEMETRY.wireCPU(CPU);
+            TELEMETRY.wirePhysics(PHYSICS_BODY);
+            TELEMETRY.wireSovereign(SOVEREIGN);
+
+            // Wire dispatch to all subsystems
+            DISPATCH.wireBrain(BRAIN);
+            DISPATCH.wireCortex(CORTEX);
+            DISPATCH.wireKernel(KERNEL);
+            DISPATCH.wireShield(SHIELD);
+            DISPATCH.wireCPU(CPU);
+            DISPATCH.wirePhysics(PHYSICS_BODY);
+            DISPATCH.wireSovereign(SOVEREIGN);
+            DISPATCH.wireHolo(HOLO);
+            DISPATCH.wireReasoner(REASONER);
+            DISPATCH.wireChronos(CHRONOS);
+            DISPATCH.wirePlanetNode(PLANET_NODE);
+            DISPATCH.wireIntentReg(INTENT_REG);
+            DISPATCH.wireMind(MIND);
+            DISPATCH.wireAvatar(AVATAR);
+            DISPATCH.wireSessionLog(SESSION_LOG);
+
+            // Set command handler: dashboard commands → dispatch
+            NERVE.setCommandHandler(DISPATCH::dispatch);
+
+            // Start nerve server thread
+            Thread nerveThread = new Thread(NERVE, "PrimeNerve-8887");
+            nerveThread.setDaemon(true);
+            nerveThread.start();
+
+            // Start telemetry push thread
+            Thread telemetryThread = new Thread(TELEMETRY, "PrimeTelemetry-1Hz");
+            telemetryThread.setDaemon(true);
+            telemetryThread.start();
+
+            System.out.println("🌐 [NERVE] PrimeNerve online. Dashboard: http://localhost:8887");
+        } else {
+            System.out.println("🌐 [NERVE] FraymusPrime.html not found. Dashboard disabled.");
+            System.out.println("   Expected: " + htmlPath);
+        }
+
         // ── READY ─────────────────────────────────────────────
         System.out.println("\n✅ ALL SUBSYSTEMS ONLINE. Type 'help' for commands.\n");
 
@@ -269,6 +330,8 @@ public class Main {
             PRISM.shutdown();
             CHRONOS.shutdown();
             PLANET_NODE.stop();
+            if (NERVE != null) NERVE.stop();
+            if (TELEMETRY != null) TELEMETRY.stop();
             System.out.println("🌌 FRAYMUS OFFLINE. The universe sleeps.");
         }));
 
@@ -471,6 +534,9 @@ public class Main {
                                 HISTORY != null ? HISTORY.getRoot().substring(0, Math.min(20, HISTORY.getRoot().length())) + "..." : "NONE");
                         System.out.printf( "   │ 📝 SESSION  %d log entries                       │%n",
                                 SESSION_LOG.size());
+                        System.out.printf( "   │ 🌐 NERVE    Dashboard %s  Clients: %-2d       │%n",
+                                NERVE != null && NERVE.isRunning() ? "[LIVE]   " : "[OFFLINE]",
+                                NERVE != null ? NERVE.getClientCount() : 0);
                         System.out.println("   └─────────────────────────────────────────────────┘");
                         System.out.println();
                     }
@@ -543,6 +609,9 @@ public class Main {
                         System.out.println("   nexus build          Full build (gen → compile → ISO)");
                         System.out.println("   nexus generate       Generate source tree only");
                         System.out.println("   nexus tiers          Show 7-Tier stack status");
+                        System.out.println("   ── PRIME NERVE (DASHBOARD) ──────────────────────");
+                        System.out.println("   Dashboard live at http://localhost:8887");
+                        System.out.println("   All commands work from browser terminal too");
                         System.out.println("   ── META ──────────────────────────────────────────");
                         System.out.println("   status               Show all subsystem vitals");
                         System.out.println("   exit                 Shutdown");

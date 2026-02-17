@@ -728,19 +728,52 @@ function connectWebSocket() {
         };
         socket.onmessage = function(event) {
             const data = event.data;
-            if (data.startsWith("PULSE:")) { pulseRate = parseInt(data.split(":")[1]); updateBioMetrics(); }
-            else if (data.startsWith("STRESS:")) { stressLevel = parseFloat(data.split(":")[1]); updateBioMetrics(); }
-            else if (data.startsWith("SYNC:")) { cognitiveSync = parseFloat(data.split(":")[1]); updateBioMetrics(); }
-            else if (data.startsWith("DEFORM:")) { meshDeformation = parseFloat(data.split(":")[1]); }
-            else if (data.startsWith("SPEED:")) { document.getElementById('phys-speed').textContent = parseFloat(data.split(":")[1]).toFixed(4); document.getElementById('phys-speed2').textContent = parseFloat(data.split(":")[1]).toFixed(4); }
-            else if (data.startsWith("MASS:")) { document.getElementById('phys-mass').textContent = parseFloat(data.split(":")[1]).toFixed(2); }
-            else if (data.startsWith("ACC:")) { document.getElementById('fvm-acc').textContent = data.split(":")[1]; }
-            else if (data.startsWith("STATE:")) { systemState = data.split(":")[1]; log("STATE: " + systemState, '#ffd700'); }
-            else if (data.startsWith("HOLO:")) { document.getElementById('holo-last').textContent = data.substring(5); }
-            else if (data.startsWith("CHRONO:")) { const p = data.split(":"); if(p[1]) document.getElementById('chrono-gen').textContent=p[1]; if(p[2]) document.getElementById('chrono-score').textContent=parseFloat(p[2]).toFixed(2); }
-            else if (data.startsWith("NET:")) { document.getElementById('net-status').textContent = data.split(":")[1]; }
-            else if (data.startsWith("SOUL:")) { document.getElementById('soul-state').textContent = data.split(":")[1]; document.getElementById('soul-time').textContent = new Date().toLocaleTimeString(); }
-            else { log(data, 'var(--neon-green)'); }
+            const idx = data.indexOf(":");
+            if (idx < 1) { log(data, 'var(--neon-green)'); return; }
+            const key = data.substring(0, idx);
+            const val = data.substring(idx + 1);
+
+            switch (key) {
+                case "PULSE": pulseRate = parseInt(val); updateBioMetrics(); break;
+                case "STRESS": stressLevel = parseFloat(val); updateBioMetrics(); break;
+                case "SYNC": cognitiveSync = parseFloat(val); updateBioMetrics(); break;
+                case "DEFORM": meshDeformation = parseFloat(val); break;
+                case "SPEED":
+                    document.getElementById('phys-speed').textContent = parseFloat(val).toFixed(4);
+                    document.getElementById('phys-speed2').textContent = parseFloat(val).toFixed(4);
+                    break;
+                case "MASS": document.getElementById('phys-mass').textContent = parseFloat(val).toFixed(2); break;
+                case "ACC": document.getElementById('fvm-acc').textContent = val; break;
+                case "STATE":
+                    systemState = val;
+                    if (val !== 'NEUTRAL') log("STATE: " + val, '#ffd700');
+                    break;
+                case "HOLO": document.getElementById('holo-last').textContent = val; break;
+                case "CHRONO": {
+                    const p = val.split(":");
+                    if (p[0]) document.getElementById('chrono-gen').textContent = p[0];
+                    if (p[1]) document.getElementById('chrono-score').textContent = parseFloat(p[1]).toFixed(2);
+                    break;
+                }
+                case "NET":
+                    document.getElementById('net-status').textContent = val;
+                    document.getElementById('net-status').style.color = val === 'LIVE' ? 'var(--neon-green)' : '#555';
+                    break;
+                case "PEERS": document.getElementById('net-peers').textContent = val; break;
+                case "SOUL":
+                    document.getElementById('soul-state').textContent = val;
+                    document.getElementById('soul-time').textContent = new Date().toLocaleTimeString();
+                    break;
+                case "EVO": document.getElementById('m_evo').textContent = val; break;
+                case "SOLVED": document.getElementById('m_solved').textContent = val; break;
+                case "KERNEL": {
+                    const kp = val.split(":");
+                    // kp[0] = process count, kp[1] = tick count (for future use)
+                    break;
+                }
+                case "LOG": log(val, 'var(--neon-green)'); break;
+                default: log(data, 'var(--neon-green)');
+            }
         };
         socket.onerror = function() { dot.className='conn-indicator conn-off'; status.textContent='ERROR'; status.style.color='var(--neon-red)'; };
         socket.onclose = function() {
