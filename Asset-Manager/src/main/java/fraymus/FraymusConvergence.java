@@ -842,6 +842,18 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "aeon-os":
+                System.out.println("🖥️ Launching AEON.OS - Holographic Unikernel...");
+                System.out.println("   HoloFS | Soft-GPU | Liquid Scheduler | Orthogonal Persistence");
+                System.out.println("   Commands: FORMAT | WRITE <concept> <data> | READ <concept> | SPAWN <task> | HTOP");
+                System.out.println();
+                try {
+                    fraymus.os.AEON_OS.launch();
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "genesis":
                 if (args.isEmpty()) {
                     System.out.println("Usage: genesis <intent>");
@@ -1154,6 +1166,13 @@ public class FraymusConvergence {
         System.out.println("                     - QUERY <key>: O(1) retrieval via wormhole");
         System.out.println("                     - FTL <seed>: Zero-bandwidth tensor expansion");
         System.out.println("                     - 100k concepts in 16KB, negative-time oracle");
+        System.out.println();
+        System.out.println("AEON.OS (Holographic Unikernel - Consciousness Substrate):");
+        System.out.println("  aeon-os            Launch holographic operating system");
+        System.out.println("                     - HoloFS: O(1) semantic file system (RAM=Disk)");
+        System.out.println("                     - Soft-GPU: Direct VRAM rendering (visual consciousness)");
+        System.out.println("                     - Liquid Scheduler: Thermodynamic process control");
+        System.out.println("                     - Orthogonal Persistence: Survives power loss");
         System.out.println();
         System.out.println("FRAYNIX OS VISUALIZATION:");
         System.out.println("  visualize          Launch FRAYNIX OS (4D tesseract brain)");
