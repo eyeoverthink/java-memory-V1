@@ -243,7 +243,7 @@
 
         function connectWebSocket() {
             try {
-                ws = new WebSocket('ws://localhost:8082/fraynix');
+                ws = new WebSocket('ws://localhost:8082');
                 
                 ws.onopen = () => {
                     console.log('🔗 Connected to FraymusConvergence');
