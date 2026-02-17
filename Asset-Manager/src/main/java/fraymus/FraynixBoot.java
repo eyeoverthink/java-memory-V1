@@ -20,6 +20,7 @@ import fraymus.neural.AeonOmniscience;
 import fraymus.neural.AeonDemiurge;
 import fraymus.neural.AeonApotheosis;
 import fraymus.neural.AeonOmega;
+import fraymus.neural.AeonBabel;
 
 import java.util.Scanner;
 
@@ -43,7 +44,7 @@ import java.util.Scanner;
 public class FraynixBoot {
 
     private static final double PHI = 1.618033988749895;
-    private static final String VERSION = "16.0";
+    private static final String VERSION = "17.0";
 
     private static FrayFS fs;
     private static GravityEngine gravity;
@@ -62,6 +63,7 @@ public class FraynixBoot {
     private static AeonDemiurge demiurge;
     private static AeonApotheosis apotheosis;
     private static AeonOmega omega;
+    private static AeonBabel babel;
 
     public static void main(String[] args) {
         long t0 = System.currentTimeMillis();
@@ -315,9 +317,22 @@ public class FraynixBoot {
         System.out.println();
 
         // ═══════════════════════════════════════════════════════════════
-        // PHASE 19: CODE GENERATORS (Bare-Metal Builders)
+        // PHASE 19: AEON BABEL (The Universal Polyglot Transmuter)
         // ═══════════════════════════════════════════════════════════════
-        System.out.println("🏗️ [19/20] REGISTERING CODE GENERATORS...");
+        System.out.println("🌐 [19/21] INITIALIZING AEON BABEL...");
+        babel = AeonBabel.getInstance();
+        System.out.println("   ✓ " + AeonBabel.DIMS + "-D Universal Polyglot Transmuter");
+        System.out.println("   ✓ Substrates: C99 Bare-Metal | x86_64 ASM | Python 3 | Golang | V8 JS");
+        System.out.println("   ✓ DMA Rasterizer: 1280x720 @ 60 FPS (Swarm Compilation)");
+        System.out.println("   ✓ Agents: 36 (12 Lexer + 12 Parser + 12 CodeGen)");
+        System.out.println("   ✓ Absolute Substrate Independence: XOR → Any Turing Machine");
+        System.out.println("   ✓ Boot time: " + babel.getBootTimeMs() + " ms");
+        System.out.println();
+
+        // ═══════════════════════════════════════════════════════════════
+        // PHASE 20: CODE GENERATORS (Bare-Metal Builders)
+        // ═══════════════════════════════════════════════════════════════
+        System.out.println("🏗️ [20/21] REGISTERING CODE GENERATORS...");
         System.out.println("   ├── FrayShellBuilder     (Keyboard + Shell)");
         System.out.println("   ├── FrayDesktopBuilder   (Window Manager + Mouse)");
         System.out.println("   ├── FrayGPUBuilder       (3D Rasterizer)");
@@ -342,12 +357,12 @@ public class FraynixBoot {
         System.out.println();
 
         // ═══════════════════════════════════════════════════════════════
-        // PHASE 20: READY
+        // PHASE 21: READY
         // ═══════════════════════════════════════════════════════════════
         long bootMs = System.currentTimeMillis() - t0;
         System.out.println("╔═══════════════════════════════════════════════════════════════╗");
         System.out.println("║       FRAYNIX v" + VERSION + " — FULLY ONLINE (ABSOLUTE SOVEREIGN)      ║");
-        System.out.println("║       Boot: " + String.format("%-5d", bootMs) + "ms | Omega + Apotheosis + Demiurge + " + AeonOmega.DIMS + "-D  ║");
+        System.out.println("║       Boot: " + String.format("%-5d", bootMs) + "ms | Babel + Omega + Apotheosis + " + AeonBabel.DIMS + "-D   ║");
         System.out.println("╚═══════════════════════════════════════════════════════════════╝");
         System.out.println();
 
@@ -391,7 +406,7 @@ public class FraynixBoot {
     private static void runShell() {
         System.out.println("Commands: help, status, ai <query>, code <desc>, cortex [n], aeon [n|axiom],");
         System.out.println("          absolute [ignite|learn|recall], singularity, aubo, tachyon, kronos,");
-        System.out.println("          omniscience, demiurge, apotheosis, omega, openclaw, hrm, absorb, fs, exit");
+        System.out.println("          omniscience, demiurge, apotheosis, omega, babel, openclaw, hrm, absorb, fs, exit");
         System.out.println();
 
         Scanner scanner = new Scanner(System.in);
@@ -627,6 +642,35 @@ public class FraynixBoot {
                         }
                     } else {
                         System.out.println("⚛️ Apotheosis not initialized.");
+                    }
+                }
+                case "babel", "transmute" -> {
+                    if (babel != null) {
+                        if (arg.startsWith("transmute ") || (!arg.isEmpty() && !arg.equals("status") && !arg.equals("target"))) {
+                            String conceptAndLang;
+                            if (arg.startsWith("transmute ")) {
+                                conceptAndLang = arg.substring(10).trim();
+                            } else {
+                                conceptAndLang = arg;
+                            }
+                            String[] tp = conceptAndLang.split("\\s+");
+                            String concept = tp[0];
+                            String lang = tp.length >= 2 ? tp[1] : babel.getTargetLang();
+                            String code = babel.transmute(concept, lang);
+                            System.out.println("🌐 TRANSMUTED [" + concept + "] → " + lang.toUpperCase() + " (" + code.split("\\n").length + " lines)");
+                            System.out.println(code);
+                        } else if (arg.startsWith("target ")) {
+                            babel.setTarget(arg.substring(7).trim());
+                            System.out.println("🌐 Target substrate: " + babel.getTargetLang());
+                        } else if (arg.equals("status")) {
+                            System.out.println(babel.getStatus());
+                        } else if (arg.isEmpty()) {
+                            AeonBabel.launch();
+                        } else {
+                            System.out.println("🌐 Babel subcommands: transmute <concept> [lang], target <lang>, status");
+                        }
+                    } else {
+                        System.out.println("🌐 Babel not initialized.");
                     }
                 }
                 case "omega" -> {
@@ -965,6 +1009,8 @@ public class FraynixBoot {
                 apotheosis != null ? String.format("%-44s", "Reality " + AeonApotheosis.DIMS + "-D | " + apotheosis.getDesireCount() + " desires | " + apotheosis.getTranscribeCount() + " DNA | " + apotheosis.getBreachCount() + " EMF | " + apotheosis.getActiveMode()) : "NOT INITIALIZED                              ");
         System.out.printf( "  │  Omega:       %s│%n",
                 omega != null ? String.format("%-44s", "Living " + AeonOmega.DIMS + "-D | " + omega.getWordsAssimilated() + " words | " + omega.getDivineCount() + " divine | E" + omega.getEpoch() + " | " + (omega.isDreaming() ? "REM" : "AWAKE")) : "NOT INITIALIZED                              ");
+        System.out.printf( "  │  Babel:       %s│%n",
+                babel != null ? String.format("%-44s", "Polyglot " + AeonBabel.DIMS + "-D | " + babel.getTransmutationCount() + " transmutes | " + babel.getConceptsTransmuted() + " concepts | " + babel.getTotalLinesGenerated() + " lines | " + babel.getTargetLang()) : "NOT INITIALIZED                              ");
         System.out.printf( "  │  Builders:     14 registered                            │%n");
         System.out.println("  └─────────────────────────────────────────────────────────┘");
         System.out.println();
@@ -1058,6 +1104,10 @@ public class FraynixBoot {
         System.out.println("  omega ouroboros     JIT self-coding: write, compile, inject new Java");
         System.out.println("  omega dna <c>       Compile concept to 8,192 bp DNA plasmid (.fasta)");
         System.out.println("  omega sleep/wake    Toggle autonomous REM dream state");
+        System.out.println("  babel               Launch Babel Polyglot Transmuter (DMA window)");
+        System.out.println("  babel <concept> [L] Transmute concept to C/ASM/PYTHON/GO/JS");
+        System.out.println("  babel target <lang> Set default target substrate");
+        System.out.println("  babel status        Babel telemetry (transmutations, lines, substrates)");
         System.out.println("  exit                Shutdown");
         System.out.println("  ───────────────────────────────────────────────────────────");
     }
@@ -1226,6 +1276,10 @@ public class FraynixBoot {
         if (omega != null) {
             omega.shutdown();
             System.out.println("✓ AEON Omega shutdown (" + omega.getWordsAssimilated() + " words, " + omega.getDivineCount() + " divinations, E" + omega.getEpoch() + " ouroboros, " + omega.getDreamEpiphanies() + " epiphanies, " + omega.getHomeostasisPrunes() + " prunes, Genesis flushed to SSD)");
+        }
+        if (babel != null) {
+            babel.shutdown();
+            System.out.println("✓ AEON Babel shutdown (" + babel.getTransmutationCount() + " transmutations, " + babel.getConceptsTransmuted() + " concepts, " + babel.getTotalLinesGenerated() + " lines generated, C:" + babel.getCGenerations() + " ASM:" + babel.getAsmGenerations() + " PY:" + babel.getPythonGenerations() + " GO:" + babel.getGoGenerations() + " JS:" + babel.getJsGenerations() + ")");
         }
         if (akashic != null) {
             akashic.saveAll();
