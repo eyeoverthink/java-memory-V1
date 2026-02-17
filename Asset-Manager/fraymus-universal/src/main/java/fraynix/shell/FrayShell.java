@@ -84,6 +84,10 @@ public class FrayShell {
         
         while (running) {
             System.out.print("\nFRAYNIX> ");
+            if (!scanner.hasNextLine()) {
+                System.out.println("\n⚠️ Input stream closed. Shutting down...");
+                break;
+            }
             String line = scanner.nextLine().trim();
             
             if (line.isEmpty()) continue;

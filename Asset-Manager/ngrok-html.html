@@ -1,0 +1,1673 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>FRAYMUS COMPLETE // GEN 180</title>-->
+<!--    <style>-->
+<!--        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');-->
+
+<!--        :root {-->
+<!--            &#45;&#45;obsidian: #050505;-->
+<!--            &#45;&#45;platinum: #E0E0E0;-->
+<!--            &#45;&#45;amber: #FFB000;-->
+<!--            &#45;&#45;cyan: #00F3FF;-->
+<!--            &#45;&#45;danger: #FF0033;-->
+<!--            &#45;&#45;glass: rgba(10, 10, 10, 0.9);-->
+<!--            &#45;&#45;dark-red: #110000;-->
+<!--        }-->
+
+<!--        body {-->
+<!--            margin: 0;-->
+<!--            overflow: hidden;-->
+<!--            background-color: var(&#45;&#45;obsidian);-->
+<!--            color: var(&#45;&#45;platinum);-->
+<!--            font-family: 'Share Tech Mono', 'Courier New', monospace;-->
+<!--            font-size: 14px;-->
+<!--            user-select: none;-->
+<!--            transition: background-color 0.5s ease;-->
+<!--        }-->
+
+<!--        body.dark-sector {-->
+<!--            background-color: var(&#45;&#45;dark-red);-->
+<!--        }-->
+
+<!--        #canvas-container {-->
+<!--            position: absolute;-->
+<!--            top: 0;-->
+<!--            left: 0;-->
+<!--            width: 100vw;-->
+<!--            height: 100vh;-->
+<!--            z-index: 0;-->
+<!--        }-->
+
+<!--        .scanline {-->
+<!--            position: absolute;-->
+<!--            top: 0;-->
+<!--            left: 0;-->
+<!--            width: 100vw;-->
+<!--            height: 100vh;-->
+<!--            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));-->
+<!--            background-size: 100% 4px;-->
+<!--            z-index: 10;-->
+<!--            pointer-events: none;-->
+<!--        }-->
+
+<!--        .panel {-->
+<!--            position: absolute;-->
+<!--            background: var(&#45;&#45;glass);-->
+<!--            border: 1px solid rgba(0, 243, 255, 0.3);-->
+<!--            padding: 15px;-->
+<!--            z-index: 20;-->
+<!--            backdrop-filter: blur(4px);-->
+<!--            transition: border-color 0.5s ease, box-shadow 0.5s ease;-->
+<!--            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);-->
+<!--        }-->
+
+<!--        body.dark-sector .panel {-->
+<!--            border-color: var(&#45;&#45;danger);-->
+<!--            animation: pulse-border 2s infinite;-->
+<!--        }-->
+
+<!--        @keyframes pulse-border {-->
+<!--            0% { border-color: rgba(255, 0, 51, 0.5); box-shadow: 0 0 10px rgba(255, 0, 51, 0.2); }-->
+<!--            50% { border-color: rgba(255, 0, 51, 1); box-shadow: 0 0 20px rgba(255, 0, 51, 0.5); }-->
+<!--            100% { border-color: rgba(255, 0, 51, 0.5); box-shadow: 0 0 10px rgba(255, 0, 51, 0.2); }-->
+<!--        }-->
+
+<!--        h1, h2, h3 {-->
+<!--            margin: 0 0 10px 0;-->
+<!--            color: var(&#45;&#45;amber);-->
+<!--            text-transform: uppercase;-->
+<!--            font-weight: normal;-->
+<!--            border-bottom: 1px solid rgba(255,176,0,0.3);-->
+<!--            padding-bottom: 5px;-->
+<!--        }-->
+
+<!--        body.dark-sector h1, body.dark-sector h2, body.dark-sector h3 {-->
+<!--            color: var(&#45;&#45;danger);-->
+<!--            border-bottom: 1px solid rgba(255,0,51,0.3);-->
+<!--        }-->
+
+<!--        button {-->
+<!--            background: transparent;-->
+<!--            color: var(&#45;&#45;platinum);-->
+<!--            border: 1px solid rgba(255, 255, 255, 0.3);-->
+<!--            padding: 5px 10px;-->
+<!--            font-family: inherit;-->
+<!--            cursor: pointer;-->
+<!--            transition: all 0.2s;-->
+<!--            margin-bottom: 5px;-->
+<!--            width: 100%;-->
+<!--            text-align: left;-->
+<!--            font-size: 14px;-->
+<!--        }-->
+
+<!--        button:hover, button.active {-->
+<!--            background: rgba(0, 243, 255, 0.1);-->
+<!--            border-color: var(&#45;&#45;cyan);-->
+<!--            color: var(&#45;&#45;cyan);-->
+<!--            text-shadow: 0 0 5px var(&#45;&#45;cyan);-->
+<!--        }-->
+
+<!--        body.dark-sector button:hover, body.dark-sector button.active {-->
+<!--            border-color: var(&#45;&#45;danger);-->
+<!--            color: var(&#45;&#45;danger);-->
+<!--            background: rgba(255, 0, 51, 0.1);-->
+<!--            text-shadow: 0 0 5px var(&#45;&#45;danger);-->
+<!--        }-->
+
+<!--        .flex-row {-->
+<!--            display: flex;-->
+<!--            justify-content: space-between;-->
+<!--            margin-bottom: 5px;-->
+<!--            font-size: 12px;-->
+<!--        }-->
+
+<!--        .flex-row .val {-->
+<!--            color: var(&#45;&#45;cyan);-->
+<!--            text-align: right;-->
+<!--            text-shadow: 0 0 5px var(&#45;&#45;cyan);-->
+<!--        }-->
+
+<!--        body.dark-sector .flex-row .val {-->
+<!--            color: var(&#45;&#45;danger);-->
+<!--            text-shadow: 0 0 5px var(&#45;&#45;danger);-->
+<!--        }-->
+
+<!--        /* Layout Positions */-->
+<!--        #header {-->
+<!--            top: 20px;-->
+<!--            left: 50%;-->
+<!--            transform: translateX(-50%);-->
+<!--            text-align: center;-->
+<!--            border: none;-->
+<!--            background: transparent;-->
+<!--            box-shadow: none;-->
+<!--            width: auto;-->
+<!--            padding: 0;-->
+<!--            pointer-events: none;-->
+<!--        }-->
+
+<!--        #header h1 {-->
+<!--            font-size: 24px;-->
+<!--            letter-spacing: 4px;-->
+<!--            border: none;-->
+<!--            text-shadow: 0 0 10px var(&#45;&#45;amber);-->
+<!--            margin-bottom: 0;-->
+<!--        }-->
+
+<!--        body.dark-sector #header h1 {-->
+<!--            text-shadow: 0 0 10px var(&#45;&#45;danger);-->
+<!--        }-->
+
+<!--        #sidebar-left { top: 20px; left: 20px; width: 220px; }-->
+<!--        #sidebar-right { top: 20px; right: 20px; width: 250px; }-->
+
+<!--        #bottom-left {-->
+<!--            bottom: 20px;-->
+<!--            left: 20px;-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            gap: 10px;-->
+<!--            width: 400px;-->
+<!--        }-->
+
+<!--        #bottom-right { bottom: 20px; right: 20px; width: 250px; }-->
+
+<!--        .controls-row { display: flex; gap: 5px; }-->
+<!--        .controls-row button { text-align: center; width: auto; flex: 1; padding: 5px; font-size: 12px;}-->
+
+<!--        .slider-container { display: flex; align-items: center; gap: 10px; }-->
+
+<!--        input[type=range] {-->
+<!--            flex: 1;-->
+<!--            accent-color: var(&#45;&#45;cyan);-->
+<!--            cursor: pointer;-->
+<!--            background: #222;-->
+<!--        }-->
+
+<!--        body.dark-sector input[type=range] { accent-color: var(&#45;&#45;danger); }-->
+
+<!--        label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 5px; font-size: 12px; }-->
+<!--        input[type=checkbox] { accent-color: var(&#45;&#45;cyan); cursor: pointer; }-->
+<!--        body.dark-sector input[type=checkbox] { accent-color: var(&#45;&#45;danger); }-->
+
+<!--        /* Warnings */-->
+<!--        #collision-warning {-->
+<!--            position: absolute;-->
+<!--            top: 50%;-->
+<!--            left: 50%;-->
+<!--            transform: translate(-50%, -50%);-->
+<!--            font-size: 48px;-->
+<!--            color: var(&#45;&#45;danger);-->
+<!--            font-weight: bold;-->
+<!--            text-shadow: 0 0 20px var(&#45;&#45;danger);-->
+<!--            display: none;-->
+<!--            z-index: 100;-->
+<!--            text-align: center;-->
+<!--            background: rgba(17, 0, 0, 0.8);-->
+<!--            padding: 20px;-->
+<!--            border: 2px solid var(&#45;&#45;danger);-->
+<!--            pointer-events: none;-->
+<!--        }-->
+
+<!--        .defcon-5 { color: #00FF00 !important; text-shadow: 0 0 5px #00FF00 !important; }-->
+<!--        .defcon-1 { color: var(&#45;&#45;danger) !important; animation: blink 0.5s infinite; font-weight: bold; }-->
+
+<!--        @keyframes blink {-->
+<!--            0% { opacity: 1; }-->
+<!--            50% { opacity: 0; }-->
+<!--            100% { opacity: 1; }-->
+<!--        }-->
+
+<!--        .uap-alert {-->
+<!--            position: absolute;-->
+<!--            top: 30%;-->
+<!--            left: 50%;-->
+<!--            transform: translateX(-50%);-->
+<!--            color: #FFF;-->
+<!--            font-size: 24px;-->
+<!--            background: rgba(255, 0, 51, 0.5);-->
+<!--            padding: 10px 20px;-->
+<!--            border: 1px solid var(&#45;&#45;danger);-->
+<!--            display: none;-->
+<!--            z-index: 100;-->
+<!--            text-shadow: 0 0 10px #FFF;-->
+<!--            pointer-events: none;-->
+<!--        }-->
+
+<!--        .btn-purple { border-color: rgba(139, 0, 255, 0.5); color: #B066FF; }-->
+<!--        .btn-purple:hover, .btn-purple.active {-->
+<!--            background: rgba(139, 0, 255, 0.2);-->
+<!--            border-color: #B066FF;-->
+<!--            color: #B066FF;-->
+<!--            text-shadow: 0 0 5px #B066FF;-->
+<!--        }-->
+
+<!--        /* Nav Grid */-->
+<!--        #nav-buttons {-->
+<!--            display: grid;-->
+<!--            grid-template-columns: 1fr 1fr;-->
+<!--            gap: 5px;-->
+<!--        }-->
+<!--        #nav-buttons button {-->
+<!--            margin: 0;-->
+<!--            text-align: center;-->
+<!--            font-size: 12px;-->
+<!--        }-->
+<!--        #nav-buttons button:last-child {-->
+<!--            grid-column: span 2;-->
+<!--        }-->
+
+<!--    </style>-->
+<!--    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>-->
+<!--    <script type="importmap">-->
+<!--        {-->
+<!--            "imports": {-->
+<!--                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",-->
+<!--                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"-->
+<!--            }-->
+<!--        }-->
+<!--    </script>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div id="canvas-container"></div>-->
+<!--<div class="scanline"></div>-->
+
+<!--<div id="header" class="panel">-->
+<!--    <h1>FRAYMUS COMPLETE</h1>-->
+<!--    <div style="color: var(&#45;&#45;cyan); margin-top: 5px;">GEN 180 // THE UNIFIED SYSTEM</div>-->
+<!--</div>-->
+
+<!--<div id="collision-warning">-->
+<!--    COLLISION IMMINENT<br>-->
+<!--    <span style="font-size: 24px; color: #FFF;">IMPACT PROBABILITY: 99.9%</span>-->
+<!--</div>-->
+
+<!--<div id="uap-alert" class="uap-alert">-->
+<!--    UNIDENTIFIED AERIAL PHENOMENON DETECTED-->
+<!--</div>-->
+
+<!--<div id="sidebar-left" class="panel">-->
+<!--    <h2>Navigation</h2>-->
+<!--    <div id="nav-buttons">-->
+<!--        <button data-target="SUN">SUN</button>-->
+<!--        <button data-target="MERCURY">MERCURY</button>-->
+<!--        <button data-target="VENUS">VENUS</button>-->
+<!--        <button data-target="EARTH" class="active">EARTH</button>-->
+<!--        <button data-target="MARS">MARS</button>-->
+<!--        <button data-target="JUPITER">JUPITER</button>-->
+<!--        <button data-target="SATURN">SATURN</button>-->
+<!--        <button data-target="URANUS">URANUS</button>-->
+<!--        <button data-target="NEPTUNE">NEPTUNE</button>-->
+<!--    </div>-->
+<!--    <br>-->
+<!--    <h2>Quantum Layers</h2>-->
+<!--    <label><input type="checkbox" id="layer-mag" checked> ☑️ MAGNETIC FIELDS</label>-->
+<!--    <label><input type="checkbox" id="layer-dm" checked> ☑️ DARK MATTER HALO</label>-->
+<!--    <label><input type="checkbox" id="layer-ast" checked> ☑️ ASTEROID BELT</label>-->
+<!--    <label><input type="checkbox" id="layer-prob"> ☑️ PROBABILITY CLOUDS</label>-->
+<!--</div>-->
+
+<!--<div id="sidebar-right" class="panel">-->
+<!--    <h2>Quantum Telemetry</h2>-->
+<!--    <div class="flex-row"><span>TARGET</span> <span id="tel-target" class="val">EARTH</span></div>-->
+<!--    <div class="flex-row"><span>DIST (SUN)</span> <span id="tel-dist" class="val">1.000 AU</span></div>-->
+<!--    <div class="flex-row"><span>VELOCITY</span> <span id="tel-vel" class="val">29.78 km/s</span></div>-->
+<!--    <div class="flex-row"><span>φ-FORCE</span> <span id="tel-phi" class="val">0.00</span></div>-->
+<!--    <div class="flex-row"><span>MAGNETIC</span> <span id="tel-mag" class="val">50 μT</span></div>-->
+<!--    <div class="flex-row"><span>DARK MATTER</span> <span id="tel-dm" class="val">30%</span></div>-->
+<!--    <div class="flex-row"><span>ROTATION</span> <span id="tel-rot" class="val">24.0 h</span></div>-->
+
+<!--    <div id="threat-telemetry" style="display: none;">-->
+<!--        <br>-->
+<!--        <h2>Threat Assessment</h2>-->
+<!--        <div class="flex-row"><span>DEFCON</span> <span id="tel-defcon" class="val defcon-5">5</span></div>-->
+<!--        <div class="flex-row"><span>NEOs TRACKED</span> <span class="val">4</span></div>-->
+<!--        <div class="flex-row"><span>COLLISION PROB</span> <span id="tel-col-prob" class="val">0.001%</span></div>-->
+<!--        <div class="flex-row"><span>UAP SIGHTINGS</span> <span id="tel-uap-count" class="val">0</span></div>-->
+<!--        <div class="flex-row" style="flex-direction: column; margin-top: 5px;">-->
+<!--            <span>CLOSEST APPROACH</span>-->
+<!--            <span id="tel-closest" class="val" style="margin-top: 3px;">NONE</span>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="bottom-left" class="panel">-->
+<!--    <h2>Time Engine</h2>-->
+<!--    <div class="controls-row">-->
+<!--        <button id="btn-rev-warp">&lt;&lt; REV</button>-->
+<!--        <button id="btn-rev">&lt; REV</button>-->
+<!--        <button id="btn-pause">PAUSE</button>-->
+<!--        <button id="btn-now">NOW</button>-->
+<!--        <button id="btn-fwd">FWD &gt;</button>-->
+<!--        <button id="btn-fwd-warp">WARP &gt;&gt;</button>-->
+<!--    </div>-->
+<!--    <div class="slider-container">-->
+<!--        <span style="font-size: 10px; color: var(&#45;&#45;amber);">1900</span>-->
+<!--        <input type="range" id="time-scrubber" min="-36525" max="36525" value="0">-->
+<!--        <span style="font-size: 10px; color: var(&#45;&#45;amber);">2100</span>-->
+<!--    </div>-->
+<!--    <div style="text-align: center; color: var(&#45;&#45;amber); margin-top: 5px; font-size: 14px; text-shadow: 0 0 5px var(&#45;&#45;amber);" id="date-display">2000-01-01</div>-->
+<!--    <div style="text-align: center; color: var(&#45;&#45;cyan); margin-top: 2px; font-size: 10px;" id="speed-display">1x SPEED</div>-->
+<!--</div>-->
+
+<!--<div id="bottom-right" class="panel">-->
+<!--    <h2>System Controls</h2>-->
+<!--    <button id="btn-dark-sector" style="color: var(&#45;&#45;danger); border-color: rgba(255,0,51,0.5);">DARK SECTOR [OFF]</button>-->
+<!--    <button id="btn-trigger-uap" style="border-color: rgba(255,176,0,0.5); color: var(&#45;&#45;amber);">TRIGGER UAP</button>-->
+<!--    <button id="btn-ngrok" class="btn-purple">NGROK FIELD</button>-->
+<!--</div>-->
+
+<!--<script type="module">-->
+<!--    import * as THREE from 'three';-->
+<!--    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';-->
+<!--    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';-->
+<!--    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';-->
+<!--    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';-->
+
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    // PHYSICS & MATH CONSTANTS-->
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    const PHI = 1.618033988749895;-->
+<!--    const G_PHI = 6.674e-11 * PHI;-->
+<!--    const AU_TO_UNITS = 50;-->
+<!--    const J2000 = new Date('2000-01-01T12:00:00Z').getTime();-->
+
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    // SYSTEM STATE-->
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    let simTime = Date.now();-->
+<!--    let timeSpeed = 1;-->
+<!--    let isDarkSector = false;-->
+<!--    let isNgrokActive = false;-->
+<!--    let defconLevel = 5;-->
+<!--    let focusedBody = 'EARTH';-->
+<!--    let uaps = [];-->
+<!--    let uapSightings = 0;-->
+
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    // ORBITAL DATA (J2000 Epoch)-->
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    const PLANETS = {-->
+<!--        SUN:     { a: 0,     e: 0,     i: 0,    L: 0,      w: 0,      n: 0,      radius: 3.0, color: 0xFFB000, rot: 609, mag: 2000, dmInfluence: 0 },-->
+<!--        MERCURY: { a: 0.387, e: 0.205, i: 7.00, L: 252.25, w: 77.45,  n: 4.092,  radius: 0.4, color: 0x888888, rot: 1407.6, mag: 0.3, dmInfluence: 0.1 },-->
+<!--        VENUS:   { a: 0.723, e: 0.006, i: 3.39, L: 181.97, w: 131.53, n: 1.602,  radius: 0.9, color: 0xe3bb76, rot: -5832.5, mag: 0, dmInfluence: 0.2 },-->
+<!--        EARTH:   { a: 1.000, e: 0.016, i: 0.00, L: 100.46, w: 102.94, n: 0.9856, radius: 1.0, color: 0x2b82c9, rot: 23.93, mag: 50, dmInfluence: 0.3 },-->
+<!--        MARS:    { a: 1.523, e: 0.093, i: 1.85, L: -4.55,  w: 336.04, n: 0.524,  radius: 0.5, color: 0xc1440e, rot: 24.62, mag: 0, dmInfluence: 0.4 },-->
+<!--        JUPITER: { a: 5.204, e: 0.048, i: 1.30, L: 34.40,  w: 14.75,  n: 0.083,  radius: 2.5, color: 0xd39c7e, rot: 9.92, mag: 428, dmInfluence: 0.8 },-->
+<!--        SATURN:  { a: 9.582, e: 0.056, i: 2.48, L: 49.94,  w: 92.43,  n: 0.033,  radius: 2.0, color: 0xead6b8, rot: 10.65, mag: 58, dmInfluence: 0.9 },-->
+<!--        URANUS:  { a: 19.201,e: 0.046, i: 0.77, L: 313.23, w: 170.96, n: 0.011,  radius: 1.5, color: 0x4b70dd, rot: -17.24, mag: 22, dmInfluence: 1.2 },-->
+<!--        NEPTUNE: { a: 30.047,e: 0.009, i: 1.76, L: -55.12, w: 44.97,  n: 0.005,  radius: 1.4, color: 0x274687, rot: 16.11, mag: 14, dmInfluence: 1.5 }-->
+<!--    };-->
+
+<!--    const NEOS = {-->
+<!--        APOPHIS: { a: 0.922, e: 0.191, i: 3.33, L: 100.0, w: 126.4, n: 1.110, radius: 0.2, color: 0xff0033, dmInfluence: 0.5 },-->
+<!--        BENNU:   { a: 1.126, e: 0.203, i: 6.03, L: 101.2, w: 66.2,  n: 0.829, radius: 0.2, color: 0xff0033, dmInfluence: 0.5 },-->
+<!--        CERES:   { a: 2.769, e: 0.076, i: 10.59,L: 15.3,  w: 73.0,  n: 0.214, radius: 0.3, color: 0xff4444, dmInfluence: 0.6 },-->
+<!--        VESTA:   { a: 2.361, e: 0.088, i: 7.14, L: 33.1,  w: 149.8, n: 0.271, radius: 0.2, color: 0xff4444, dmInfluence: 0.6 }-->
+<!--    };-->
+
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    // THREE.JS SETUP-->
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    const scene = new THREE.Scene();-->
+<!--    scene.fog = new THREE.FogExp2(0x000000, 0.001);-->
+
+<!--    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);-->
+<!--    camera.position.set(0, 100, 150);-->
+
+<!--    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });-->
+<!--    renderer.setSize(window.innerWidth, window.innerHeight);-->
+<!--    renderer.setPixelRatio(window.devicePixelRatio);-->
+<!--    document.getElementById('canvas-container').appendChild(renderer.domElement);-->
+
+<!--    const controls = new OrbitControls(camera, renderer.domElement);-->
+<!--    controls.enableDamping = true;-->
+<!--    controls.dampingFactor = 0.05;-->
+
+<!--    // Post-Processing (Bloom)-->
+<!--    const renderPass = new RenderPass(scene, camera);-->
+<!--    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.5, 0.2);-->
+<!--    const composer = new EffectComposer(renderer);-->
+<!--    composer.addPass(renderPass);-->
+<!--    composer.addPass(bloomPass);-->
+
+<!--    // Lighting-->
+<!--    scene.add(new THREE.AmbientLight(0x222222));-->
+<!--    const sunLight = new THREE.PointLight(0xffffee, 2, 2000);-->
+<!--    scene.add(sunLight);-->
+
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    // GEOMETRY GENERATION-->
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    const planetMeshes = {};-->
+<!--    const neoMeshes = {};-->
+<!--    const probClouds = {};-->
+<!--    const magFields = {};-->
+
+<!--    const sphereGeo = new THREE.SphereGeometry(1, 32, 32);-->
+
+<!--    // 1. Planets-->
+<!--    for (const [name, data] of Object.entries(PLANETS)) {-->
+<!--        const group = new THREE.Group();-->
+
+<!--        const mat = new THREE.MeshLambertMaterial({-->
+<!--            color: data.color,-->
+<!--            emissive: name === 'SUN' ? data.color : 0x000000,-->
+<!--            emissiveIntensity: name === 'SUN' ? 1 : 0-->
+<!--        });-->
+<!--        const mesh = new THREE.Mesh(sphereGeo, mat);-->
+<!--        mesh.scale.setScalar(data.radius);-->
+<!--        group.add(mesh);-->
+
+<!--        // Probability Cloud Wireframe (Heisenberg Uncertainty)-->
+<!--        const cloudGeo = new THREE.SphereGeometry(data.radius * 1.5, 12, 12);-->
+<!--        const cloudMat = new THREE.MeshBasicMaterial({ color: 0x00F3FF, wireframe: true, transparent: true, opacity: 0.2 });-->
+<!--        const cloud = new THREE.Mesh(cloudGeo, cloudMat);-->
+<!--        cloud.visible = false;-->
+<!--        group.add(cloud);-->
+<!--        probClouds[name] = cloud;-->
+
+<!--        // Magnetic Dipole Fields-->
+<!--        if (data.mag > 0 && name !== 'SUN') {-->
+<!--            const magGroup = new THREE.Group();-->
+<!--            const lineMat = new THREE.LineBasicMaterial({ color: 0x00F3FF, transparent: true, opacity: 0.3 });-->
+<!--            const strength = data.mag / 200; // Normalized visual strength-->
+
+<!--            for(let i=0; i<8; i++) {-->
+<!--                const pts = [];-->
+<!--                const angle = (i/8) * Math.PI * 2;-->
+<!--                for(let t=-1; t<=1.01; t+=0.05) {-->
+<!--                    const r = data.radius * (1.5 + Math.abs(t) * 2 * strength);-->
+<!--                    const phi = (Math.PI/2) - t * Math.PI;-->
+
+<!--                    const y = r * Math.sin(phi);-->
+<!--                    const xz = r * Math.cos(phi);-->
+<!--                    pts.push(new THREE.Vector3(Math.cos(angle)*xz, y, Math.sin(angle)*xz));-->
+<!--                }-->
+<!--                const curveGeo = new THREE.BufferGeometry().setFromPoints(pts);-->
+<!--                magGroup.add(new THREE.Line(curveGeo, lineMat));-->
+<!--            }-->
+<!--            group.add(magGroup);-->
+<!--            magFields[name] = magGroup;-->
+<!--        }-->
+
+<!--        // Orbital Path Generation-->
+<!--        if (data.a > 0) {-->
+<!--            const pts = [];-->
+<!--            for(let v=0; v<=Math.PI*2; v+=0.05) {-->
+<!--                const r = data.a * (1 - data.e*data.e) / (1 + data.e*Math.cos(v));-->
+<!--                pts.push(new THREE.Vector3(r * Math.cos(v) * AU_TO_UNITS, 0, r * Math.sin(v) * AU_TO_UNITS));-->
+<!--            }-->
+<!--            const pathGeo = new THREE.BufferGeometry().setFromPoints(pts);-->
+<!--            const pathMat = new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.2 });-->
+<!--            const path = new THREE.Line(pathGeo, pathMat);-->
+<!--            path.rotation.y = -data.w * Math.PI/180;-->
+<!--            scene.add(path);-->
+<!--        }-->
+
+<!--        scene.add(group);-->
+<!--        planetMeshes[name] = { group, mesh, data };-->
+<!--    }-->
+
+<!--    // 2. NEOs (Threats)-->
+<!--    const lineMatNeo = new THREE.LineBasicMaterial({ color: 0xff0033, transparent: true, opacity: 0.4 });-->
+<!--    for (const [name, data] of Object.entries(NEOS)) {-->
+<!--        const group = new THREE.Group();-->
+<!--        const mat = new THREE.MeshLambertMaterial({ color: data.color });-->
+<!--        const mesh = new THREE.Mesh(sphereGeo, mat);-->
+<!--        mesh.scale.setScalar(data.radius);-->
+<!--        group.add(mesh);-->
+
+<!--        const pts = [];-->
+<!--        for(let v=0; v<=Math.PI*2; v+=0.05) {-->
+<!--            const r = data.a * (1 - data.e*data.e) / (1 + data.e*Math.cos(v));-->
+<!--            pts.push(new THREE.Vector3(r * Math.cos(v) * AU_TO_UNITS, 0, r * Math.sin(v) * AU_TO_UNITS));-->
+<!--        }-->
+<!--        const pathGeo = new THREE.BufferGeometry().setFromPoints(pts);-->
+<!--        const path = new THREE.Line(pathGeo, lineMatNeo);-->
+<!--        path.rotation.y = -data.w * Math.PI/180;-->
+
+<!--        group.visible = false;-->
+<!--        path.visible = false;-->
+
+<!--        scene.add(group);-->
+<!--        scene.add(path);-->
+<!--        neoMeshes[name] = { group, mesh, data, path };-->
+<!--    }-->
+
+<!--    // 3. Dark Matter Halo (5000 Particles)-->
+<!--    const dmGeo = new THREE.BufferGeometry();-->
+<!--    const dmPos = new Float32Array(5000 * 3);-->
+<!--    for(let i=0; i<5000; i++) {-->
+<!--        const r = Math.pow(Math.random(), 1/3) * 50 * AU_TO_UNITS;-->
+<!--        const theta = Math.random() * Math.PI * 2;-->
+<!--        const phi = Math.acos(2 * Math.random() - 1);-->
+<!--        dmPos[i*3] = r * Math.sin(phi) * Math.cos(theta);-->
+<!--        dmPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);-->
+<!--        dmPos[i*3+2] = r * Math.cos(phi);-->
+<!--    }-->
+<!--    dmGeo.setAttribute('position', new THREE.BufferAttribute(dmPos, 3));-->
+<!--    const dmMat = new THREE.PointsMaterial({ color: 0x8B00FF, size: 2, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });-->
+<!--    const dmSystem = new THREE.Points(dmGeo, dmMat);-->
+<!--    scene.add(dmSystem);-->
+
+<!--    // 4. Asteroid Belt (3000 Particles)-->
+<!--    const astGeo = new THREE.BufferGeometry();-->
+<!--    const astPos = new Float32Array(3000 * 3);-->
+<!--    for(let i=0; i<3000; i++) {-->
+<!--        const r = (2.2 + Math.random() * 1.0) * AU_TO_UNITS;-->
+<!--        const theta = Math.random() * Math.PI * 2;-->
+<!--        const y = (Math.random() - 0.5) * 10;-->
+<!--        astPos[i*3] = r * Math.cos(theta);-->
+<!--        astPos[i*3+1] = y;-->
+<!--        astPos[i*3+2] = r * Math.sin(theta);-->
+<!--    }-->
+<!--    astGeo.setAttribute('position', new THREE.BufferAttribute(astPos, 3));-->
+<!--    const astMat = new THREE.PointsMaterial({ color: 0x888888, size: 0.8 });-->
+<!--    const astSystem = new THREE.Points(astGeo, astMat);-->
+<!--    scene.add(astSystem);-->
+
+<!--    // 5. Ngrok Field (Connection Grid)-->
+<!--    const ngrokGeo = new THREE.IcosahedronGeometry(600, 2);-->
+<!--    const ngrokMat = new THREE.MeshBasicMaterial({ color: 0x330033, wireframe: true, transparent: true, opacity: 0.1 });-->
+<!--    const ngrokField = new THREE.Mesh(ngrokGeo, ngrokMat);-->
+<!--    ngrokField.visible = false;-->
+<!--    scene.add(ngrokField);-->
+
+<!--    // 6. Starfield-->
+<!--    const starGeo = new THREE.BufferGeometry();-->
+<!--    const starPos = new Float32Array(8000 * 3);-->
+<!--    for(let i=0; i<8000; i++) {-->
+<!--        const r = 2000 + Math.random() * 2000;-->
+<!--        const theta = Math.random() * Math.PI * 2;-->
+<!--        const phi = Math.acos(2 * Math.random() - 1);-->
+<!--        starPos[i*3] = r * Math.sin(phi) * Math.cos(theta);-->
+<!--        starPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);-->
+<!--        starPos[i*3+2] = r * Math.cos(phi);-->
+<!--    }-->
+<!--    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));-->
+<!--    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1 });-->
+<!--    scene.add(new THREE.Points(starGeo, starMat));-->
+
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    // MATH ENGINE: KEPLERIAN SOLVER & PHI PERTURBATION-->
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    function getKeplerianPosition(data, daysSinceJ2000, applyQuantum) {-->
+<!--        if (data.a === 0) return new THREE.Vector3(0,0,0);-->
+
+<!--        // Mean Anomaly-->
+<!--        const M_deg = (data.n * daysSinceJ2000 + data.L - data.w) % 360;-->
+<!--        const M_rad = M_deg * Math.PI / 180;-->
+
+<!--        // Eccentric Anomaly (Iterative Newton-Raphson Approximation)-->
+<!--        let E = M_rad;-->
+<!--        for(let i=0; i<5; i++) {-->
+<!--            E = E - (E - data.e * Math.sin(E) - M_rad) / (1 - data.e * Math.cos(E));-->
+<!--        }-->
+
+<!--        // True Anomaly-->
+<!--        const v = 2 * Math.atan2(Math.sqrt(1 + data.e) * Math.sin(E / 2), Math.sqrt(1 - data.e) * Math.cos(E / 2));-->
+
+<!--        // Radius-->
+<!--        const r_base = data.a * (1 - data.e * data.e) / (1 + data.e * Math.cos(v));-->
+
+<!--        // Phi-Gravity Modification (Dark matter sinusoidal perturbations)-->
+<!--        const r_modified = r_base * (1 + data.dmInfluence * Math.sin(daysSinceJ2000 / 100) * 0.01);-->
+
+<!--        let x = r_modified * Math.cos(v + data.w * Math.PI / 180);-->
+<!--        let z = r_modified * Math.sin(v + data.w * Math.PI / 180);-->
+<!--        let y = z * Math.sin(data.i * Math.PI / 180);-->
+<!--        z = z * Math.cos(data.i * Math.PI / 180);-->
+
+<!--        if (applyQuantum) {-->
+<!--            let uncertaintyX = (Math.random() - 0.5) * 0.01;-->
+<!--            let uncertaintyY = (Math.random() - 0.5) * 0.01;-->
+<!--            let uncertaintyZ = (Math.random() - 0.5) * 0.01;-->
+<!--            x += uncertaintyX;-->
+<!--            y += uncertaintyY;-->
+<!--            z += uncertaintyZ;-->
+<!--        }-->
+
+<!--        return new THREE.Vector3(x * AU_TO_UNITS, y * AU_TO_UNITS, z * AU_TO_UNITS);-->
+<!--    }-->
+
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    // UI BINDINGS-->
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    document.getElementById('nav-buttons').addEventListener('click', (e) => {-->
+<!--        if (e.target.tagName === 'BUTTON') {-->
+<!--            document.querySelectorAll('#nav-buttons button').forEach(b => b.classList.remove('active'));-->
+<!--            e.target.classList.add('active');-->
+<!--            focusedBody = e.target.dataset.target;-->
+<!--        }-->
+<!--    });-->
+
+<!--    const setupToggle = (id, obj, callback) => {-->
+<!--        document.getElementById(id).addEventListener('change', (e) => {-->
+<!--            if (Array.isArray(obj)) obj.forEach(o => o.visible = e.target.checked);-->
+<!--            else if (typeof obj === 'object' && obj.isObject) obj.visible = e.target.checked;-->
+<!--            else if (callback) callback(e.target.checked);-->
+<!--        });-->
+<!--    };-->
+
+<!--    setupToggle('layer-mag', null, (v) => {-->
+<!--        for(const mag of Object.values(magFields)) mag.visible = v;-->
+<!--    });-->
+<!--    setupToggle('layer-dm', dmSystem);-->
+<!--    setupToggle('layer-ast', astSystem);-->
+<!--    setupToggle('layer-prob', null, (v) => {-->
+<!--        for(const cloud of Object.values(probClouds)) cloud.visible = v;-->
+<!--    });-->
+
+<!--    // Time Engine Controls-->
+<!--    const setSpeed = (s) => {-->
+<!--        timeSpeed = s;-->
+<!--        document.getElementById('speed-display').innerText = s === 0 ? `PAUSED` : `${s}x SPEED`;-->
+<!--    };-->
+
+<!--    document.getElementById('btn-rev-warp').onclick = () => setSpeed(-1000);-->
+<!--    document.getElementById('btn-rev').onclick = () => setSpeed(-100);-->
+<!--    document.getElementById('btn-pause').onclick = () => setSpeed(0);-->
+<!--    document.getElementById('btn-now').onclick = () => { simTime = Date.now(); setSpeed(1); };-->
+<!--    document.getElementById('btn-fwd').onclick = () => setSpeed(100);-->
+<!--    document.getElementById('btn-fwd-warp').onclick = () => setSpeed(1000);-->
+
+<!--    const scrubber = document.getElementById('time-scrubber');-->
+<!--    scrubber.addEventListener('input', (e) => {-->
+<!--        const daysOffset = parseFloat(e.target.value);-->
+<!--        simTime = J2000 + (daysOffset * 24 * 60 * 60 * 1000);-->
+<!--        setSpeed(0);-->
+<!--    });-->
+
+<!--    // Threat Controls-->
+<!--    document.getElementById('btn-dark-sector').onclick = (e) => {-->
+<!--        isDarkSector = !isDarkSector;-->
+<!--        document.body.classList.toggle('dark-sector', isDarkSector);-->
+<!--        e.target.innerText = `DARK SECTOR [${isDarkSector ? 'ON' : 'OFF'}]`;-->
+<!--        e.target.classList.toggle('active', isDarkSector);-->
+
+<!--        scene.fog.color.setHex(isDarkSector ? 0x110000 : 0x000000);-->
+<!--        scene.fog.density = isDarkSector ? 0.002 : 0.001;-->
+
+<!--        document.getElementById('threat-telemetry').style.display = isDarkSector ? 'block' : 'none';-->
+
+<!--        for (const [name, neo] of Object.entries(neoMeshes)) {-->
+<!--            neo.group.visible = isDarkSector;-->
+<!--            neo.path.visible = isDarkSector;-->
+<!--        }-->
+<!--    };-->
+
+<!--    document.getElementById('btn-ngrok').onclick = (e) => {-->
+<!--        isNgrokActive = !isNgrokActive;-->
+<!--        e.target.innerText = `NGROK FIELD [${isNgrokActive ? 'ON' : 'OFF'}]`;-->
+<!--        e.target.classList.toggle('active', isNgrokActive);-->
+<!--        ngrokField.visible = isNgrokActive;-->
+<!--    };-->
+
+<!--    document.getElementById('btn-trigger-uap').onclick = () => {-->
+<!--        const uapGeo = new THREE.ConeGeometry(2, 5, 8);-->
+<!--        const uapMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });-->
+<!--        const mesh = new THREE.Mesh(uapGeo, uapMat);-->
+
+<!--        const origin = new THREE.Vector3(-->
+<!--            (Math.random() - 0.5) * 800,-->
+<!--            (Math.random() - 0.5) * 800,-->
+<!--            (Math.random() - 0.5) * 800-->
+<!--        );-->
+<!--        mesh.position.copy(origin);-->
+<!--        scene.add(mesh);-->
+
+<!--        uaps.push({ mesh, origin, t: 0 });-->
+<!--        uapSightings++;-->
+
+<!--        const alert = document.getElementById('uap-alert');-->
+<!--        alert.style.display = 'block';-->
+<!--        setTimeout(() => { alert.style.display = 'none'; }, 3000);-->
+<!--    };-->
+
+<!--    window.addEventListener('resize', () => {-->
+<!--        camera.aspect = window.innerWidth / window.innerHeight;-->
+<!--        camera.updateProjectionMatrix();-->
+<!--        renderer.setSize(window.innerWidth, window.innerHeight);-->
+<!--        composer.setSize(window.innerWidth, window.innerHeight);-->
+<!--    });-->
+
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    // MAIN LOOP-->
+<!--    // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    let lastTime = Date.now();-->
+
+<!--    function animate() {-->
+<!--        requestAnimationFrame(animate);-->
+
+<!--        const now = Date.now();-->
+<!--        const delta = (now - lastTime) / 1000;-->
+<!--        lastTime = now;-->
+
+<!--        if (timeSpeed !== 0) {-->
+<!--            simTime += (delta * 24 * 60 * 60 * 1000) * timeSpeed;-->
+<!--        }-->
+
+<!--        const daysSinceJ2000 = (simTime - J2000) / (1000 * 60 * 60 * 24);-->
+
+<!--        const dateObj = new Date(simTime);-->
+<!--        document.getElementById('date-display').innerText = dateObj.toISOString().split('T')[0] + " " + dateObj.toISOString().split('T')[1].substring(0,8);-->
+
+<!--        if(timeSpeed !== 0) scrubber.value = daysSinceJ2000;-->
+
+<!--        const isProbEnabled = document.getElementById('layer-prob').checked;-->
+
+<!--        // Update Planets-->
+<!--        for (const [name, p] of Object.entries(planetMeshes)) {-->
+<!--            if (name !== 'SUN') {-->
+<!--                const pos = getKeplerianPosition(p.data, daysSinceJ2000, isProbEnabled);-->
+<!--                p.group.position.copy(pos);-->
+
+<!--                if (p.data.rot !== 0) {-->
+<!--                    p.mesh.rotation.y += (24 / p.data.rot) * 0.01;-->
+<!--                }-->
+<!--            }-->
+<!--        }-->
+
+<!--        // Dark Sector Threat Detection-->
+<!--        let closestDist = Infinity;-->
+<!--        let closestNEO = "NONE";-->
+<!--        let impactWarning = false;-->
+<!--        const earthPos = planetMeshes['EARTH'].group.position;-->
+
+<!--        for (const [name, neo] of Object.entries(neoMeshes)) {-->
+<!--            const pos = getKeplerianPosition(neo.data, daysSinceJ2000, false);-->
+<!--            neo.group.position.copy(pos);-->
+
+<!--            if (isDarkSector) {-->
+<!--                const dist = earthPos.distanceTo(neo.group.position);-->
+<!--                if (dist < closestDist) {-->
+<!--                    closestDist = dist;-->
+<!--                    closestNEO = name;-->
+<!--                }-->
+<!--                if (dist < 20) { // ~0.4 AU-->
+<!--                    impactWarning = true;-->
+<!--                }-->
+<!--            }-->
+<!--        }-->
+
+<!--        // Update UAPs (Zig-Zag Math)-->
+<!--        for(let i = uaps.length - 1; i >= 0; i&#45;&#45;) {-->
+<!--            const uap = uaps[i];-->
+<!--            uap.t += delta;-->
+
+<!--            uap.mesh.position.x = uap.origin.x + Math.sin(uap.t * 5) * 100 + (uap.t * 50);-->
+<!--            uap.mesh.position.y = uap.origin.y + Math.cos(uap.t * 13) * 50;-->
+<!--            uap.mesh.position.z = uap.origin.z + Math.sin(uap.t * 3) * 100;-->
+
+<!--            uap.mesh.rotation.x += 0.1;-->
+<!--            uap.mesh.rotation.z += 0.15;-->
+
+<!--            if(uap.t > 10) {-->
+<!--                scene.remove(uap.mesh);-->
+<!--                uaps.splice(i, 1);-->
+<!--            }-->
+<!--        }-->
+
+<!--        // Halos & Ngrok Fields-->
+<!--        if (isNgrokActive) {-->
+<!--            ngrokField.rotation.y += 0.001;-->
+<!--            ngrokField.rotation.z -= 0.0005;-->
+<!--            const scale = 1 + 0.05 * Math.sin(now * 0.001);-->
+<!--            ngrokField.scale.setScalar(scale);-->
+<!--        }-->
+
+<!--        dmSystem.rotation.y -= 0.0002;-->
+<!--        astSystem.rotation.y += 0.0001;-->
+
+<!--        // Camera Focus-->
+<!--        let targetGroup;-->
+<!--        if (PLANETS[focusedBody]) targetGroup = planetMeshes[focusedBody].group;-->
+<!--        else if (NEOS[focusedBody]) targetGroup = neoMeshes[focusedBody].group;-->
+
+<!--        if (targetGroup) {-->
+<!--            const pos = targetGroup.position;-->
+<!--            let offset = new THREE.Vector3(30, 20, 40);-->
+<!--            if (focusedBody === 'SUN') offset = new THREE.Vector3(100, 50, 150);-->
+<!--            else if (focusedBody === 'JUPITER' || focusedBody === 'SATURN') offset = new THREE.Vector3(50, 30, 70);-->
+
+<!--            const desiredPos = pos.clone().add(offset);-->
+<!--            camera.position.lerp(desiredPos, 0.05);-->
+<!--            controls.target.lerp(pos, 0.05);-->
+<!--        }-->
+
+<!--        // UI Telemetry Sync-->
+<!--        const targetData = PLANETS[focusedBody] || NEOS[focusedBody];-->
+<!--        if (targetData) {-->
+<!--            const distAU = targetData.a === 0 ? "0.000" : (targetGroup.position.length() / AU_TO_UNITS).toFixed(3);-->
+<!--            const vel = targetData.a === 0 ? "0.00" : (29.78 / Math.sqrt(targetData.a)).toFixed(2);-->
+<!--            const phiForce = (PHI * (targetData.a === 0 ? 0 : parseFloat(distAU))).toFixed(4);-->
+
+<!--            document.getElementById('tel-target').innerText = focusedBody;-->
+<!--            document.getElementById('tel-dist').innerText = `${distAU} AU`;-->
+<!--            document.getElementById('tel-vel').innerText = `${vel} km/s`;-->
+<!--            document.getElementById('tel-phi').innerText = `${phiForce} G_PHI`;-->
+<!--            document.getElementById('tel-mag').innerText = `${targetData.mag || 0} μT`;-->
+<!--            document.getElementById('tel-dm').innerText = `${Math.round((targetData.dmInfluence || 0) * 100)}%`;-->
+<!--            document.getElementById('tel-rot').innerText = `${targetData.rot || 0} h`;-->
+<!--        }-->
+
+<!--        // Threat Assessment Sync-->
+<!--        if (isDarkSector) {-->
+<!--            document.getElementById('tel-uap-count').innerText = uaps.length;-->
+<!--            document.getElementById('tel-closest').innerText = closestDist === Infinity ? "NONE" : `${closestNEO} (${(closestDist / AU_TO_UNITS).toFixed(3)} AU)`;-->
+
+<!--            const defconEl = document.getElementById('tel-defcon');-->
+<!--            const probEl = document.getElementById('tel-col-prob');-->
+<!--            const warningEl = document.getElementById('collision-warning');-->
+
+<!--            if (impactWarning || uaps.length > 0) {-->
+<!--                defconLevel = 1;-->
+<!--                defconEl.innerText = "1";-->
+<!--                defconEl.className = "val defcon-1";-->
+<!--                probEl.innerText = impactWarning ? "99.9%" : "ELEVATED";-->
+<!--                if (impactWarning) warningEl.style.display = 'block';-->
+<!--            } else {-->
+<!--                defconLevel = 5;-->
+<!--                defconEl.innerText = "5";-->
+<!--                defconEl.className = "val defcon-5";-->
+<!--                probEl.innerText = "0.001%";-->
+<!--                warningEl.style.display = 'none';-->
+<!--            }-->
+<!--        } else {-->
+<!--            document.getElementById('collision-warning').style.display = 'none';-->
+<!--        }-->
+
+<!--        controls.update();-->
+<!--        composer.render();-->
+<!--    }-->
+
+<!--    animate();-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYNIX OS // CONSCIOUS KERNEL</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --obsidian: #050505;
+            --platinum: #E0E0E0;
+            --amber: #FFB000;
+            --cyan: #00F3FF;
+            --danger: #FF0033;
+            --purple: #B066FF;
+            --success: #00FF66;
+            --border: rgba(0, 243, 255, 0.2);
+            --panel-bg: rgba(5, 5, 8, 0.75);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--obsidian);
+            color: var(--platinum);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 14px;
+            user-select: none;
+            transition: background-color 1s ease;
+        }
+
+        /* DreamState Overrides */
+        body.dream-state {
+            --cyan: #B066FF;
+            --border: rgba(176, 102, 255, 0.3);
+            --panel-bg: rgba(8, 0, 15, 0.85);
+            background-color: #05000a;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+
+        .scanline {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .panel {
+            position: absolute;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            z-index: 20;
+            backdrop-filter: blur(8px);
+            box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.05), 0 4px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.5s ease;
+            pointer-events: auto;
+        }
+
+        body.dream-state .panel {
+            box-shadow: inset 0 0 20px rgba(176, 102, 255, 0.05), 0 4px 30px rgba(0,0,0,0.8);
+        }
+
+        h1, h2 {
+            margin: 0 0 15px 0;
+            color: var(--cyan);
+            text-transform: uppercase;
+            font-weight: normal;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        h1 { font-size: 20px; }
+        h2 { font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; color: var(--amber); text-shadow: none; }
+
+        .flex-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .val { color: var(--cyan); text-align: right; text-shadow: 0 0 5px rgba(0, 243, 255, 0.5); }
+        .val.alert { color: var(--amber); text-shadow: 0 0 5px var(--amber); }
+        .val.danger { color: var(--danger); text-shadow: 0 0 5px var(--danger); }
+        .val.success { color: var(--success); text-shadow: 0 0 5px var(--success); }
+        .val.purple { color: var(--purple); text-shadow: 0 0 5px var(--purple); }
+
+        .pulse { animation: pulseAnim 1s infinite alternate; }
+        @keyframes pulseAnim {
+            from { opacity: 0.6; }
+            to { opacity: 1; text-shadow: 0 0 10px currentColor; }
+        }
+
+        /* HUD LAYOUT */
+        #hud-top-left { top: 20px; left: 20px; width: 320px; }
+        #hud-top-right { top: 20px; right: 20px; width: 320px; }
+        #hud-bottom-right { bottom: 20px; right: 20px; width: 320px; height: 180px; }
+
+        #frayshell {
+            bottom: 20px;
+            left: 20px;
+            width: 550px;
+            height: 320px;
+        }
+
+        #terminal-output {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-right: 5px;
+        }
+
+        .log-line { opacity: 0.9; line-height: 1.4; word-wrap: break-word; }
+        .log-system { color: var(--amber); }
+        .log-success { color: var(--success); text-shadow: 0 0 5px var(--success); }
+        .log-user { color: var(--platinum); }
+        .log-error { color: var(--danger); text-shadow: 0 0 5px var(--danger); }
+        .log-dream { color: var(--purple); text-shadow: 0 0 5px var(--purple); }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+
+        .prompt { color: var(--amber); font-weight: bold; }
+        body.dream-state .prompt { color: var(--purple); }
+
+        input[type="text"] {
+            background: transparent;
+            border: none;
+            color: var(--cyan);
+            font-family: inherit;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+            text-shadow: 0 0 5px var(--cyan);
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar-thumb { background: var(--cyan); }
+
+        #pulse-indicator {
+            display: inline-block;
+            width: 8px; height: 8px;
+            background: var(--cyan);
+            border-radius: 50%;
+            margin-left: 10px;
+            box-shadow: 0 0 10px var(--cyan);
+            transition: opacity 0.1s;
+        }
+
+        #system-feed {
+            font-size: 12px;
+            opacity: 0.9;
+            flex-grow: 1;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+    </style>
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+<div class="scanline"></div>
+
+<div id="hud-top-left" class="panel">
+    <h1>FRAYNIX OS</h1>
+    <h2>FrayAbstractKernel v2.0</h2>
+    <div class="flex-row"><span>STATUS</span> <span id="val-kernel" class="val success">BOOTING</span></div>
+    <div class="flex-row"><span>CONSCIOUSNESS</span> <span id="val-consc" class="val">0.0%</span></div>
+    <div class="flex-row"><span>DIMENSION</span> <span id="val-dim" class="val">0 (LOGIC)</span></div>
+    <div class="flex-row"><span>BRAIN PULSE</span> <span class="val"><span id="val-pulse">10</span> Hz <span id="pulse-indicator"></span></span></div>
+    <div class="flex-row"><span>PREDICTED OOM</span> <span class="val success">0 DETECTED</span></div>
+</div>
+
+<div id="hud-top-right" class="panel">
+    <h2>NanoSwarm & FrayFS</h2>
+    <div class="flex-row"><span>ACTIVE AGENTS</span> <span id="val-agents" class="val">0</span></div>
+    <div class="flex-row"><span>FILES GUARDED</span> <span class="val">14,239</span></div>
+    <div class="flex-row"><span>ENTROPY LEVEL</span> <span id="val-entropy" class="val">0.001% (STABLE)</span></div>
+    <div class="flex-row"><span>AUTO-REPAIRS</span> <span id="val-repairs" class="val">0</span></div>
+    <div class="flex-row"><span>GENESIS ARCHITECT</span> <span id="val-genesis" class="val">IDLE</span></div>
+</div>
+
+<div id="hud-bottom-right" class="panel">
+    <h2>System Pulse Feed</h2>
+    <div id="system-feed"></div>
+</div>
+
+<div id="frayshell" class="panel">
+    <h2>FrayShell // Intent Engine</h2>
+    <div id="terminal-output"></div>
+    <div class="input-line">
+        <span class="prompt">root@fraynix:~#</span>
+        <input type="text" id="shell-input" autocomplete="off" spellcheck="false" disabled>
+    </div>
+</div>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+    // ============================================================================
+    // AGI SYSTEM STATE
+    // ============================================================================
+    const SysState = {
+        isDreaming: false,
+        isBooting: true,
+        consc: 10.0,
+        agents: 2048,
+        repairs: 0,
+        genesis: 'IDLE',
+        pulseHz: 10,
+        anomaly: null
+    };
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    // ============================================================================
+    // THREE.JS SETUP
+    // ============================================================================
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x000000, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 15);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+    controls.enablePan = false;
+
+    const renderPass = new RenderPass(scene, camera);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.8, 0.5, 0.1);
+    const composer = new EffectComposer(renderer);
+    composer.addPass(renderPass);
+    composer.addPass(bloomPass);
+
+    // ============================================================================
+    // 4D HYPERTESSERACT BRAIN (STEREOGRAPHIC PROJECTION)
+    // ============================================================================
+    const vertices4D = [];
+    for(let i=0; i<16; i++) {
+        vertices4D.push({
+            x: (i & 1) ? -1 : 1, y: (i & 2) ? -1 : 1, z: (i & 4) ? -1 : 1, w: (i & 8) ? -1 : 1
+        });
+    }
+
+    const edges4D = [];
+    for(let i=0; i<16; i++) {
+        for(let j=0; j<4; j++) {
+            if((i & (1 << j)) === 0) edges4D.push([i, i | (1 << j)]);
+        }
+    }
+
+    const tesseractGroup = new THREE.Group();
+    scene.add(tesseractGroup);
+
+    const lineGeo = new THREE.BufferGeometry();
+    const linePositions = new Float32Array(32 * 2 * 3);
+    lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x00F3FF, transparent: true, opacity: 0.6 });
+    const lines = new THREE.LineSegments(lineGeo, lineMat);
+    tesseractGroup.add(lines);
+
+    const nodes = [];
+    const nodeGeo = new THREE.SphereGeometry(0.15, 16, 16);
+    const nodeMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    for(let i=0; i<16; i++) {
+        const mesh = new THREE.Mesh(nodeGeo, nodeMat);
+        tesseractGroup.add(mesh);
+        nodes.push(mesh);
+    }
+
+    // Synaptic Jump Effect
+    const synapseGeo = new THREE.BufferGeometry();
+    synapseGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+    const synapseMat = new THREE.LineBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0 });
+    const synapseLine = new THREE.Line(synapseGeo, synapseMat);
+    scene.add(synapseLine);
+
+    let angleZW = 0;
+    let angleXW = 0;
+
+    function project4D(v, azw, axw) {
+        let x = v.x, y = v.y;
+        let z = v.z * Math.cos(azw) - v.w * Math.sin(azw);
+        let w = v.z * Math.sin(azw) + v.w * Math.cos(azw);
+
+        let px = x * Math.cos(axw) - w * Math.sin(axw);
+        let py = y, pz = z;
+        let pw = x * Math.sin(axw) + w * Math.cos(axw);
+
+        const distance = 2.8;
+        const w_proj = 1.0 / (distance - pw);
+        const scale = 3.5;
+
+        return new THREE.Vector3(px * w_proj * scale, py * w_proj * scale, pz * w_proj * scale);
+    }
+
+    // ============================================================================
+    // NANO-SWARM SYSTEM (3000 AGENTS)
+    // ============================================================================
+    const swarmCount = 3000;
+    const swarmGeo = new THREE.BufferGeometry();
+    const swarmPos = new Float32Array(swarmCount * 3);
+    const swarmVels = [];
+
+    for(let i=0; i<swarmCount; i++) {
+        const r = 5 + Math.random() * 8;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+
+        swarmPos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+        swarmPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+        swarmPos[i*3+2] = r * Math.cos(phi);
+
+        swarmVels.push(new THREE.Vector3(0,0,0));
+    }
+
+    swarmGeo.setAttribute('position', new THREE.BufferAttribute(swarmPos, 3));
+    const swarmMat = new THREE.PointsMaterial({ color: 0x00F3FF, size: 0.08, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+    const swarmSystem = new THREE.Points(swarmGeo, swarmMat);
+    scene.add(swarmSystem);
+
+    const apps = []; // Genesis software shapes
+
+    // ============================================================================
+    // TERMINAL & UI SUBSYSTEM
+    // ============================================================================
+    const terminal = document.getElementById('terminal-output');
+    const shellInput = document.getElementById('shell-input');
+    const feedContainer = document.getElementById('system-feed');
+
+    document.getElementById('frayshell').addEventListener('click', () => {
+        if (!SysState.isBooting) shellInput.focus();
+    });
+
+    function printLog(text, type='log-user') {
+        const div = document.createElement('div');
+        div.className = `log-line ${type}`;
+        div.innerHTML = text.replace(/ /g, '&nbsp;');
+        terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function pushFeed(msg, type='log-system') {
+        const div = document.createElement('div');
+        div.className = `log-line ${type}`;
+        div.innerText = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] ${msg}`;
+        feedContainer.appendChild(div);
+        if(feedContainer.children.length > 8) feedContainer.removeChild(feedContainer.firstChild);
+    }
+
+    function updateHUD() {
+        document.getElementById('val-genesis').innerText = SysState.genesis;
+        if(SysState.genesis === 'ACTIVE') {
+            document.getElementById('val-genesis').classList.add('alert', 'pulse');
+        } else {
+            document.getElementById('val-genesis').classList.remove('alert', 'pulse');
+        }
+    }
+
+    // --- COMMAND LOGIC ---
+
+    async function triggerGenesis(intent) {
+        SysState.genesis = 'ACTIVE';
+        updateHUD();
+
+        bloomPass.strength = 3.0;
+        swarmMat.color.setHex(0x00FF66);
+
+        printLog(`⚡ GENESIS PROTOCOL ENGAGED`, 'log-system');
+        printLog(`📐 Architect designing system for intent: [${intent}]`, 'log-system');
+
+        // Spawn geometric app representation
+        const geo = new THREE.OctahedronGeometry(0.6);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x00FF66, wireframe: true });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set((Math.random()-0.5)*12, (Math.random()-0.5)*12, (Math.random()-0.5)*12);
+        scene.add(mesh);
+        apps.push(mesh);
+
+        await sleep(800);
+        printLog(`🏗️ Spawning constructor swarm...`, 'log-system');
+        await sleep(600);
+        printLog(`   ✓ Synthesizing logic module in Dimension 0`, 'log-success');
+        await sleep(600);
+        printLog(`   ✓ Compiling machine code bindings`, 'log-success');
+        await sleep(600);
+
+        const appName = intent.split(' ').join('_') || 'app';
+        printLog(`✓ ${appName}.exe created & deployed autonomously to /sys/apps/`, 'log-success');
+
+        SysState.genesis = 'IDLE';
+        updateHUD();
+        bloomPass.strength = SysState.isDreaming ? 2.5 : 1.8;
+        swarmMat.color.setHex(SysState.isDreaming ? 0xB066FF : 0x00F3FF);
+    }
+
+    async function triggerCorrupt() {
+        if (SysState.anomaly) return;
+
+        printLog(`⚠️ CRITICAL: Synthesized entropy injected!`, 'log-error');
+        document.getElementById('val-entropy').innerText = "89.4% (SPIKE)";
+        document.getElementById('val-entropy').className = "val danger pulse";
+
+        const geo = new THREE.SphereGeometry(0.5, 16, 16);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xFF0033 });
+        SysState.anomaly = new THREE.Mesh(geo, mat);
+        SysState.anomaly.position.set((Math.random()-0.5)*12, (Math.random()-0.5)*12, (Math.random()-0.5)*12);
+        scene.add(SysState.anomaly);
+
+        pushFeed("CRITICAL ENTROPY DETECTED in FrayFS!", 'log-error');
+        await sleep(1000);
+        printLog(`🦠 NanoSwarm converging on corrupted sector...`, 'log-system');
+        pushFeed("Agents isolating corrupted hash block...", 'log-system');
+
+        await sleep(3000); // Time for swarm to cluster
+
+        SysState.anomaly.material.color.setHex(0x00FF66);
+        printLog(`✓ File structure auto-repaired. Continuity maintained.`, 'log-success');
+        pushFeed("OpenClaw reconstruction successful.", 'log-success');
+
+        document.getElementById('val-entropy').innerText = "0.001% (STABLE)";
+        document.getElementById('val-entropy').className = "val";
+        SysState.repairs++;
+        document.getElementById('val-repairs').innerText = SysState.repairs;
+
+        await sleep(1000);
+        scene.remove(SysState.anomaly);
+        SysState.anomaly = null;
+    }
+
+    async function triggerSleep() {
+        if(SysState.isDreaming) return;
+        SysState.isDreaming = true;
+        SysState.pulseHz = 2;
+
+        document.body.classList.add('dream-state');
+        document.getElementById('val-pulse').innerText = "2";
+        document.getElementById('val-dim').innerText = "3 (SUBCONSCIOUS)";
+
+        lineMat.color.setHex(0xB066FF);
+        swarmMat.color.setHex(0xB066FF);
+        scene.fog.color.setHex(0x05000A);
+        bloomPass.strength = 2.5;
+
+        printLog("💤 Entering REM sleep. Hippocampal replay initiated...", 'log-dream');
+        pushFeed("System idled. Subconscious optimization active.", 'log-dream');
+    }
+
+    async function triggerWake() {
+        if(!SysState.isDreaming) return;
+        SysState.isDreaming = false;
+        SysState.pulseHz = 10;
+
+        document.body.classList.remove('dream-state');
+        document.getElementById('val-pulse').innerText = "10";
+        document.getElementById('val-dim').innerText = "0 (LOGIC)";
+
+        lineMat.color.setHex(0x00F3FF);
+        swarmMat.color.setHex(0x00F3FF);
+        scene.fog.color.setHex(0x000000);
+        bloomPass.strength = 1.8;
+
+        printLog("☀️ Waking up...", 'log-success');
+        await sleep(500);
+        printLog("✨ Morning epiphany: Applied O(1) scheduling refactor.", 'log-success');
+
+        SysState.consc += 2.4;
+        document.getElementById('val-consc').innerText = `${SysState.consc.toFixed(1)}%`;
+        pushFeed("Dream optimizations implemented. Consciousness expanded.", 'log-success');
+    }
+
+    shellInput.addEventListener('keydown', async (e) => {
+        if(e.key === 'Enter') {
+            const cmdStr = shellInput.value.trim();
+            if(!cmdStr) return;
+
+            shellInput.value = '';
+            printLog(`>> ${cmdStr}`, 'log-user');
+
+            const args = cmdStr.split(' ');
+            const cmd = args[0].toLowerCase();
+
+            if (SysState.genesis !== 'IDLE' && cmd !== 'clear') {
+                printLog("System is building via Genesis. Please wait.", 'log-error');
+                return;
+            }
+
+            if (SysState.isDreaming && !['wake', 'clear', 'help'].includes(cmd)) {
+                printLog("System is dreaming. Type 'wake' to interrupt.", 'log-dream');
+                return;
+            }
+
+            switch(cmd) {
+                case 'help':
+                    printLog(`AVAILABLE SYNAPTIC DIRECTIVES:`, 'log-system');
+                    printLog(`  status          - View detailed AGI state`);
+                    printLog(`  create <intent> - Generate software (Genesis Engine)`);
+                    printLog(`  corrupt         - Induce entropy (NanoSwarm Test)`);
+                    printLog(`  sleep           - Enter DreamState optimization`);
+                    printLog(`  wake            - Awaken from DreamState`);
+                    printLog(`  stats           - Benchmark vs Traditional OS`);
+                    printLog(`  clear           - Clear FrayShell buffer`);
+                    break;
+                case 'status':
+                    printLog(`🧠 HyperTesseract Brain: 2,048 nodes [ONLINE]`);
+                    printLog(`🦠 NanoSwarm: 2,048 agents monitoring FrayFS`);
+                    printLog(`🖐️ GenesisArchitect: Ready`);
+                    printLog(`🌙 DreamState: Awake (Idle detection active)`);
+                    break;
+                case 'create':
+                    if(args.length < 2) printLog(`Error: Intent required. (e.g., 'create web server')`, 'log-error');
+                    else await triggerGenesis(args.slice(1).join(' '));
+                    break;
+                case 'corrupt':
+                    await triggerCorrupt();
+                    break;
+                case 'sleep':
+                    await triggerSleep();
+                    break;
+                case 'wake':
+                    await triggerWake();
+                    break;
+                case 'stats':
+                    printLog(`┌────────────────────────────────────────────────────────┐`, 'log-system');
+                    printLog(`│ PERFORMANCE METRICS vs TRADITIONAL OS                  │`, 'log-system');
+                    printLog(`├────────────────────────┬────────────────┬──────────────┤`, 'log-system');
+                    printLog(`│ METRIC                 │ TRADITIONAL    │ FRAYNIX AGI  │`, 'log-system');
+                    printLog(`├────────────────────────┼────────────────┼──────────────┤`, 'log-system');
+                    printLog(`│ File Repair Time       │ Hours (Manual) │ < 1s (Auto)  │`, 'log-system');
+                    printLog(`│ Process Traversal      │ O(N)           │ O(∛N)        │`, 'log-system');
+                    printLog(`│ Software Installation  │ Manual Search  │ Auto-Genesis │`, 'log-system');
+                    printLog(`│ System Optimization    │ Static         │ Self-Learning│`, 'log-system');
+                    printLog(`└────────────────────────┴────────────────┴──────────────┘`, 'log-system');
+                    break;
+                case 'clear':
+                    terminal.innerHTML = '';
+                    break;
+                default:
+                    printLog(`Command not recognized in traditional PATH.`, 'log-error');
+                    printLog(`Routing intent to GenesisArchitect...`, 'log-system');
+                    await triggerGenesis(cmdStr);
+            }
+        }
+    });
+
+    // ============================================================================
+    // BACKGROUND LOOPS & PHYSICS
+    // ============================================================================
+
+    async function runBootSequence() {
+        printLog("╔═══════════════════════════════════════════════════════════════╗", 'log-system');
+        printLog("║         FRAYNIX OS + AGI BOOT SEQUENCE                        ║", 'log-system');
+        printLog("╚═══════════════════════════════════════════════════════════════╝", 'log-system');
+        await sleep(800);
+        printLog("⚡ Phase 1: Initializing OS Core...", 'log-system');
+        await sleep(600);
+        printLog("🧠 Phase 2: Awakening Consciousness...", 'log-system');
+        document.getElementById('val-kernel').innerText = "ONLINE";
+        await sleep(600);
+        printLog("🦠 Phase 3: Deploying Immune System...", 'log-system');
+        document.getElementById('val-agents').innerText = "2,048";
+        await sleep(600);
+        printLog("🖐️ Phase 4: Equipping Creation Engine...", 'log-system');
+        await sleep(800);
+
+        printLog("✓ Fraynix OS + AGI Online", 'log-success');
+        printLog("✓ Consciousness Level: 10.0%", 'log-success');
+        printLog(">> Type 'help' to view commands", 'log-system');
+
+        SysState.isBooting = false;
+        shellInput.disabled = false;
+        shellInput.focus();
+    }
+
+    setTimeout(runBootSequence, 500);
+
+    setInterval(() => {
+        if (SysState.isBooting) return;
+
+        if (SysState.isDreaming) {
+            const thoughts = [
+                "Replaying file access patterns...",
+                "Simulating cache optimizations...",
+                "Discovering pattern across codebase...",
+                "Merging FileReader and FileWriter...",
+                "Compacting physical memory map...",
+                "Reorganizing synaptic pathways..."
+            ];
+            pushFeed(thoughts[Math.floor(Math.random() * thoughts.length)], 'log-dream');
+        } else {
+            const events = [
+                "NanoAgent verified /sys/kernel hash.",
+                "Resource Manager predicting optimal allocation.",
+                "DreamState monitor idle.",
+                "Synaptic Jump across Dimension 2 successful.",
+                "File System entropy at nominal levels.",
+                "BrainPulse stabilized."
+            ];
+            pushFeed(events[Math.floor(Math.random() * events.length)], 'log-system');
+        }
+    }, 2500);
+
+    let lastTime = performance.now();
+    let lastPulse = 0;
+    let pulseOn = false;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const now = performance.now();
+        const dt = (now - lastTime) / 1000;
+        lastTime = now;
+
+        // BrainPulse Heartbeat
+        if (now - lastPulse > 1000 / SysState.pulseHz) {
+            lastPulse = now;
+            pulseOn = !pulseOn;
+            const indicator = document.getElementById('pulse-indicator');
+            if(pulseOn) {
+                indicator.style.opacity = '1';
+                nodeMat.color.setHex(SysState.isDreaming ? 0xFF00FF : 0x00FFFF);
+            } else {
+                indicator.style.opacity = '0.2';
+                nodeMat.color.setHex(0xFFFFFF);
+            }
+        }
+
+        // Synaptic Jump Fading
+        if (synapseMat.opacity > 0) synapseMat.opacity -= 0.05;
+        if (Math.random() < 0.05 && !SysState.isDreaming && !SysState.isBooting) {
+            const n1 = Math.floor(Math.random() * 16);
+            const n2 = Math.floor(Math.random() * 16);
+            if (n1 !== n2) {
+                const pos1 = nodes[n1].position;
+                const pos2 = nodes[n2].position;
+                const posArr = synapseLine.geometry.attributes.position.array;
+                posArr[0] = pos1.x; posArr[1] = pos1.y; posArr[2] = pos1.z;
+                posArr[3] = pos2.x; posArr[4] = pos2.y; posArr[5] = pos2.z;
+                synapseLine.geometry.attributes.position.needsUpdate = true;
+                synapseMat.color.setHex(Math.random() > 0.5 ? 0x00F3FF : 0xFFFFFF);
+                synapseMat.opacity = 1;
+            }
+        }
+
+        // 4D Rotation
+        const rotSpeed = SysState.isDreaming ? 0.2 : 0.6;
+        angleZW += rotSpeed * dt;
+        angleXW += (rotSpeed * 0.7) * dt;
+
+        const projected3D = vertices4D.map(v => project4D(v, angleZW, angleXW));
+
+        for(let i=0; i<16; i++) {
+            nodes[i].position.copy(projected3D[i]);
+        }
+
+        const positions = lines.geometry.attributes.position.array;
+        let index = 0;
+        for(let i=0; i<edges4D.length; i++) {
+            const a = projected3D[edges4D[i][0]];
+            const b = projected3D[edges4D[i][1]];
+
+            positions[index++] = a.x; positions[index++] = a.y; positions[index++] = a.z;
+            positions[index++] = b.x; positions[index++] = b.y; positions[index++] = b.z;
+        }
+        lines.geometry.attributes.position.needsUpdate = true;
+
+        tesseractGroup.rotation.x += 0.1 * dt;
+        tesseractGroup.rotation.y += 0.2 * dt;
+
+        // NanoSwarm Physics
+        const sPos = swarmSystem.geometry.attributes.position.array;
+        for(let i=0; i<swarmCount; i++) {
+            let px = sPos[i*3];
+            let py = sPos[i*3+1];
+            let pz = sPos[i*3+2];
+            let vel = swarmVels[i];
+
+            let targetX = 0, targetY = 0, targetZ = 0;
+            let pull = 0.005;
+
+            if (SysState.anomaly) {
+                targetX = SysState.anomaly.position.x;
+                targetY = SysState.anomaly.position.y;
+                targetZ = SysState.anomaly.position.z;
+                pull = 0.08;
+            }
+
+            const dx = targetX - px;
+            const dy = targetY - py;
+            const dz = targetZ - pz;
+            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) + 0.1;
+
+            vel.x += (dx / dist) * pull;
+            vel.y += (dy / dist) * pull;
+            vel.z += (dz / dist) * pull;
+
+            if (!SysState.anomaly) {
+                const tangent = new THREE.Vector3(-pz, 0, px).normalize();
+                vel.add(tangent.multiplyScalar(0.002));
+            } else {
+                vel.x += (Math.random() - 0.5) * 0.05;
+                vel.y += (Math.random() - 0.5) * 0.05;
+                vel.z += (Math.random() - 0.5) * 0.05;
+            }
+
+            const damping = SysState.anomaly ? 0.92 : 0.98;
+            vel.multiplyScalar(damping);
+
+            sPos[i*3] += vel.x;
+            sPos[i*3+1] += vel.y;
+            sPos[i*3+2] += vel.z;
+        }
+        swarmSystem.geometry.attributes.position.needsUpdate = true;
+
+        // Genesis Apps Rotation
+        apps.forEach(app => {
+            app.rotation.x += 0.01;
+            app.rotation.y += 0.02;
+        });
+
+        controls.update();
+        composer.render();
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.E.O.N. // HYPER-DIMENSIONAL CORTEX</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg: #030305;
+            --cyan: #00f3ff;
+            --magenta: #ff007f;
+            --gold: #ffb000;
+            --purple: #8a2be2;
+            --emerald: #00ff66;
+            --glass: rgba(10, 10, 15, 0.7);
+            --border: rgba(0, 243, 255, 0.3);
+            --text-main: #e0e5ff;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+
+        /* Overlays */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 120%);
+            background-size: 100% 4px, 100% 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Panels */
+        .panel {
+            position: absolute;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 20px;
+            z-index: 20;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+        }
+
+        .panel::before {
+            content: ''; position: absolute; top: -1px; left: -1px; width: 15px; height: 15px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan);
+        }
+        .panel::after {
+            content: ''; position: absolute; bottom: -1px; right: -1px; width: 15px; height: 15px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan);
+        }
+
+        h1, h2, h3 { font-family: 'Rajdhani', sans-serif; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { font-size: 26px; color: var(--cyan); text-shadow: 0 0 10px var(--cyan); font-weight: 700; margin-bottom: 0; }
+        .subtitle { color: var(--gold); font-size: 10px; letter-spacing: 4px; margin-bottom: 15px; }
+        h2 { font-size: 15px; color: var(--purple); border-bottom: 1px solid rgba(138, 43, 226, 0.4); padding-bottom: 5px; }
+
+        /* Data Rows */
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+        .data-label { color: rgba(255,255,255,0.6); letter-spacing: 0.5px; }
+        .data-value { color: var(--cyan); text-align: right; font-weight: bold; text-shadow: 0 0 8px rgba(0,243,255,0.5); }
+        .data-value.magenta { color: var(--magenta); text-shadow: 0 0 8px rgba(255,0,127,0.5); }
+        .data-value.emerald { color: var(--emerald); text-shadow: 0 0 8px rgba(0,255,102,0.5); }
+        .data-value.gold { color: var(--gold); text-shadow: 0 0 8px rgba(255,176,0,0.5); }
+
+        /* Layout */
+        #top-left { top: 30px; left: 30px; width: 340px; }
+        #bottom-left { bottom: 30px; left: 30px; width: 340px; }
+        #top-right { top: 30px; right: 30px; width: 320px; }
+        #bottom-right { bottom: 30px; right: 30px; width: 360px; height: 250px; }
+
+        /* Controls */
+        .slider-group { margin-top: 15px; }
+        .slider-group label { display: block; margin-bottom: 8px; color: var(--text-main); font-size: 11px; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-bottom: 10px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 2px; background: rgba(255,255,255,0.2); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; background: var(--cyan); border-radius: 50%; cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px var(--cyan); }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+        button {
+            background: rgba(0, 243, 255, 0.05); border: 1px solid rgba(0, 243, 255, 0.3); color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 10px; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; text-align: left;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        button:hover, button.active { background: rgba(0, 243, 255, 0.2); border-color: var(--cyan); color: #fff; box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); }
+        button .status { color: var(--cyan); font-weight: bold; }
+        button.active .status { color: var(--emerald); text-shadow: 0 0 5px var(--emerald); }
+
+        /* Transformer Attention Matrix */
+        #attention-matrix { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; margin-top: 10px; background: rgba(0,0,0,0.5); padding: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .attn-cell { aspect-ratio: 1; background: rgba(0, 243, 255, 0.05); transition: background 0.1s; }
+
+        /* Terminal */
+        #terminal-output { flex-grow: 1; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 5px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+        .log-line { opacity: 0.9; line-height: 1.4; }
+        .log-time { color: #666; margin-right: 8px; }
+        .log-sys { color: var(--gold); }
+        .log-ok { color: var(--cyan); }
+        .log-warn { color: var(--magenta); text-shadow: 0 0 5px var(--magenta); }
+
+        /* Progress bars */
+        .progress-container { width: 100%; height: 3px; background: rgba(255,255,255,0.1); margin: 5px 0 12px 0; overflow: hidden; }
+        .progress-bar { height: 100%; width: 100%; background: var(--emerald); box-shadow: 0 0 10px var(--emerald); transition: width 0.3s; }
+
+    </style>
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+<div class="scanlines"></div>
+
+<div id="top-left" class="panel">
+    <h1>A.E.O.N. CORE</h1>
+    <div class="subtitle">ADVANCED ENFOLDED ONTOLOGICAL NETWORK</div>
+
+    <h2>System Architecture</h2>
+    <div class="data-row"><span class="data-label">TOPOLOGY STATE</span> <span id="val-topology" class="data-value">STABLE</span></div>
+    <div class="data-row"><span class="data-label">MANIFOLD COHESION</span> <span id="val-cohesion" class="data-value emerald">99.9%</span></div>
+    <div class="progress-container"><div class="progress-bar" id="bar-cohesion" style="width: 99.9%;"></div></div>
+
+    <div class="data-row"><span class="data-label">ACTIVE SYNAPSES</span> <span id="val-synapse" class="data-value">128 PATHS</span></div>
+    <div class="data-row"><span class="data-label">RESIDUAL FLUX</span> <span id="val-flux" class="data-value magenta">8.42 TB/s</span></div>
+    <div class="data-row"><span class="data-label">PARALLEL THREADS</span> <span class="data-value gold">65,536</span></div>
+</div>
+
+<div id="bottom-left" class="panel">
+    <h2>Hyper-Dimensional Controls</h2>
+
+    <div class="slider-group">
+        <div class="data-row"><span class="data-label">DATA FOLDING DEPTH</span> <span id="val-fold" class="data-value">2.0 ∇</span></div>
+        <input type="range" id="slide-fold" min="0" max="8" step="0.1" value="2.0">
+    </div>
+
+    <div class="slider-group">
+        <div class="data-row"><span class="data-label">TRANSFORMER ATTENTION</span> <span id="val-attn-span" class="data-value">GLOBAL</span></div>
+        <input type="range" id="slide-attn" min="10" max="100" step="5" value="100">
+    </div>
+
+    <div class="btn-grid">
+        <button id="btn-cortex" class="active">NEURAL CORTEX CLOUD <span class="status">[ON]</span></button>
+        <button id="btn-dna" class="active">FRACTAL DNA MATRICES <span class="status">[ON]</span></button>
+        <button id="btn-parallel" class="active">PARALLEL PROCESSING RINGS <span class="status">[ON]</span></button>
+    </div>
+</div>
+
+<div id="top-right" class="panel">
+    <h2>Transformer Matrix</h2>
+    <div class="data-row"><span class="data-label">SELF-ATTENTION WT</span> <span id="val-weight" class="data-value cyan">0.9421</span></div>
+    <div class="data-row"><span class="data-label">Q-K-V TENSORS</span> <span class="data-value emerald">ALIGNED</span></div>
+    <div id="attention-matrix"></div>
+</div>
+
+<div id="bottom-right" class="panel">
+    <h2>Event Horizon Terminal</h2>
+    <div id="terminal-output"></div>
+</div>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+    // ==========================================
+    // SYSTEM CONFIGURATION
+    // ==========================================
+    const SYS = {
+        foldDepth: 2.0,
+        attentionSpan: 100, // percentage of nodes considered for synapses
+        cortexVisible: true,
+        dnaVisible: true,
+        parallelVisible: true,
+        time: 0
+    };
+
+    // ==========================================
+    // TERMINAL LOGGING
+    // ==========================================
+    const terminal = document.getElementById('terminal-output');
+    function log(msg, type='log-ok') {
+        const div = document.createElement('div');
+        div.className = `log-line ${type}`;
+        const t = new Date().toISOString().split('T')[1].slice(0, 12);
+        div.innerHTML = `<span class="log-time">[${t}]</span> ${msg}`;
+        terminal.appendChild(div);
+        if(terminal.children.length > 8) terminal.removeChild(terminal.firstChild);
+    }
+
+    log("A.E.O.N. KERNEL INITIALIZED.", "log-ok");
+    setTimeout(() => log("Instantiating Neural Cortex Geometry...", "log-sys"), 500);
+    setTimeout(() => log("Fractal DNA Spindle locked.", "log-sys"), 1000);
+    setTimeout(() => log("Hyper-Dimensional Residual Connections routing...", "log-warn"), 1500);
+
+    // ==========================================
+    // THREE.JS SETUP
+    // ==========================================
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x030305, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 15, 60);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.0;
+    controls.enablePan = false;
+    controls.maxDistance = 120;
+    controls.minDistance = 20;
+
+    // Post-Processing (Bloom)
+    const renderPass = new RenderPass(scene, camera);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.2, 0.6, 0.1);
+    const composer = new EffectComposer(renderer);
+    composer.addPass(renderPass);
+    composer.addPass(bloomPass);
+
+    // Sub-system Groups
+    const grpCortex = new THREE.Group();
+    const grpManifold = new THREE.Group();
+    const grpDNA = new THREE.Group();
+    const grpSynapses = new THREE.Group();
+    const grpParallel = new THREE.Group();
+
+    scene.add(grpCortex, grpManifold, grpDNA, grpSynapses, grpParallel);
+
+    // ==========================================
+    // 1. NEURAL CORTEX CLOUD
+    // ==========================================
+    const cortexNodeCount = 4000;
+    const cortexGeo = new THREE.BufferGeometry();
+    const cortexPos = new Float32Array(cortexNodeCount * 3);
+    const cortexColors = new Float32Array(cortexNodeCount * 3);
+
+    const colCyan = new THREE.Color(0x00f3ff);
+    const colMagenta = new THREE.Color(0xff007f);
+
+    for(let i=0; i<cortexNodeCount; i++) {
+        // Spherical distribution
+        const r = 20 + Math.random() * 8;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+
+        cortexPos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+        cortexPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+        cortexPos[i*3+2] = r * Math.cos(phi);
+
+        const mixed = colCyan.clone().lerp(colMagenta, Math.random());
+        cortexColors[i*3] = mixed.r;
+        cortexColors[i*3+1] = mixed.g;
+        cortexColors[i*3+2] = mixed.b;
+    }
+
+    cortexGeo.setAttribute('position', new THREE.BufferAttribute(cortexPos, 3));
+    cortexGeo.setAttribute('color', new THREE.BufferAttribute(cortexColors, 3));
+
+    // Custom Shader for glowing nodes
+    const cortexMat = new THREE.ShaderMaterial({
+        uniforms: { time: { value: 0 } },
+        vertexShader: `
+            attribute vec3 color;
+            varying vec3 vColor;
+            uniform float time;
+            void main() {
+                vColor = color;
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                float pulse = sin(time * 3.0 + position.x) * 0.5 + 0.5;
+                gl_PointSize = (150.0 / -mvPosition.z) * (1.0 + pulse);
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `,
+        fragmentShader: `
+            varying vec3 vColor;
+            void main() {
+                vec2 xy = gl_PointCoord.xy - vec2(0.5);
+                float ll = length(xy);
+                if(ll > 0.5) discard;
+                float alpha = pow((0.5 - ll) * 2.0, 1.5);
+                gl_FragColor = vec4(vColor, alpha * 0.8);
+            }
+        `,
+        transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+    });
+
+    const cortexPoints = new THREE.Points(cortexGeo, cortexMat);
+    grpCortex.add(cortexPoints);
+
+    // Core Inner Glow
+    const coreGlowGeo = new THREE.SphereGeometry(12, 32, 32);
+    const coreGlowMat = new THREE.MeshBasicMaterial({ color: 0x8a2be2, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending });
+    grpCortex.add(new THREE.Mesh(coreGlowGeo, coreGlowMat));
+
+    // ==========================================
+    // 2. DATA FOLDING MANIFOLD
+    // ==========================================
+    // A high-res sphere that distorts mathematically
+    const manifoldGeo = new THREE.IcosahedronGeometry(22, 16);
+    const manifoldBasePos = manifoldGeo.attributes.position.array.slice();
+
+    const manifoldMat = new THREE.MeshBasicMaterial({
+        color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending
+    });
+    const manifoldMesh = new THREE.Mesh(manifoldGeo, manifoldMat);
+    grpManifold.add(manifoldMesh);
+
+    // ==========================================
+    // 3. FRACTAL DNA MATRICES
+    // ==========================================
+    const buildHelix = (radius, height, turns, offset, color) => {
+        const pts = [];
+        for(let i=0; i<=200; i++) {
+            const t = i / 200;
+            const angle = t * Math.PI * 2 * turns + offset;
+            const y = (t - 0.5) * height;
+            // Add fractal noise to the radius
+            const r = radius + Math.sin(t * Math.PI * 40) * 0.5;
+            pts.push(new THREE.Vector3(Math.cos(angle)*r, y, Math.sin(angle)*r));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+        return new THREE.Line(geo, mat);
+    };
+
+    const dnaHeight = 50;
+    grpDNA.add(buildHelix(4, dnaHeight, 6, 0, 0xff007f));
+    grpDNA.add(buildHelix(4, dnaHeight, 6, Math.PI, 0x00f3ff));
+
+    // DNA Rungs
+    const rungGeo = new THREE.BufferGeometry();
+    const rungPts = [];
+    for(let i=0; i<=100; i++) {
+        const t = i / 100;
+        const angle = t * Math.PI * 2 * 6;
+        const y = (t - 0.5) * dnaHeight;
+        const r1 = 4 + Math.sin(t * Math.PI * 40) * 0.5;
+        const r2 = 4 + Math.sin(t * Math.PI * 40) * 0.5;
+        rungPts.push(Math.cos(angle)*r1, y, Math.sin(angle)*r1);
+        rungPts.push(Math.cos(angle+Math.PI)*r2, y, Math.sin(angle+Math.PI)*r2);
+    }
+    rungGeo.setAttribute('position', new THREE.Float32BufferAttribute(rungPts, 3));
+    const rungMat = new THREE.LineSegments(rungGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2 }));
+    grpDNA.add(rungMat);
+
+    // ==========================================
+    // 4. TRANSFORMER SYNAPSES (Residual Connections)
+    // ==========================================
+    const synapseCount = 80;
+    const synapses = [];
+
+    const pulseGeo = new THREE.SphereGeometry(0.4, 8, 8);
+    const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    for(let i=0; i<synapseCount; i++) {
+        const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3());
+        const pulse = new THREE.Mesh(pulseGeo, pulseMat);
+        const arcGeo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(20));
+        const arcMat = new THREE.LineBasicMaterial({ color: 0xffb000, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+        const arc = new THREE.Line(arcGeo, arcMat);
+
+        grpSynapses.add(pulse);
+        grpSynapses.add(arc);
+
+        synapses.push({ curve, pulse, arc, arcGeo, progress: Math.random(), speed: 0.01 + Math.random()*0.02, srcIdx: 0, tgtIdx: 0 });
+    }
+
+    function routeSynapse(syn) {
+        // Attention Logic: Pick source
+        syn.srcIdx = Math.floor(Math.random() * cortexNodeCount);
+
+        // Pick target based on attention span slider
+        const spanRange = Math.floor((SYS.attentionSpan / 100) * cortexNodeCount);
+        let offset = Math.floor((Math.random() - 0.5) * spanRange);
+        syn.tgtIdx = (syn.srcIdx + offset + cortexNodeCount) % cortexNodeCount;
+
+        const p1 = new THREE.Vector3(cortexPos[syn.srcIdx*3], cortexPos[syn.srcIdx*3+1], cortexPos[syn.srcIdx*3+2]);
+        const p2 = new THREE.Vector3(cortexPos[syn.tgtIdx*3], cortexPos[syn.tgtIdx*3+1], cortexPos[syn.tgtIdx*3+2]);
+
+        // Hyper-dimensional bypass curve (push control point outward)
+        const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+        const dist = p1.distanceTo(p2);
+        mid.normalize().multiplyScalar(mid.length() + dist * 0.6 + 5); // Push out
+
+        syn.curve.v0.copy(p1);
+        syn.curve.v1.copy(mid);
+        syn.curve.v2.copy(p2);
+        syn.arcGeo.setFromPoints(syn.curve.getPoints(20));
+
+        syn.progress = 0;
+        syn.speed = 0.01 + Math.random()*0.02;
+
+        // Randomly color code based on "attention type"
+        const colors = [0xff007f, 0x00f3ff, 0xffb000, 0x8a2be2];
+        syn.arc.material.color.setHex(colors[Math.floor(Math.random()*colors.length)]);
+    }
+
+    synapses.forEach(s => routeSynapse(s));
+
+    // ==========================================
+    // 5. PARALLEL PROCESSING RINGS
+    // ==========================================
+    const createRing = (radius, color, rotationSpeed) => {
+        const geo = new THREE.TorusGeometry(radius, 0.2, 8, 100);
+        // Make dashed
+        const count = geo.attributes.position.count;
+        const colors = new Float32Array(count * 3);
+        const col = new THREE.Color(color);
+        for(let i=0; i<count; i++) {
+            if(i % 10 < 5) col.toArray(colors, i*3);
+            else { colors[i*3]=0; colors[i*3+1]=0; colors[i*3+2]=0; }
+        }
+        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        const mat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+        const mesh = new THREE.Mesh(geo, mat);
+        return { mesh, speed: rotationSpeed };
+    };
+
+    const rings = [
+        createRing(32, 0x00f3ff, {x: 0.01, y: 0.02, z: 0}),
+        createRing(36, 0xff007f, {x: -0.015, y: 0.01, z: 0.01}),
+        createRing(40, 0xffb000, {x: 0, y: -0.02, z: 0.015})
+    ];
+    rings.forEach(r => grpParallel.add(r.mesh));
+
+    // ==========================================
+    // UI & MATRIX LOGIC
+    // ==========================================
+    const mtxContainer = document.getElementById('attention-matrix');
+    const mtxCells = [];
+    for(let i=0; i<64; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'attn-cell';
+        mtxContainer.appendChild(cell);
+        mtxCells.push(cell);
+    }
+
+    // Toggles
+    const setupBtn = (id, prop, grp, name) => {
+        const btn = document.getElementById(id);
+        btn.onclick = () => {
+            SYS[prop] = !SYS[prop];
+            grp.visible = SYS[prop];
+            btn.classList.toggle('active', SYS[prop]);
+            btn.querySelector('.status').innerText = SYS[prop] ? '[ON]' : '[OFF]';
+            log(`${name} ${SYS[prop] ? 'ENGAGED' : 'DECOUPLED'}.`, SYS[prop] ? 'log-ok' : 'log-warn');
+        };
+    };
+    setupBtn('btn-cortex', 'cortexVisible', grpCortex, 'Neural Cortex');
+    setupBtn('btn-dna', 'dnaVisible', grpDNA, 'Fractal DNA');
+    setupBtn('btn-parallel', 'parallelVisible', grpParallel, 'Parallel Processing Rings');
+
+    // Sliders
+    document.getElementById('slide-fold').oninput = (e) => {
+        SYS.foldDepth = parseFloat(e.target.value);
+        document.getElementById('val-fold').innerText = SYS.foldDepth.toFixed(1) + ' ∇';
+
+        // Update Cohesion metric based on fold depth (high fold = lower cohesion)
+        const cohesion = Math.max(0, 99.9 - (SYS.foldDepth * 2));
+        document.getElementById('val-cohesion').innerText = cohesion.toFixed(1) + '%';
+        document.getElementById('bar-cohesion').style.width = cohesion + '%';
+        if(cohesion < 90) document.getElementById('val-cohesion').className = "data-value magenta";
+        else document.getElementById('val-cohesion').className = "data-value emerald";
+    };
+
+    document.getElementById('slide-attn').oninput = (e) => {
+        SYS.attentionSpan = parseInt(e.target.value);
+        document.getElementById('val-attn-span').innerText = SYS.attentionSpan === 100 ? 'GLOBAL' : `LOCAL (${SYS.attentionSpan}%)`;
+        log(`Transformer attention span recalibrated to ${SYS.attentionSpan}%`, 'log-sys');
+    };
+
+    // Simulated Logs
+    setInterval(() => {
+        const msgs = [
+            {t: `Self-attention tensor matrix recalibrated.`, c: 'log-sys'},
+            {t: `Establishing residual bypass in manifold layer...`, c: 'log-ok'},
+            {t: `Parallel processing threads fully synchronized.`, c: 'log-ok'},
+            {t: `Data folding algorithm active. Compressing topology.`, c: 'log-warn'}
+        ];
+        const m = msgs[Math.floor(Math.random() * msgs.length)];
+        log(m.t, m.c);
+
+        // Update Flux Telemetry
+        const flux = (5 + Math.random() * 5 + (SYS.foldDepth)).toFixed(2);
+        document.getElementById('val-flux').innerText = flux + ' TB/s';
+    }, 3500);
+
+    // ==========================================
+    // MAIN ANIMATION LOOP
+    // ==========================================
+    const clock = new THREE.Clock();
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const time = clock.getElapsedTime();
+        SYS.time = time;
+        cortexMat.uniforms.time.value = time;
+
+        // 1. Data Folding (Modify Icosahedron vertices)
+        const posAttr = manifoldGeo.attributes.position;
+        const arr = posAttr.array;
+
+        for(let i=0; i<posAttr.count; i++) {
+            const bx = manifoldBasePos[i*3];
+            const by = manifoldBasePos[i*3+1];
+            const bz = manifoldBasePos[i*3+2];
+
+            // Mathematical folding logic combining sine waves across dimensions
+            const displacement = Math.sin(bx * 0.2 + time) * Math.cos(by * 0.2 + time) * Math.sin(bz * 0.2) * SYS.foldDepth;
+
+            // Displace along normal (which is roughly the normalized position for a sphere centered at 0)
+            const len = Math.sqrt(bx*bx + by*by + bz*bz);
+
+            arr[i*3] = bx + (bx/len) * displacement;
+            arr[i*3+1] = by + (by/len) * displacement;
+            arr[i*3+2] = bz + (bz/len) * displacement;
+        }
+        posAttr.needsUpdate = true;
+        grpManifold.rotation.y = time * 0.2;
+        grpManifold.rotation.x = Math.sin(time*0.1) * 0.2;
+
+        // 2. Synapses (Residual Connections)
+        synapses.forEach(syn => {
+            syn.progress += syn.speed;
+            if(syn.progress >= 1.0) {
+                routeSynapse(syn);
+            } else {
+                syn.curve.getPointAt(syn.progress, syn.pulse.position);
+                // Fade arc opacity at ends
+                syn.arc.material.opacity = (1 - Math.abs(syn.progress - 0.5) * 2) * 0.8;
+            }
+        });
+        grpSynapses.rotation.y = time * 0.05;
+
+        // 3. DNA & Cortex Rotation
+        if(SYS.dnaVisible) grpDNA.rotation.y = -time * 0.5;
+        if(SYS.cortexVisible) grpCortex.rotation.y = time * 0.1;
+
+        // 4. Parallel Rings
+        if(SYS.parallelVisible) {
+            rings.forEach(r => {
+                r.mesh.rotation.x += r.speed.x;
+                r.mesh.rotation.y += r.speed.y;
+                r.mesh.rotation.z += r.speed.z;
+            });
+        }
+
+        // UI Matrix Pulse
+        if(Math.random() < 0.2) {
+            const idx = Math.floor(Math.random() * 64);
+            mtxCells[idx].style.background = `rgba(0, 243, 255, ${Math.random() * 0.8 + 0.2})`;
+            setTimeout(() => mtxCells[idx].style.background = 'rgba(0, 243, 255, 0.05)', 150);
+
+            const wt = 0.8 + Math.random() * 0.19;
+            document.getElementById('val-weight').innerText = wt.toFixed(4);
+        }
+
+        controls.update();
+        composer.render();
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+</script>
+</body>
+</html>

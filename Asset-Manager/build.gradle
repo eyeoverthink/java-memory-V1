@@ -33,7 +33,8 @@ sourceSets {
             exclude '**/examples/QuantumSupremacyDemo.java'
             exclude '**/examples/RealPhysicsDemo.java'
             exclude '**/examples/ReflectorExample.java'
-            exclude '**/FraynixBoot.java'
+            // FraynixBoot.java rewritten — no longer depends on io.fraymus.ai
+            // exclude '**/FraynixBoot.java'
             exclude '**/FraymusSystem.java'
             exclude '**/FraynixMain.java'
         }
