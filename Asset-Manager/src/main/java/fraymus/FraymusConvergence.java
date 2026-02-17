@@ -672,11 +672,6 @@ public class FraymusConvergence {
                 AUDIT.log("concept_injected", args);
                 break;
 
-            case "omega":
-                // System.out.println(OMEGA.status());
-                System.out.println("⚠️  Omega Point not available in this build");
-                break;
-
             case "visualize":
                 System.out.println("🌐 Launching FRAYNIX OS visualization...");
                 System.out.println("   Opening browser to: http://localhost:8083/fraynix-os.html");
