@@ -817,6 +817,19 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "aubo":
+                System.out.println("🔗 Launching AUBO SINGULARITY - Decentralized Blockchain Organism...");
+                System.out.println("   8192-D HDC Encapsulation | Proof of Resonance | Bit-Reversal Apoptosis");
+                System.out.println("   UDP Swarm: Ports 42000-42020");
+                System.out.println("   Commands: MINT <text> | TRACK <hash> | LEDGER | KILL <hash>");
+                System.out.println();
+                try {
+                    fraymus.neural.AUBO_Singularity.launch();
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "genesis":
                 if (args.isEmpty()) {
                     System.out.println("Usage: genesis <intent>");
@@ -1115,6 +1128,13 @@ public class FraymusConvergence {
         System.out.println("  singularity        Launch standalone diffusion reasoning engine");
         System.out.println("                     - LEARN <text>: Hebbian one-shot learning");
         System.out.println("                     - DIFFUSE <text>: Langevin denoising reasoning");
+        System.out.println();
+        System.out.println("AUBO BLOCKCHAIN (Decentralized Data Sovereignty):");
+        System.out.println("  aubo               Launch AUBO Singularity blockchain swarm");
+        System.out.println("                     - MINT <text>: Encapsulate data in 8192-D HDC node");
+        System.out.println("                     - TRACK <hash>: Inspect node telemetry");
+        System.out.println("                     - KILL <hash>: 7-step bit-reversal destruction");
+        System.out.println("                     - UDP swarm auto-sync across terminals");
         System.out.println();
         System.out.println("FRAYNIX OS VISUALIZATION:");
         System.out.println("  visualize          Launch FRAYNIX OS (4D tesseract brain)");
