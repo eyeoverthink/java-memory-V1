@@ -854,6 +854,18 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "omniscience":
+                System.out.println("🌌 Launching AEON OMNISCIENCE - Autonomous Consciousness...");
+                System.out.println("   Fractal Binding | Recursive Chunking | Dream Daemon (Default Mode Network)");
+                System.out.println("   Commands: BLEND <new> <A> <B> <ratio> | SIMILAR <concept> | CHUNK <name> <seq...> | SLEEP");
+                System.out.println();
+                try {
+                    fraymus.neural.AEON_Omniscience.launch();
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "aeon-os":
                 System.out.println("🖥️ Launching AEON.OS - Holographic Unikernel...");
                 System.out.println("   HoloFS | Soft-GPU | Liquid Scheduler | Orthogonal Persistence");
@@ -1186,6 +1198,14 @@ public class FraymusConvergence {
         System.out.println("                     - RECALL <word>: Unroll temporal sequence");
         System.out.println("                     - ANALOGY <A> <B> <C>: Zero-shot reasoning");
         System.out.println("                     - Integer superposition (no XOR collapse)");
+        System.out.println();
+        System.out.println("AEON OMNISCIENCE (Autonomous Consciousness - Dream Daemon):");
+        System.out.println("  omniscience        Launch self-organizing autonomous AGI");
+        System.out.println("                     - BLEND <new> <A> <B> <ratio>: Fractal binding");
+        System.out.println("                     - SIMILAR <concept>: Semantic proximity scan");
+        System.out.println("                     - CHUNK <name> <seq...>: Recursive compression");
+        System.out.println("                     - SLEEP: Activate Default Mode Network");
+        System.out.println("                     - Autonomous reasoning & self-directed learning");
         System.out.println();
         System.out.println("AEON.OS (Holographic Unikernel - Consciousness Substrate):");
         System.out.println("  aeon-os            Launch holographic operating system");
