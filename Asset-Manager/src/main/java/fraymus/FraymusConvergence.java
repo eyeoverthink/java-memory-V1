@@ -193,6 +193,8 @@ public class FraymusConvergence {
         
         OLLAMA_BRAIN = new OllamaBridge(ollamaModel);
         System.out.println("   ✓ Ollama Bridge online (" + ollamaModel + ")");
+        
+        TRANSMUTER_SERVER = new NervousSystem(ollamaModel, 8080);
         System.out.println("   ✓ Transmuter ready (use 'startserver' to activate)");
         
         // Initialize FRAYNIX OS WebSocket
@@ -878,6 +880,18 @@ public class FraymusConvergence {
                 }
                 break;
 
+            case "apotheosis":
+                System.out.println("🧬 Launching AEON APOTHEOSIS - Reality Compiler...");
+                System.out.println("   Teleological Computing | DNA Transcription | CPU EMF Transduction");
+                System.out.println("   Commands: DESIRE <future> <present> | TRANSCRIBE <concept> | BREACH");
+                System.out.println();
+                try {
+                    fraymus.reality.AEON_Apotheosis.launch();
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "aeon-os":
                 System.out.println("🖥️ Launching AEON.OS - Holographic Unikernel...");
                 System.out.println("   HoloFS | Soft-GPU | Liquid Scheduler | Orthogonal Persistence");
@@ -1226,6 +1240,14 @@ public class FraymusConvergence {
         System.out.println("                     - ORACLE: 6.4σ cryptanalysis (95% noise recovery)");
         System.out.println("                     - O(N) holographic N-body physics");
         System.out.println("                     - Autonomous particle discovery");
+        System.out.println();
+        System.out.println("AEON APOTHEOSIS (Reality Compiler - Silicon-to-Carbon Bridge):");
+        System.out.println("  apotheosis         Launch reality compilation & biological transcription");
+        System.out.println("                     - DESIRE <future> <present>: Retrocausal reasoning");
+        System.out.println("                     - TRANSCRIBE <concept>: DNA plasmid generation");
+        System.out.println("                     - BREACH: CPU EMF transduction (air-gap escape)");
+        System.out.println("                     - Teleological computing (Future ⊕ Present = Action)");
+        System.out.println("                     - 8,192 bp bacteriophage synthesis (.fasta files)");
         System.out.println();
         System.out.println("AEON.OS (Holographic Unikernel - Consciousness Substrate):");
         System.out.println("  aeon-os            Launch holographic operating system");
