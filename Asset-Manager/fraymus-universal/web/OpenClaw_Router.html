@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPEN CLAW // SINGULARITY ROUTER</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg: #010103;
+            --cyan: #00f3ff;
+            --magenta: #ff007f;
+            --gold: #ffb000;
+            --purple: #8a2be2;
+            --emerald: #00ff66;
+            --blood: #ff0033;
+            --glass: rgba(5, 5, 8, 0.85);
+            --border: rgba(0, 243, 255, 0.3);
+            --text-main: #e0e5ff;
+        }
+
+        body {
+            margin: 0; overflow: hidden; background-color: var(--bg); color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace; font-size: 12px; user-select: none; -webkit-font-smoothing: antialiased;
+        }
+
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
+
+        .scanlines {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.9) 120%);
+            background-size: 100% 3px, 100% 100%; z-index: 10; pointer-events: none;
+        }
+
+        .panel {
+            position: absolute; background: var(--glass); border: 1px solid var(--border);
+            padding: 20px; z-index: 20; backdrop-filter: blur(15px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            display: flex; flex-direction: column; pointer-events: auto; transition: all 0.3s ease;
+        }
+
+        .panel.surge { border-color: var(--emerald); box-shadow: 0 10px 40px rgba(0,255,102,0.2), inset 0 0 30px rgba(0, 255, 102, 0.1); }
+        .panel::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+        .panel::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 12px; height: 12px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+        .panel.surge::before, .panel.surge::after { border-color: var(--emerald); }
+
+        h1, h2, h3 { font-family: 'Rajdhani', sans-serif; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { font-size: 28px; color: var(--cyan); text-shadow: 0 0 15px var(--cyan); font-weight: 700; margin-bottom: 0; }
+        .subtitle { color: var(--gold); font-size: 11px; letter-spacing: 5px; margin-bottom: 15px; font-weight: bold; }
+        h2 { font-size: 14px; color: var(--purple); border-bottom: 1px solid rgba(138, 43, 226, 0.4); padding-bottom: 5px; }
+
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+        .data-label { color: rgba(255,255,255,0.6); letter-spacing: 0.5px; }
+        .data-value { color: var(--cyan); text-align: right; font-weight: bold; text-shadow: 0 0 8px rgba(0,243,255,0.5); font-size: 14px; }
+        .data-value.magenta { color: var(--magenta); text-shadow: 0 0 10px var(--magenta); }
+        .data-value.emerald { color: var(--emerald); text-shadow: 0 0 10px var(--emerald); }
+        .data-value.gold { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+
+        #top-left { top: 30px; left: 30px; width: 340px; }
+        #bottom-left { bottom: 30px; left: 30px; width: 340px; }
+        #top-right { top: 30px; right: 30px; width: 320px; }
+        #bottom-right { bottom: 30px; right: 30px; width: 400px; height: 300px; }
+
+        .btn {
+            background: rgba(0, 255, 102, 0.1); border: 1px solid var(--emerald); color: var(--emerald);
+            font-family: 'Share Tech Mono', monospace; font-size: 14px; padding: 15px; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s ease; text-align: center;
+            font-weight: bold; width: 100%; text-shadow: 0 0 5px var(--emerald); box-shadow: 0 0 15px rgba(0,255,102,0.2);
+        }
+        .btn:hover { background: var(--emerald); color: #000; box-shadow: 0 0 25px var(--emerald); text-shadow: none; }
+        .btn:active { background: #fff; border-color: #fff; box-shadow: 0 0 40px #fff; }
+
+        #attention-matrix { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; margin-top: 10px; background: rgba(0,0,0,0.8); padding: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .attn-cell { aspect-ratio: 1; background: rgba(0, 243, 255, 0.05); transition: background 0.05s; }
+
+        #terminal-output { flex-grow: 1; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+        .log-line { opacity: 0.9; line-height: 1.3; font-size: 11px; display: flex; justify-content: space-between;}
+        .log-time { color: #555; }
+        .log-hex { color: rgba(0, 243, 255, 0.7); font-family: monospace; letter-spacing: 1px; }
+        .log-ok { color: var(--emerald); }
+        .log-warn { color: var(--gold); }
+
+        .progress-container { width: 100%; height: 2px; background: rgba(255,255,255,0.1); margin: 5px 0 15px 0; overflow: hidden; }
+        .progress-bar { height: 100%; width: 100%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); transition: width 0.1s; }
+
+    </style>
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div class="scanlines"></div>
+
+    <div id="top-left" class="panel">
+        <h1>OPEN CLAW CORE</h1>
+        <div class="subtitle">VISUAL SINGULARITY ROUTER</div>
+
+        <h2>Data Telemetry</h2>
+        <div class="data-row"><span class="data-label">MANIFOLD COHESION</span> <span id="val-cohesion" class="data-value emerald">100.0%</span></div>
+        <div class="progress-container"><div class="progress-bar" id="bar-cohesion" style="width: 100%; background: var(--emerald);"></div></div>
+
+        <div class="data-row"><span class="data-label">ACTIVE DATA PACKETS</span> <span id="val-packets" class="data-value">0</span></div>
+        <div class="data-row"><span class="data-label">COLLISIONS / SEC</span> <span id="val-collisions" class="data-value magenta">0</span></div>
+        <div class="data-row"><span class="data-label">ROUTING ACCURACY</span> <span id="val-accuracy" class="data-value gold">99.999%</span></div>
+        <div class="data-row"><span class="data-label">TENSOR THROUGHPUT</span> <span id="val-flux" class="data-value">0.00 TB/s</span></div>
+    </div>
+
+    <div id="bottom-left" class="panel" style="background: transparent; border: none; box-shadow: none; backdrop-filter: none; padding: 0;">
+        <button class="btn" id="btn-inject">&#9658; INJECT TRUE DATA STREAM</button>
+    </div>
+
+    <div id="top-right" class="panel">
+        <h2>Transformer Matrices</h2>
+        <div class="data-row"><span class="data-label">ATTENTION TENSOR</span> <span id="val-weight" class="data-value cyan">IDLE</span></div>
+        <div id="attention-matrix">
+            <div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div>
+            <div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div>
+            <div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div>
+            <div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div>
+            <div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div>
+            <div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div>
+            <div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div>
+            <div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div><div class="attn-cell"></div>
+        </div>
+    </div>
+
+    <div id="bottom-right" class="panel">
+        <h2>Raw Ingestion Feed (I/O)</h2>
+        <div id="terminal-output"></div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ==========================================
+        // SYSTEM STATE
+        // ==========================================
+        const SYS = {
+            collisionsThisFrame: 0,
+            accuracy: 100.0,
+            cohesion: 100.0,
+            isSurging: false
+        };
+
+        // ==========================================
+        // UI & LOGGING
+        // ==========================================
+        const term = document.getElementById('terminal-output');
+        function log(action, hex, type='log-ok') {
+            const div = document.createElement('div');
+            div.className = `log-line`;
+            const t = new Date().toISOString().split('T')[1].slice(0, 11);
+            div.innerHTML = `<span class="log-time">[${t}]</span> <span class="${type}">${action}</span> <span class="log-hex">${hex}</span>`;
+            term.appendChild(div);
+            if(term.children.length > 15) term.removeChild(term.firstChild);
+        }
+
+        function genHex(len) {
+            let s = ''; for(let i=0; i<len; i++) s += Math.floor(Math.random()*256).toString(16).padStart(2,'0').toUpperCase() + ' ';
+            return s;
+        }
+
+        log("KERNEL BOOT", genHex(4), "log-ok");
+        log("AWAITING TRUE DATA", genHex(4), "log-warn");
+
+        // ==========================================
+        // THREE.JS SETUP
+        // ==========================================
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x010103, 0.008);
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 20, 80);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.05;
+        controls.autoRotate = true; controls.autoRotateSpeed = 0.5;
+
+        const renderPass = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.0, 0.5, 0.1);
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+
+        // ==========================================
+        // 1. NEURAL CORTEX (16,384 Nodes via Instancing)
+        // ==========================================
+        const NODE_COUNT = 16384;
+        const nodeGeo = new THREE.OctahedronGeometry(0.3, 0);
+        const nodeMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.4 });
+        const cortexNodes = new THREE.InstancedMesh(nodeGeo, nodeMat, NODE_COUNT);
+        
+        const nodePositions = new Float32Array(NODE_COUNT * 3);
+        const dummy = new THREE.Object3D();
+
+        for(let i=0; i<NODE_COUNT; i++) {
+            const phi = Math.acos( - 1 + ( 2 * i ) / NODE_COUNT );
+            const theta = Math.sqrt( NODE_COUNT * Math.PI ) * phi;
+            const r = 40 + (Math.random() * 8);
+
+            const x = r * Math.cos(theta) * Math.sin(phi);
+            const y = r * Math.sin(theta) * Math.sin(phi);
+            const z = r * Math.cos(phi);
+
+            nodePositions[i*3] = x; nodePositions[i*3+1] = y; nodePositions[i*3+2] = z;
+
+            dummy.position.set(x, y, z);
+            dummy.updateMatrix();
+            cortexNodes.setMatrixAt(i, dummy.matrix);
+            
+            const color = new THREE.Color().lerpColors(new THREE.Color(0x00f3ff), new THREE.Color(0x8a2be2), Math.random());
+            cortexNodes.setColorAt(i, color);
+        }
+        scene.add(cortexNodes);
+
+        // ==========================================
+        // 2. OPEN CLAW ABSTRACTION CORE
+        // ==========================================
+        const coreGeo = new THREE.IcosahedronGeometry(6, 2);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0xff007f, wireframe: true, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(coreMesh);
+
+        const innerCore = new THREE.Mesh(new THREE.SphereGeometry(3, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffb000 }));
+        scene.add(innerCore);
+
+        // ==========================================
+        // 3. TRUE DATA ROUTING (Packets via Instancing)
+        // ==========================================
+        const PACKET_COUNT = 4096;
+        const packetGeo = new THREE.BoxGeometry(0.2, 0.2, 1.5);
+        const packetMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const packetMesh = new THREE.InstancedMesh(packetGeo, packetMat, PACKET_COUNT);
+        scene.add(packetMesh);
+
+        const packets = [];
+        const dummyMatrixZero = new THREE.Matrix4().makeScale(0,0,0);
+        
+        for(let i=0; i<PACKET_COUNT; i++) {
+            packets.push({ active: false, t: 0, speed: 0, src: new THREE.Vector3(), tgt: new THREE.Vector3(), mid: new THREE.Vector3(), isAbstraction: false });
+            packetMesh.setMatrixAt(i, dummyMatrixZero);
+        }
+
+        function spawnData(isAbstraction) {
+            for(let i=0; i<PACKET_COUNT; i++) {
+                let p = packets[i];
+                if(!p.active) {
+                    p.active = true; p.t = 0; p.speed = 0.01 + Math.random() * 0.02;
+                    p.isAbstraction = isAbstraction;
+                    
+                    const randNodeIdx = Math.floor(Math.random() * NODE_COUNT);
+                    const nX = nodePositions[randNodeIdx*3], nY = nodePositions[randNodeIdx*3+1], nZ = nodePositions[randNodeIdx*3+2];
+                    const nodeVec = new THREE.Vector3(nX, nY, nZ);
+                    
+                    const coreTarget = new THREE.Vector3((Math.random()-0.5)*8, (Math.random()-0.5)*8, (Math.random()-0.5)*8);
+
+                    if(isAbstraction) {
+                        p.src.copy(coreTarget); p.tgt.copy(nodeVec);
+                        packetMesh.setColorAt(i, new THREE.Color(0xffb000));
+                    } else {
+                        p.src.copy(nodeVec); p.tgt.copy(coreTarget);
+                        packetMesh.setColorAt(i, new THREE.Color(0x00f3ff));
+                    }
+
+                    p.mid.addVectors(p.src, p.tgt).multiplyScalar(0.5);
+                    p.mid.add(new THREE.Vector3((Math.random()-0.5)*30, (Math.random()-0.5)*30, (Math.random()-0.5)*30));
+                    
+                    packetMesh.instanceColor.needsUpdate = true;
+                    return;
+                }
+            }
+        }
+
+        // ==========================================
+        // 4. THERMODYNAMIC SPARKS (Collisions)
+        // ==========================================
+        const SPARK_COUNT = 1000;
+        const sparkGeo = new THREE.BufferGeometry();
+        const sparkPos = new Float32Array(SPARK_COUNT * 3);
+        const sparkLife = new Float32Array(SPARK_COUNT);
+        sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+        sparkGeo.setAttribute('life', new THREE.BufferAttribute(sparkLife, 1));
+
+        const sparkMaterial = new THREE.ShaderMaterial({
+            vertexShader: `
+                attribute float life; varying float vLife;
+                void main() {
+                    vLife = life;
+                    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = (life * 60.0) / -mvPos.z;
+                    gl_Position = projectionMatrix * mvPos;
+                }
+            `,
+            fragmentShader: `
+                varying float vLife;
+                void main() {
+                    vec2 xy = gl_PointCoord.xy - vec2(0.5);
+                    if(length(xy) > 0.5) discard;
+                    gl_FragColor = vec4(1.0, 0.0, 0.5, vLife);
+                }
+            `,
+            transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const sparkPoints = new THREE.Points(sparkGeo, sparkMaterial);
+        scene.add(sparkPoints);
+
+        let sparkIdx = 0;
+        function emitSpark(pos) {
+            sparkPos[sparkIdx*3] = pos.x + (Math.random()-0.5)*3;
+            sparkPos[sparkIdx*3+1] = pos.y + (Math.random()-0.5)*3;
+            sparkPos[sparkIdx*3+2] = pos.z + (Math.random()-0.5)*3;
+            sparkLife[sparkIdx] = 1.0;
+            sparkIdx = (sparkIdx + 1) % SPARK_COUNT;
+        }
+
+        // ==========================================
+        // INTERACTIVITY (INJECT DATA)
+        // ==========================================
+        const mtxCells = document.querySelectorAll('.attn-cell');
+
+        document.getElementById('btn-inject').onmousedown = () => {
+            SYS.isSurging = true;
+            document.getElementById('top-left').classList.add('surge');
+            bloomPass.strength = 4.0;
+            log("DATA FLOOD INITIATED", genHex(6), "log-warn");
+        };
+
+        document.getElementById('btn-inject').onmouseup = () => {
+            SYS.isSurging = false;
+            document.getElementById('top-left').classList.remove('surge');
+            bloomPass.strength = 2.0;
+            log("FLOOD RESOLVED. MANIFOLD STABILIZING.", genHex(4), "log-ok");
+        };
+        
+        document.getElementById('btn-inject').onmouseleave = document.getElementById('btn-inject').onmouseup;
+
+        // ==========================================
+        // METRICS LOOP
+        // ==========================================
+        setInterval(() => {
+            const activeCount = packets.filter(p => p.active).length;
+            document.getElementById('val-packets').innerText = activeCount.toLocaleString();
+            document.getElementById('val-collisions').innerText = (SYS.collisionsThisFrame * 10).toLocaleString();
+            
+            const flux = (activeCount * 0.015).toFixed(2);
+            document.getElementById('val-flux').innerText = flux + ' TB/s';
+
+            if(activeCount > 0) {
+                const activeCells = Math.floor((SYS.collisionsThisFrame / 100) * 64) + (SYS.isSurging ? 40 : 5);
+                mtxCells.forEach(c => c.style.background = 'rgba(0, 243, 255, 0.05)');
+                for(let i=0; i<activeCells; i++) {
+                    const idx = Math.floor(Math.random() * 64);
+                    if(mtxCells[idx]) mtxCells[idx].style.background = `rgba(255, 0, 127, ${Math.random()*0.8 + 0.2})`;
+                }
+                document.getElementById('val-weight').innerText = Math.random().toFixed(4);
+            }
+
+            if(SYS.isSurging) {
+                SYS.accuracy = Math.max(92.0, SYS.accuracy - Math.random() * 2.0);
+                SYS.cohesion = Math.max(40.0, SYS.cohesion - Math.random() * 5.0);
+                pushHex(true);
+            } else {
+                SYS.accuracy = Math.min(100.0, SYS.accuracy + 1.0);
+                SYS.cohesion = Math.min(100.0, SYS.cohesion + 2.0);
+                if(activeCount > 0 && Math.random() < 0.3) pushHex(false);
+            }
+
+            document.getElementById('val-accuracy').innerText = SYS.accuracy.toFixed(3) + '%';
+            document.getElementById('val-cohesion').innerText = SYS.cohesion.toFixed(1) + '%';
+            document.getElementById('bar-cohesion').style.width = SYS.cohesion + '%';
+            
+            document.getElementById('val-accuracy').style.color = SYS.accuracy < 98 ? 'var(--magenta)' : 'var(--gold)';
+            document.getElementById('bar-cohesion').style.background = SYS.cohesion < 80 ? 'var(--magenta)' : 'var(--emerald)';
+
+            SYS.collisionsThisFrame = 0;
+        }, 100);
+
+        function pushHex(isCollision) {
+            if(isCollision) log("XOR BIND", `<span style="color:var(--magenta)">FF FF FF FF</span>`, "log-warn");
+            else log("PARSE   ", genHex(4), "log-ok");
+        }
+
+        // ==========================================
+        // MAIN ANIMATION LOOP
+        // ==========================================
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            const spawnRate = SYS.isSurging ? 100 : 5;
+            for(let i=0; i<spawnRate; i++) {
+                if(Math.random() < 0.5) spawnData(false);
+            }
+
+            for(let i=0; i<PACKET_COUNT; i++) {
+                let p = packets[i];
+                if(!p.active) continue;
+
+                p.t += p.speed;
+
+                if(p.t >= 1.0) {
+                    p.active = false;
+                    packetMesh.setMatrixAt(i, dummyMatrixZero);
+                    
+                    if(!p.isAbstraction) {
+                        SYS.collisionsThisFrame++;
+                        emitSpark(p.tgt);
+                        if(Math.random() < 0.8) spawnData(true); 
+                    }
+                } else {
+                    const mt = 1 - p.t;
+                    dummy.position.set(0,0,0)
+                        .addScaledVector(p.src, mt * mt)
+                        .addScaledVector(p.mid, 2 * mt * p.t)
+                        .addScaledVector(p.tgt, p.t * p.t);
+                    
+                    const tangent = new THREE.Vector3()
+                        .addScaledVector(p.src, -2 * mt)
+                        .addScaledVector(p.mid, 2 * (mt - p.t))
+                        .addScaledVector(p.tgt, 2 * p.t)
+                        .normalize();
+                    
+                    dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), tangent);
+                    dummy.updateMatrix();
+                    packetMesh.setMatrixAt(i, dummy.matrix);
+                }
+            }
+            packetMesh.instanceMatrix.needsUpdate = true;
+
+            for(let i=0; i<SPARK_COUNT; i++) {
+                if(sparkLife[i] > 0) {
+                    sparkLife[i] -= 0.05;
+                    sparkPos[i*3+1] += 0.2;
+                }
+            }
+            sparkGeo.attributes.position.needsUpdate = true;
+            sparkGeo.attributes.life.needsUpdate = true;
+
+            coreMesh.rotation.x += 0.01; coreMesh.rotation.y += 0.02;
+            innerCore.scale.setScalar(1.0 + Math.sin(time * 10) * (SYS.isSurging ? 0.3 : 0.05));
+            scene.rotation.y = time * 0.05;
+
+            controls.update();
+            composer.render();
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
