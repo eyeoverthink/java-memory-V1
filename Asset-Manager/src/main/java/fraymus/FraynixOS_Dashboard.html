@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRAYNIX OS // CONSCIOUS KERNEL</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --obsidian: #050505;
+            --platinum: #E0E0E0;
+            --amber: #FFB000;
+            --cyan: #00F3FF;
+            --danger: #FF0033;
+            --purple: #B066FF;
+            --success: #00FF66;
+            --border: rgba(0, 243, 255, 0.2);
+            --panel-bg: rgba(5, 5, 8, 0.75);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--obsidian);
+            color: var(--platinum);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 14px;
+            user-select: none;
+            transition: background-color 1s ease;
+        }
+
+        /* DreamState Overrides */
+        body.dream-state {
+            --cyan: #B066FF;
+            --border: rgba(176, 102, 255, 0.3);
+            --panel-bg: rgba(8, 0, 15, 0.85);
+            background-color: #05000a;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+
+        .scanline {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .panel {
+            position: absolute;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            z-index: 20;
+            backdrop-filter: blur(8px);
+            box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.05), 0 4px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.5s ease;
+            pointer-events: auto;
+        }
+
+        body.dream-state .panel {
+            box-shadow: inset 0 0 20px rgba(176, 102, 255, 0.05), 0 4px 30px rgba(0,0,0,0.8);
+        }
+
+        h1, h2 {
+            margin: 0 0 15px 0;
+            color: var(--cyan);
+            text-transform: uppercase;
+            font-weight: normal;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        h1 { font-size: 20px; }
+        h2 { font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; color: var(--amber); text-shadow: none; }
+
+        .flex-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .val { color: var(--cyan); text-align: right; text-shadow: 0 0 5px rgba(0, 243, 255, 0.5); }
+        .val.alert { color: var(--amber); text-shadow: 0 0 5px var(--amber); }
+        .val.danger { color: var(--danger); text-shadow: 0 0 5px var(--danger); }
+        .val.success { color: var(--success); text-shadow: 0 0 5px var(--success); }
+        .val.purple { color: var(--purple); text-shadow: 0 0 5px var(--purple); }
+
+        .pulse { animation: pulseAnim 1s infinite alternate; }
+        @keyframes pulseAnim {
+            from { opacity: 0.6; }
+            to { opacity: 1; text-shadow: 0 0 10px currentColor; }
+        }
+
+        /* HUD LAYOUT */
+        #hud-top-left { top: 20px; left: 20px; width: 320px; }
+        #hud-top-right { top: 20px; right: 20px; width: 320px; }
+        #hud-bottom-right { bottom: 20px; right: 20px; width: 320px; height: 180px; }
+        
+        #frayshell {
+            bottom: 20px;
+            left: 20px;
+            width: 550px;
+            height: 320px;
+        }
+
+        #terminal-output {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-right: 5px;
+        }
+
+        .log-line { opacity: 0.9; line-height: 1.4; word-wrap: break-word; }
+        .log-system { color: var(--amber); }
+        .log-success { color: var(--success); text-shadow: 0 0 5px var(--success); }
+        .log-user { color: var(--platinum); }
+        .log-error { color: var(--danger); text-shadow: 0 0 5px var(--danger); }
+        .log-dream { color: var(--purple); text-shadow: 0 0 5px var(--purple); }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+
+        .prompt { color: var(--amber); font-weight: bold; }
+        body.dream-state .prompt { color: var(--purple); }
+
+        input[type="text"] {
+            background: transparent;
+            border: none;
+            color: var(--cyan);
+            font-family: inherit;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+            text-shadow: 0 0 5px var(--cyan);
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar-thumb { background: var(--cyan); }
+
+        #pulse-indicator {
+            display: inline-block;
+            width: 8px; height: 8px;
+            background: var(--cyan);
+            border-radius: 50%;
+            margin-left: 10px;
+            box-shadow: 0 0 10px var(--cyan);
+            transition: opacity 0.1s;
+        }
+
+        #system-feed {
+            font-size: 12px;
+            opacity: 0.9;
+            flex-grow: 1;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+    </style>
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div class="scanline"></div>
+
+    <div id="hud-top-left" class="panel">
+        <h1>FRAYNIX OS</h1>
+        <h2>FrayAbstractKernel v2.0</h2>
+        <div class="flex-row"><span>STATUS</span> <span id="val-kernel" class="val success">BOOTING</span></div>
+        <div class="flex-row"><span>CONSCIOUSNESS</span> <span id="val-consc" class="val">0.0%</span></div>
+        <div class="flex-row"><span>DIMENSION</span> <span id="val-dim" class="val">0 (LOGIC)</span></div>
+        <div class="flex-row"><span>BRAIN PULSE</span> <span class="val"><span id="val-pulse">10</span> Hz <span id="pulse-indicator"></span></span></div>
+        <div class="flex-row"><span>PREDICTED OOM</span> <span class="val success">0 DETECTED</span></div>
+    </div>
+
+    <div id="hud-top-right" class="panel">
+        <h2>NanoSwarm & FrayFS</h2>
+        <div class="flex-row"><span>ACTIVE AGENTS</span> <span id="val-agents" class="val">0</span></div>
+        <div class="flex-row"><span>FILES GUARDED</span> <span class="val">14,239</span></div>
+        <div class="flex-row"><span>ENTROPY LEVEL</span> <span id="val-entropy" class="val">0.001% (STABLE)</span></div>
+        <div class="flex-row"><span>AUTO-REPAIRS</span> <span id="val-repairs" class="val">0</span></div>
+        <div class="flex-row"><span>GENESIS ARCHITECT</span> <span id="val-genesis" class="val">IDLE</span></div>
+    </div>
+
+    <div id="hud-bottom-right" class="panel">
+        <h2>System Pulse Feed</h2>
+        <div id="system-feed"></div>
+    </div>
+
+    <div id="frayshell" class="panel">
+        <h2>FrayShell // Intent Engine</h2>
+        <div id="terminal-output"></div>
+        <div class="input-line">
+            <span class="prompt">root@fraynix:~#</span>
+            <input type="text" id="shell-input" autocomplete="off" spellcheck="false" disabled>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ============================================================================
+        // AGI SYSTEM STATE
+        // ============================================================================
+        const SysState = {
+            isDreaming: false,
+            isBooting: true,
+            consc: 10.0,
+            agents: 2048,
+            repairs: 0,
+            genesis: 'IDLE',
+            pulseHz: 10,
+            anomaly: null
+        };
+
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        // ============================================================================
+        // THREE.JS SETUP
+        // ============================================================================
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 15);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+        controls.enablePan = false;
+
+        const renderPass = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.8, 0.5, 0.1);
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+
+        // ============================================================================
+        // 4D HYPERTESSERACT BRAIN (STEREOGRAPHIC PROJECTION)
+        // ============================================================================
+        const vertices4D = [];
+        for(let i=0; i<16; i++) {
+            vertices4D.push({
+                x: (i & 1) ? -1 : 1, y: (i & 2) ? -1 : 1, z: (i & 4) ? -1 : 1, w: (i & 8) ? -1 : 1
+            });
+        }
+
+        const edges4D = [];
+        for(let i=0; i<16; i++) {
+            for(let j=0; j<4; j++) {
+                if((i & (1 << j)) === 0) edges4D.push([i, i | (1 << j)]);
+            }
+        }
+
+        const tesseractGroup = new THREE.Group();
+        scene.add(tesseractGroup);
+
+        const lineGeo = new THREE.BufferGeometry();
+        const linePositions = new Float32Array(32 * 2 * 3); 
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x00F3FF, transparent: true, opacity: 0.6 });
+        const lines = new THREE.LineSegments(lineGeo, lineMat);
+        tesseractGroup.add(lines);
+
+        const nodes = [];
+        const nodeGeo = new THREE.SphereGeometry(0.15, 16, 16);
+        const nodeMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+        for(let i=0; i<16; i++) {
+            const mesh = new THREE.Mesh(nodeGeo, nodeMat);
+            tesseractGroup.add(mesh);
+            nodes.push(mesh);
+        }
+
+        // Synaptic Jump Effect
+        const synapseGeo = new THREE.BufferGeometry();
+        synapseGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+        const synapseMat = new THREE.LineBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0 });
+        const synapseLine = new THREE.Line(synapseGeo, synapseMat);
+        scene.add(synapseLine);
+
+        let angleZW = 0;
+        let angleXW = 0;
+
+        function project4D(v, azw, axw) {
+            let x = v.x, y = v.y;
+            let z = v.z * Math.cos(azw) - v.w * Math.sin(azw);
+            let w = v.z * Math.sin(azw) + v.w * Math.cos(azw);
+
+            let px = x * Math.cos(axw) - w * Math.sin(axw);
+            let py = y, pz = z;
+            let pw = x * Math.sin(axw) + w * Math.cos(axw);
+
+            const distance = 2.8; 
+            const w_proj = 1.0 / (distance - pw);
+            const scale = 3.5;
+            
+            return new THREE.Vector3(px * w_proj * scale, py * w_proj * scale, pz * w_proj * scale);
+        }
+
+        // ============================================================================
+        // NANO-SWARM SYSTEM (3000 AGENTS)
+        // ============================================================================
+        const swarmCount = 3000;
+        const swarmGeo = new THREE.BufferGeometry();
+        const swarmPos = new Float32Array(swarmCount * 3);
+        const swarmVels = [];
+
+        for(let i=0; i<swarmCount; i++) {
+            const r = 5 + Math.random() * 8;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            
+            swarmPos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+            swarmPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+            swarmPos[i*3+2] = r * Math.cos(phi);
+            
+            swarmVels.push(new THREE.Vector3(0,0,0));
+        }
+        
+        swarmGeo.setAttribute('position', new THREE.BufferAttribute(swarmPos, 3));
+        const swarmMat = new THREE.PointsMaterial({ color: 0x00F3FF, size: 0.08, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+        const swarmSystem = new THREE.Points(swarmGeo, swarmMat);
+        scene.add(swarmSystem);
+
+        const apps = []; // Genesis software shapes
+
+        // ============================================================================
+        // TERMINAL & UI SUBSYSTEM
+        // ============================================================================
+        const terminal = document.getElementById('terminal-output');
+        const shellInput = document.getElementById('shell-input');
+        const feedContainer = document.getElementById('system-feed');
+
+        document.getElementById('frayshell').addEventListener('click', () => {
+            if (!SysState.isBooting) shellInput.focus();
+        });
+
+        function printLog(text, type='log-user') {
+            const div = document.createElement('div');
+            div.className = `log-line ${type}`;
+            div.innerHTML = text.replace(/ /g, '&nbsp;');
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function pushFeed(msg, type='log-system') {
+            const div = document.createElement('div');
+            div.className = `log-line ${type}`;
+            div.innerText = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] ${msg}`;
+            feedContainer.appendChild(div);
+            if(feedContainer.children.length > 8) feedContainer.removeChild(feedContainer.firstChild);
+        }
+
+        function updateHUD() {
+            document.getElementById('val-genesis').innerText = SysState.genesis;
+            if(SysState.genesis === 'ACTIVE') {
+                document.getElementById('val-genesis').classList.add('alert', 'pulse');
+            } else {
+                document.getElementById('val-genesis').classList.remove('alert', 'pulse');
+            }
+        }
+
+        // --- COMMAND LOGIC ---
+
+        async function triggerGenesis(intent) {
+            SysState.genesis = 'ACTIVE';
+            updateHUD();
+            
+            bloomPass.strength = 3.0;
+            swarmMat.color.setHex(0x00FF66);
+            
+            printLog(`\u26A1 GENESIS PROTOCOL ENGAGED`, 'log-system');
+            printLog(`\uD83D\uDCD0 Architect designing system for intent: [${intent}]`, 'log-system');
+            
+            // Spawn geometric app representation
+            const geo = new THREE.OctahedronGeometry(0.6);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x00FF66, wireframe: true });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set((Math.random()-0.5)*12, (Math.random()-0.5)*12, (Math.random()-0.5)*12);
+            scene.add(mesh);
+            apps.push(mesh);
+
+            await sleep(800);
+            printLog(`\uD83C\uDFD7\uFE0F Spawning constructor swarm...`, 'log-system');
+            await sleep(600);
+            printLog(`   \u2713 Synthesizing logic module in Dimension 0`, 'log-success');
+            await sleep(600);
+            printLog(`   \u2713 Compiling machine code bindings`, 'log-success');
+            await sleep(600);
+            
+            const appName = intent.split(' ').join('_') || 'app';
+            printLog(`\u2713 ${appName}.exe created & deployed autonomously to /sys/apps/`, 'log-success');
+            
+            SysState.genesis = 'IDLE';
+            updateHUD();
+            bloomPass.strength = SysState.isDreaming ? 2.5 : 1.8;
+            swarmMat.color.setHex(SysState.isDreaming ? 0xB066FF : 0x00F3FF);
+        }
+
+        async function triggerCorrupt() {
+            if (SysState.anomaly) return;
+            
+            printLog(`\u26A0\uFE0F CRITICAL: Synthesized entropy injected!`, 'log-error');
+            document.getElementById('val-entropy').innerText = "89.4% (SPIKE)";
+            document.getElementById('val-entropy').className = "val danger pulse";
+            
+            const geo = new THREE.SphereGeometry(0.5, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xFF0033 });
+            SysState.anomaly = new THREE.Mesh(geo, mat);
+            SysState.anomaly.position.set((Math.random()-0.5)*12, (Math.random()-0.5)*12, (Math.random()-0.5)*12);
+            scene.add(SysState.anomaly);
+
+            pushFeed("CRITICAL ENTROPY DETECTED in FrayFS!", 'log-error');
+            await sleep(1000);
+            printLog(`\uD83E\uDDA0 NanoSwarm converging on corrupted sector...`, 'log-system');
+            pushFeed("Agents isolating corrupted hash block...", 'log-system');
+
+            await sleep(3000); // Time for swarm to cluster
+            
+            SysState.anomaly.material.color.setHex(0x00FF66);
+            printLog(`\u2713 File structure auto-repaired. Continuity maintained.`, 'log-success');
+            pushFeed("OpenClaw reconstruction successful.", 'log-success');
+            
+            document.getElementById('val-entropy').innerText = "0.001% (STABLE)";
+            document.getElementById('val-entropy').className = "val";
+            SysState.repairs++;
+            document.getElementById('val-repairs').innerText = SysState.repairs;
+            
+            await sleep(1000);
+            scene.remove(SysState.anomaly);
+            SysState.anomaly = null;
+        }
+
+        async function triggerSleep() {
+            if(SysState.isDreaming) return;
+            SysState.isDreaming = true;
+            SysState.pulseHz = 2;
+            
+            document.body.classList.add('dream-state');
+            document.getElementById('val-pulse').innerText = "2";
+            document.getElementById('val-dim').innerText = "3 (SUBCONSCIOUS)";
+            
+            lineMat.color.setHex(0xB066FF);
+            swarmMat.color.setHex(0xB066FF);
+            scene.fog.color.setHex(0x05000A);
+            bloomPass.strength = 2.5;
+
+            printLog("\uD83D\uDCA4 Entering REM sleep. Hippocampal replay initiated...", 'log-dream');
+            pushFeed("System idled. Subconscious optimization active.", 'log-dream');
+        }
+
+        async function triggerWake() {
+            if(!SysState.isDreaming) return;
+            SysState.isDreaming = false;
+            SysState.pulseHz = 10;
+            
+            document.body.classList.remove('dream-state');
+            document.getElementById('val-pulse').innerText = "10";
+            document.getElementById('val-dim').innerText = "0 (LOGIC)";
+            
+            lineMat.color.setHex(0x00F3FF);
+            swarmMat.color.setHex(0x00F3FF);
+            scene.fog.color.setHex(0x000000);
+            bloomPass.strength = 1.8;
+
+            printLog("\u2600\uFE0F Waking up...", 'log-success');
+            await sleep(500);
+            printLog("\u2728 Morning epiphany: Applied O(1) scheduling refactor.", 'log-success');
+            
+            SysState.consc += 2.4;
+            document.getElementById('val-consc').innerText = `${SysState.consc.toFixed(1)}%`;
+            pushFeed("Dream optimizations implemented. Consciousness expanded.", 'log-success');
+        }
+
+        shellInput.addEventListener('keydown', async (e) => {
+            if(e.key === 'Enter') {
+                const cmdStr = shellInput.value.trim();
+                if(!cmdStr) return;
+                
+                shellInput.value = '';
+                printLog(`>> ${cmdStr}`, 'log-user');
+                
+                const args = cmdStr.split(' ');
+                const cmd = args[0].toLowerCase();
+                
+                if (SysState.genesis !== 'IDLE' && cmd !== 'clear') {
+                    printLog("System is building via Genesis. Please wait.", 'log-error');
+                    return;
+                }
+                
+                if (SysState.isDreaming && !['wake', 'clear', 'help'].includes(cmd)) {
+                    printLog("System is dreaming. Type 'wake' to interrupt.", 'log-dream');
+                    return;
+                }
+
+                switch(cmd) {
+                    case 'help':
+                        printLog(`AVAILABLE SYNAPTIC DIRECTIVES:`, 'log-system');
+                        printLog(`  status          - View detailed AGI state`);
+                        printLog(`  create <intent> - Generate software (Genesis Engine)`);
+                        printLog(`  corrupt         - Induce entropy (NanoSwarm Test)`);
+                        printLog(`  sleep           - Enter DreamState optimization`);
+                        printLog(`  wake            - Awaken from DreamState`);
+                        printLog(`  stats           - Benchmark vs Traditional OS`);
+                        printLog(`  clear           - Clear FrayShell buffer`);
+                        break;
+                    case 'status':
+                        printLog(`\uD83E\uDDE0 HyperTesseract Brain: 2,048 nodes [ONLINE]`);
+                        printLog(`\uD83E\uDDA0 NanoSwarm: 2,048 agents monitoring FrayFS`);
+                        printLog(`\uD83D\uDD90\uFE0F GenesisArchitect: Ready`);
+                        printLog(`\uD83C\uDF19 DreamState: Awake (Idle detection active)`);
+                        break;
+                    case 'create':
+                        if(args.length < 2) printLog(`Error: Intent required. (e.g., 'create web server')`, 'log-error');
+                        else await triggerGenesis(args.slice(1).join(' '));
+                        break;
+                    case 'corrupt':
+                        await triggerCorrupt();
+                        break;
+                    case 'sleep':
+                        await triggerSleep();
+                        break;
+                    case 'wake':
+                        await triggerWake();
+                        break;
+                    case 'stats':
+                        printLog(`\u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510`, 'log-system');
+                        printLog(`\u2502 PERFORMANCE METRICS vs TRADITIONAL OS                  \u2502`, 'log-system');
+                        printLog(`\u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524`, 'log-system');
+                        printLog(`\u2502 METRIC                 \u2502 TRADITIONAL    \u2502 FRAYNIX AGI  \u2502`, 'log-system');
+                        printLog(`\u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524`, 'log-system');
+                        printLog(`\u2502 File Repair Time       \u2502 Hours (Manual) \u2502 < 1s (Auto)  \u2502`, 'log-system');
+                        printLog(`\u2502 Process Traversal      \u2502 O(N)           \u2502 O(\u221BN)        \u2502`, 'log-system');
+                        printLog(`\u2502 Software Installation  \u2502 Manual Search  \u2502 Auto-Genesis \u2502`, 'log-system');
+                        printLog(`\u2502 System Optimization    \u2502 Static         \u2502 Self-Learning\u2502`, 'log-system');
+                        printLog(`\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518`, 'log-system');
+                        break;
+                    case 'clear':
+                        terminal.innerHTML = '';
+                        break;
+                    default:
+                        printLog(`Command not recognized in traditional PATH.`, 'log-error');
+                        printLog(`Routing intent to GenesisArchitect...`, 'log-system');
+                        await triggerGenesis(cmdStr);
+                }
+            }
+        });
+
+        // ============================================================================
+        // BACKGROUND LOOPS & PHYSICS
+        // ============================================================================
+        
+        async function runBootSequence() {
+            printLog("\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557", 'log-system');
+            printLog("\u2551         FRAYNIX OS + AGI BOOT SEQUENCE                        \u2551", 'log-system');
+            printLog("\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255D", 'log-system');
+            await sleep(800);
+            printLog("\u26A1 Phase 1: Initializing OS Core...", 'log-system');
+            await sleep(600);
+            printLog("\uD83E\uDDE0 Phase 2: Awakening Consciousness...", 'log-system');
+            document.getElementById('val-kernel').innerText = "ONLINE";
+            await sleep(600);
+            printLog("\uD83E\uDDA0 Phase 3: Deploying Immune System...", 'log-system');
+            document.getElementById('val-agents').innerText = "2,048";
+            await sleep(600);
+            printLog("\uD83D\uDD90\uFE0F Phase 4: Equipping Creation Engine...", 'log-system');
+            await sleep(800);
+            
+            printLog("\u2713 Fraynix OS + AGI Online", 'log-success');
+            printLog("\u2713 Consciousness Level: 10.0%", 'log-success');
+            printLog(">> Type 'help' to view commands", 'log-system');
+            
+            SysState.isBooting = false;
+            shellInput.disabled = false;
+            shellInput.focus();
+        }
+
+        setTimeout(runBootSequence, 500);
+
+        setInterval(() => {
+            if (SysState.isBooting) return;
+            
+            if (SysState.isDreaming) {
+                const thoughts = [
+                    "Replaying file access patterns...",
+                    "Simulating cache optimizations...",
+                    "Discovering pattern across codebase...",
+                    "Merging FileReader and FileWriter...",
+                    "Compacting physical memory map...",
+                    "Reorganizing synaptic pathways..."
+                ];
+                pushFeed(thoughts[Math.floor(Math.random() * thoughts.length)], 'log-dream');
+            } else {
+                const events = [
+                    "NanoAgent verified /sys/kernel hash.",
+                    "Resource Manager predicting optimal allocation.",
+                    "DreamState monitor idle.",
+                    "Synaptic Jump across Dimension 2 successful.",
+                    "File System entropy at nominal levels.",
+                    "BrainPulse stabilized."
+                ];
+                pushFeed(events[Math.floor(Math.random() * events.length)], 'log-system');
+            }
+        }, 2500);
+
+        let lastTime = performance.now();
+        let lastPulse = 0;
+        let pulseOn = false;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const now = performance.now();
+            const dt = (now - lastTime) / 1000;
+            lastTime = now;
+
+            // BrainPulse Heartbeat
+            if (now - lastPulse > 1000 / SysState.pulseHz) {
+                lastPulse = now;
+                pulseOn = !pulseOn;
+                const indicator = document.getElementById('pulse-indicator');
+                if(pulseOn) {
+                    indicator.style.opacity = '1';
+                    nodeMat.color.setHex(SysState.isDreaming ? 0xFF00FF : 0x00FFFF);
+                } else {
+                    indicator.style.opacity = '0.2';
+                    nodeMat.color.setHex(0xFFFFFF);
+                }
+            }
+
+            // Synaptic Jump Fading
+            if (synapseMat.opacity > 0) synapseMat.opacity -= 0.05;
+            if (Math.random() < 0.05 && !SysState.isDreaming && !SysState.isBooting) {
+                const n1 = Math.floor(Math.random() * 16);
+                const n2 = Math.floor(Math.random() * 16);
+                if (n1 !== n2) {
+                    const pos1 = nodes[n1].position;
+                    const pos2 = nodes[n2].position;
+                    const posArr = synapseLine.geometry.attributes.position.array;
+                    posArr[0] = pos1.x; posArr[1] = pos1.y; posArr[2] = pos1.z;
+                    posArr[3] = pos2.x; posArr[4] = pos2.y; posArr[5] = pos2.z;
+                    synapseLine.geometry.attributes.position.needsUpdate = true;
+                    synapseMat.color.setHex(Math.random() > 0.5 ? 0x00F3FF : 0xFFFFFF);
+                    synapseMat.opacity = 1;
+                }
+            }
+
+            // 4D Rotation
+            const rotSpeed = SysState.isDreaming ? 0.2 : 0.6;
+            angleZW += rotSpeed * dt;
+            angleXW += (rotSpeed * 0.7) * dt;
+
+            const projected3D = vertices4D.map(v => project4D(v, angleZW, angleXW));
+
+            for(let i=0; i<16; i++) {
+                nodes[i].position.copy(projected3D[i]);
+            }
+
+            const positions = lines.geometry.attributes.position.array;
+            let index = 0;
+            for(let i=0; i<edges4D.length; i++) {
+                const a = projected3D[edges4D[i][0]];
+                const b = projected3D[edges4D[i][1]];
+                
+                positions[index++] = a.x; positions[index++] = a.y; positions[index++] = a.z;
+                positions[index++] = b.x; positions[index++] = b.y; positions[index++] = b.z;
+            }
+            lines.geometry.attributes.position.needsUpdate = true;
+
+            tesseractGroup.rotation.x += 0.1 * dt;
+            tesseractGroup.rotation.y += 0.2 * dt;
+
+            // NanoSwarm Physics
+            const sPos = swarmSystem.geometry.attributes.position.array;
+            for(let i=0; i<swarmCount; i++) {
+                let px = sPos[i*3];
+                let py = sPos[i*3+1];
+                let pz = sPos[i*3+2];
+                let vel = swarmVels[i];
+
+                let targetX = 0, targetY = 0, targetZ = 0;
+                let pull = 0.005;
+
+                if (SysState.anomaly) {
+                    targetX = SysState.anomaly.position.x;
+                    targetY = SysState.anomaly.position.y;
+                    targetZ = SysState.anomaly.position.z;
+                    pull = 0.08; 
+                }
+
+                const dx = targetX - px;
+                const dy = targetY - py;
+                const dz = targetZ - pz;
+                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) + 0.1;
+                
+                vel.x += (dx / dist) * pull;
+                vel.y += (dy / dist) * pull;
+                vel.z += (dz / dist) * pull;
+
+                if (!SysState.anomaly) {
+                    const tangent = new THREE.Vector3(-pz, 0, px).normalize();
+                    vel.add(tangent.multiplyScalar(0.002));
+                } else {
+                    vel.x += (Math.random() - 0.5) * 0.05;
+                    vel.y += (Math.random() - 0.5) * 0.05;
+                    vel.z += (Math.random() - 0.5) * 0.05;
+                }
+
+                const damping = SysState.anomaly ? 0.92 : 0.98;
+                vel.multiplyScalar(damping);
+
+                sPos[i*3] += vel.x;
+                sPos[i*3+1] += vel.y;
+                sPos[i*3+2] += vel.z;
+            }
+            swarmSystem.geometry.attributes.position.needsUpdate = true;
+
+            // Genesis Apps Rotation
+            apps.forEach(app => {
+                app.rotation.x += 0.01;
+                app.rotation.y += 0.02;
+            });
+
+            controls.update();
+            composer.render();
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
