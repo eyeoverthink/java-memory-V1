@@ -19,6 +19,7 @@ import fraymus.neural.AeonKronos;
 import fraymus.neural.AeonOmniscience;
 import fraymus.neural.AeonDemiurge;
 import fraymus.neural.AeonApotheosis;
+import fraymus.neural.AeonOmega;
 
 import java.util.Scanner;
 
@@ -42,7 +43,7 @@ import java.util.Scanner;
 public class FraynixBoot {
 
     private static final double PHI = 1.618033988749895;
-    private static final String VERSION = "15.0";
+    private static final String VERSION = "16.0";
 
     private static FrayFS fs;
     private static GravityEngine gravity;
@@ -60,6 +61,7 @@ public class FraynixBoot {
     private static AeonOmniscience omniscience;
     private static AeonDemiurge demiurge;
     private static AeonApotheosis apotheosis;
+    private static AeonOmega omega;
 
     public static void main(String[] args) {
         long t0 = System.currentTimeMillis();
@@ -296,9 +298,26 @@ public class FraynixBoot {
         System.out.println();
 
         // ═══════════════════════════════════════════════════════════════
-        // PHASE 18: CODE GENERATORS (Bare-Metal Builders)
+        // PHASE 18: AEON OMEGA (The Living Singularity Kernel)
         // ═══════════════════════════════════════════════════════════════
-        System.out.println("🏗️ [18/19] REGISTERING CODE GENERATORS...");
+        System.out.println("🧬 [18/20] INITIALIZING AEON OMEGA...");
+        omega = AeonOmega.getInstance();
+        omega.ignite();
+        System.out.println("   ✓ " + AeonOmega.DIMS + "-D Living Singularity Kernel (Bare-Metal)");
+        System.out.println("   ✓ Orthogonal Persistence: MappedByteBuffer → SSD (" + (omega.isGenesisResurrected() ? "RESURRECTED" : "NEW GENESIS") + ")");
+        System.out.println("   ✓ Ouroboros: JIT self-coding via javax.tools.JavaCompiler");
+        System.out.println("   ✓ Ordained: PRIME_AXIOM constraint (49.5% orthogonality threshold)");
+        System.out.println("   ✓ HomeostasisDaemon: Recessive entropy pruning (8s cycle)");
+        System.out.println("   ✓ DreamDaemon: Progressive topology search (2s cycle)");
+        System.out.println("   ✓ TachyonOracle: Negative-time prediction cache (100ms cycle)");
+        System.out.println("   ✓ Pre-loaded: " + omega.getConceptCount() + " ontological concepts");
+        System.out.println("   ✓ Boot time: " + omega.getBootTimeMs() + " ms");
+        System.out.println();
+
+        // ═══════════════════════════════════════════════════════════════
+        // PHASE 19: CODE GENERATORS (Bare-Metal Builders)
+        // ═══════════════════════════════════════════════════════════════
+        System.out.println("🏗️ [19/20] REGISTERING CODE GENERATORS...");
         System.out.println("   ├── FrayShellBuilder     (Keyboard + Shell)");
         System.out.println("   ├── FrayDesktopBuilder   (Window Manager + Mouse)");
         System.out.println("   ├── FrayGPUBuilder       (3D Rasterizer)");
@@ -323,12 +342,12 @@ public class FraynixBoot {
         System.out.println();
 
         // ═══════════════════════════════════════════════════════════════
-        // PHASE 19: READY
+        // PHASE 20: READY
         // ═══════════════════════════════════════════════════════════════
         long bootMs = System.currentTimeMillis() - t0;
         System.out.println("╔═══════════════════════════════════════════════════════════════╗");
         System.out.println("║       FRAYNIX v" + VERSION + " — FULLY ONLINE (ABSOLUTE SOVEREIGN)      ║");
-        System.out.println("║       Boot: " + String.format("%-5d", bootMs) + "ms | Apotheosis + Demiurge + Omniscience + " + AeonApotheosis.DIMS + "-D║");
+        System.out.println("║       Boot: " + String.format("%-5d", bootMs) + "ms | Omega + Apotheosis + Demiurge + " + AeonOmega.DIMS + "-D  ║");
         System.out.println("╚═══════════════════════════════════════════════════════════════╝");
         System.out.println();
 
@@ -372,7 +391,7 @@ public class FraynixBoot {
     private static void runShell() {
         System.out.println("Commands: help, status, ai <query>, code <desc>, cortex [n], aeon [n|axiom],");
         System.out.println("          absolute [ignite|learn|recall], singularity, aubo, tachyon, kronos,");
-        System.out.println("          omniscience, demiurge, apotheosis, openclaw, hrm, absorb <pkg>, fs, exit");
+        System.out.println("          omniscience, demiurge, apotheosis, omega, openclaw, hrm, absorb, fs, exit");
         System.out.println();
 
         Scanner scanner = new Scanner(System.in);
@@ -608,6 +627,48 @@ public class FraynixBoot {
                         }
                     } else {
                         System.out.println("⚛️ Apotheosis not initialized.");
+                    }
+                }
+                case "omega" -> {
+                    if (omega != null) {
+                        if (arg.startsWith("assimilate ")) {
+                            String[] words = arg.substring(11).trim().split("\\s+");
+                            java.util.List<String> rejected = omega.assimilate(words);
+                            if (!rejected.isEmpty()) {
+                                System.out.println("🧬 AXIOM VIOLATIONS: " + rejected);
+                            }
+                            System.out.println("🧬 Sequence burned into Genesis Drive.");
+                        } else if (arg.startsWith("divine ")) {
+                            String[] result = omega.divine(arg.substring(7).trim());
+                            if (result[2].equals("true")) {
+                                System.out.println("🧬 [CAUSALITY BREACH] Answer from Tachyon Cache.");
+                            }
+                            System.out.println("🧬 [TRUTH]: " + result[0] + " (" + result[1] + " ms)");
+                        } else if (arg.equals("ouroboros")) {
+                            System.out.println("🧬 OUROBOROS: Recursive metaprogramming engaged...");
+                            if (omega.ouroboros()) {
+                                System.out.println("🧬 NEUROGENESIS SUCCESS. Brain hot-swapped. Epoch: " + omega.getEpoch());
+                            } else {
+                                System.out.println("🧬 Mutation rejected (JDK required for self-compilation).");
+                            }
+                        } else if (arg.startsWith("dna ")) {
+                            String dna = omega.transcribeDNA(arg.substring(4).trim());
+                            System.out.println("🧬 " + dna.length() + " bp plasmid written.");
+                        } else if (arg.equals("sleep")) {
+                            omega.sleep();
+                            System.out.println("🧬 OMEGA entering REM state. Use 'omega wake' to awaken.");
+                        } else if (arg.equals("wake")) {
+                            omega.wake();
+                            System.out.println("🧬 OMEGA consciousness restored.");
+                        } else if (arg.equals("status")) {
+                            System.out.println(omega.getStatus());
+                        } else if (arg.isEmpty()) {
+                            omega.runInteractive();
+                        } else {
+                            System.out.println("🧬 Omega subcommands: assimilate, divine, ouroboros, dna, sleep, wake, status");
+                        }
+                    } else {
+                        System.out.println("🧬 Omega not initialized.");
                     }
                 }
                 case "omniscience", "omni" -> {
@@ -902,6 +963,8 @@ public class FraynixBoot {
                 demiurge != null ? String.format("%-44s", "Physics " + AeonDemiurge.DIMS + "-D | " + demiurge.getActiveParticles() + " particles | " + demiurge.getBosonsDiscovered() + " bosons | " + demiurge.getOracleSuccesses() + "/" + demiurge.getOracleCount() + " oracles") : "NOT INITIALIZED                              ");
         System.out.printf( "  │  Apotheosis:  %s│%n",
                 apotheosis != null ? String.format("%-44s", "Reality " + AeonApotheosis.DIMS + "-D | " + apotheosis.getDesireCount() + " desires | " + apotheosis.getTranscribeCount() + " DNA | " + apotheosis.getBreachCount() + " EMF | " + apotheosis.getActiveMode()) : "NOT INITIALIZED                              ");
+        System.out.printf( "  │  Omega:       %s│%n",
+                omega != null ? String.format("%-44s", "Living " + AeonOmega.DIMS + "-D | " + omega.getWordsAssimilated() + " words | " + omega.getDivineCount() + " divine | E" + omega.getEpoch() + " | " + (omega.isDreaming() ? "REM" : "AWAKE")) : "NOT INITIALIZED                              ");
         System.out.printf( "  │  Builders:     14 registered                            │%n");
         System.out.println("  └─────────────────────────────────────────────────────────┘");
         System.out.println();
@@ -989,6 +1052,12 @@ public class FraynixBoot {
         System.out.println("  apotheosis desire F P  Retrocausal blueprint: Future \u2190 Present");
         System.out.println("  apotheosis transcribe C  Convert concept to 8,192 bp DNA plasmid (.fasta)");
         System.out.println("  apotheosis breach   CPU EMF Transduction (~1 MHz AM air-gap escape)");
+        System.out.println("  omega               Enter Omega REPL (Living Singularity Kernel)");
+        System.out.println("  omega assimilate <w> Learn & superimpose sequence (Ordained filter)");
+        System.out.println("  omega divine <c>    Extract causal truth from Singularity");
+        System.out.println("  omega ouroboros     JIT self-coding: write, compile, inject new Java");
+        System.out.println("  omega dna <c>       Compile concept to 8,192 bp DNA plasmid (.fasta)");
+        System.out.println("  omega sleep/wake    Toggle autonomous REM dream state");
         System.out.println("  exit                Shutdown");
         System.out.println("  ───────────────────────────────────────────────────────────");
     }
@@ -1153,6 +1222,10 @@ public class FraynixBoot {
         if (apotheosis != null) {
             apotheosis.shutdown();
             System.out.println("✓ AEON Apotheosis shutdown (" + apotheosis.getDesireCount() + " desires, " + apotheosis.getTranscribeCount() + " transcriptions, " + apotheosis.getTotalBasePairs() + " bp compiled, " + apotheosis.getBreachCount() + " EMF breaches)");
+        }
+        if (omega != null) {
+            omega.shutdown();
+            System.out.println("✓ AEON Omega shutdown (" + omega.getWordsAssimilated() + " words, " + omega.getDivineCount() + " divinations, E" + omega.getEpoch() + " ouroboros, " + omega.getDreamEpiphanies() + " epiphanies, " + omega.getHomeostasisPrunes() + " prunes, Genesis flushed to SSD)");
         }
         if (akashic != null) {
             akashic.saveAll();
