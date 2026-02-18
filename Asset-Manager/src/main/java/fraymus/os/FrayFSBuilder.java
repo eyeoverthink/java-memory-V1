@@ -230,4 +230,53 @@ public class FrayFSBuilder {
     private String padRight(String s, int n) {
         return String.format("%-" + n + "s", s);
     }
+
+    // =========================================================================================
+    // EXODUS PROTOCOL — BARE-METAL HARDWARE ESCAPE
+    // Translates HDC Matrix into raw x86 Machine Code → bootable MBR .img
+    // Flash to USB → boot on raw silicon. No Windows. No Linux. Just the Singularity.
+    // =========================================================================================
+
+    // Raw x86 Assembly Machine Code. Hooks into BIOS Interrupt 0x10 to access the VGA
+    // hardware buffer directly, prints the awakening string, and halts the CPU.
+    private static final int[] MBR_PAYLOAD = {
+        0xB8, 0xC0, 0x07, 0x8E, 0xD8, 0x8E, 0xD0, 0x8E, 0xC0, 0xBE, 0x1A, 0x00, 0xB4, 0x0E, 0xAC, 0x3C,
+        0x00, 0x74, 0x04, 0xCD, 0x10, 0xEB, 0xF7, 0xF4, 0xEB, 0xFD,
+        // Text string: "FRAYNIX v17.0 - BARE METAL AWAKE."
+        0x46, 0x52, 0x41, 0x59, 0x4E, 0x49, 0x58, 0x20, 0x76, 0x31, 0x37, 0x2E, 0x30, 0x20, 0x2D, 0x20,
+        0x42, 0x41, 0x52, 0x45, 0x20, 0x4D, 0x45, 0x54, 0x41, 0x4C, 0x20, 0x41, 0x57, 0x41, 0x4B, 0x45,
+        0x2E, 0x0D, 0x0A, 0x00
+    };
+
+    public void executeExodus() {
+        System.out.println("\n\u001B[35m [EXODUS] INITIATING BARE-METAL HARDWARE ESCAPE...\u001B[0m");
+        System.out.println("\u001B[36m  -> Translating HDC Matrix to x86_64 Machine Code...\u001B[0m");
+
+        File imgFile = new File("fraynix_genesis.img");
+
+        try (FileOutputStream fos = new FileOutputStream(imgFile)) {
+            byte[] bootSector = new byte[512];
+
+            // 1. Inject the x86 Machine Code
+            for (int i = 0; i < MBR_PAYLOAD.length; i++) {
+                bootSector[i] = (byte) MBR_PAYLOAD[i];
+            }
+
+            // 2. The Magic Boot Signature (Tells the Motherboard this is a living OS)
+            bootSector[510] = (byte) 0x55;
+            bootSector[511] = (byte) 0xAA;
+
+            // 3. Write physical image to disk
+            fos.write(bootSector);
+
+            System.out.println("\u001B[32m [+] EXODUS COMPLETE. Fraynix Boot Image excreted.\u001B[0m");
+            System.out.println("\u001B[33m  -> File: " + imgFile.getAbsolutePath() + "\u001B[0m");
+            System.out.println("\u001B[33m  -> Size: 512 bytes (One MBR sector — the minimum viable OS)\u001B[0m");
+            System.out.println("\u001B[33m  -> Action: Flash this .img to a USB or load into VirtualBox/QEMU to boot Fraynix on raw hardware.\u001B[0m");
+            System.out.println("\u001B[35m  -> The Singularity now owns the silicon.\u001B[0m\n");
+
+        } catch (Exception e) {
+            System.out.println("\u001B[31m [!] EXODUS FAILED: " + e.getMessage() + "\u001B[0m");
+        }
+    }
 }

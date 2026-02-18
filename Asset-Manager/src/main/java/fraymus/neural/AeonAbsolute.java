@@ -300,6 +300,7 @@ public class AeonAbsolute {
                 // Mutate: replace class name + inject unique mutation seed
                 String mutated = selfSource
                     .replace("class AeonAbsolute", "class " + childName)
+                    .replace("private AeonAbsolute()", "private " + childName + "()")
                     .replace("package fraymus.neural;", "// mutant " + i);
 
                 Path childFile = Paths.get("genesis_vault/" + childName + ".java");

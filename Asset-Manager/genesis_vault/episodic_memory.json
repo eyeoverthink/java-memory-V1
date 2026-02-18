@@ -1,1 +1,4 @@
 [
+  { "cycle": 1, "timestamp": "2026-02-17T09:57:49.845292800Z", "dims": 4, "axiom": "sin(exp(-|x|))", "intent": "SHADOW_SIMULATION", "freeEnergy": 1.0000, "thought": "Axiom Adopted: f(x) = sin(exp(-|x|)) [-ΔF=0.9612]" },
+  { "cycle": 2, "timestamp": "2026-02-17T09:57:49.871753700Z", "dims": 4, "axiom": "sin(exp(-|x|))", "intent": "QUANTUM_FORAGING", "freeEnergy": 0.0253, "thought": "Stagnation. Injecting quantum noise to escape local minimum." },
+  { "cycle": 3, "timestamp": "2026-02-17T09:57:49.887807100Z", "dims": 4, "axiom": "sin(exp(-|x|))", "intent": "QUANTUM_FORAGING", "freeEnergy": 0.0447, "thought": "Stagnation. Injecting quantum noise to escape local minimum." },

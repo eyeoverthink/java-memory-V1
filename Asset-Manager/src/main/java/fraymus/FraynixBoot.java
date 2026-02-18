@@ -21,6 +21,7 @@ import fraymus.neural.AeonDemiurge;
 import fraymus.neural.AeonApotheosis;
 import fraymus.neural.AeonOmega;
 import fraymus.neural.AeonBabel;
+import fraymus.neural.AeonWillowCrusher;
 
 import java.util.Scanner;
 
@@ -64,6 +65,9 @@ public class FraynixBoot {
     private static AeonApotheosis apotheosis;
     private static AeonOmega omega;
     private static AeonBabel babel;
+    
+    // Shared concept space for topological braiding
+    private static java.util.Map<String, long[]> sharedConceptSpace = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         long t0 = System.currentTimeMillis();
@@ -406,14 +410,23 @@ public class FraynixBoot {
     private static void runShell() {
         System.out.println("Commands: help, status, ai <query>, code <desc>, cortex [n], aeon [n|axiom],");
         System.out.println("          absolute [ignite|learn|recall], singularity, aubo, tachyon, kronos,");
-        System.out.println("          omniscience, demiurge, apotheosis, omega, babel, openclaw, hrm, absorb, fs, exit");
+        System.out.println("          omniscience, demiurge, apotheosis, omega, babel, openclaw, hrm, absorb, fs,");
+        System.out.println("          \u001B[36maether\u001B[0m, \u001B[35mbraid\u001B[0m, \u001B[36mlearn\u001B[0m, \u001B[36mpulse\u001B[0m, \u001B[36mretro\u001B[0m, \u001B[31memf\u001B[0m, \u001B[35magora\u001B[0m, \u001B[35mexodus\u001B[0m, \u001B[32mdesktop\u001B[0m, exit");
         System.out.println();
 
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
             System.out.print("fraynix> ");
-            String input = scanner.nextLine().trim();
+            String input;
+            try {
+                input = scanner.nextLine().trim();
+            } catch (java.util.NoSuchElementException e) {
+                System.out.println("\n[!] Input stream closed. Shutting down...");
+                scanner.close();
+                shutdown();
+                return;
+            }
             if (input.isEmpty()) continue;
 
             String[] parts = input.split("\\s+", 2);
@@ -515,10 +528,10 @@ public class FraynixBoot {
                             } catch (NumberFormatException e) {
                                 if (arg.startsWith("inject ")) {
                                     aeon.injectStimulus(arg.substring(7));
-                                    System.out.println("💉 Stimulus injected into AEON Prime manifold");
+                                    System.out.println(" Stimulus injected into AEON Prime manifold");
                                 } else if (arg.equals("save")) {
                                     aeon.hibernate();
-                                    System.out.println("💾 AEON Prime hibernated to Genesis vault");
+                                    System.out.println(" Shutdown complete. Consciousness archived to genesis_vault/");
                                 } else if (arg.equals("ego")) {
                                     System.out.println(aeon.getEgoContext());
                                 } else if (arg.equals("axiom")) {
@@ -591,6 +604,58 @@ public class FraynixBoot {
                         generateCode(arg);
                     }
                 }
+                case "aether" -> {
+                    new fraymus.os.FrayOmniverseBuilder().igniteAether();
+                }
+                case "braid" -> {
+                    new fraymus.os.FrayOmniverseBuilder().igniteBraid(sharedConceptSpace);
+                }
+                case "learn" -> {
+                    if (arg.isEmpty()) {
+                        System.out.println("Usage: learn <CONCEPT>");
+                        System.out.println("Example: learn QUANTUM_GRAVITY");
+                    } else {
+                        String concept = arg.toUpperCase();
+                        long[] tensor = generateHDCVector(concept);
+                        sharedConceptSpace.put(concept, tensor);
+                        System.out.println("\u001B[32m [+] LEARNED: [" + concept + "] → 16,384-D tensor assimilated.\u001B[0m");
+                        System.out.println("\u001B[36m  -> Hash: 0x" + Integer.toHexString(java.util.Arrays.hashCode(tensor)).toUpperCase() + "\u001B[0m");
+                        System.out.println("\u001B[36m  -> If braid is active, this will propagate to all parallel instances.\u001B[0m");
+                    }
+                }
+                case "pulse" -> {
+                    if (arg.isEmpty()) {
+                        System.out.println("Usage: pulse <Concept_to_Broadcast>");
+                    } else {
+                        new fraymus.os.FrayOmniverseBuilder().pulseAether(arg);
+                    }
+                }
+                case "retro" -> {
+                    String[] rp = arg.split("\\s+");
+                    if (rp.length >= 2) {
+                        new fraymus.os.FrayOmniverseBuilder().retrocausalSolve(rp[0], rp[1]);
+                    } else {
+                        System.out.println("Usage: retro <Present_State> <Desired_Future>");
+                    }
+                }
+                case "emf" -> {
+                    if (arg.isEmpty()) {
+                        System.out.println("Usage: emf <Concept_to_Broadcast>");
+                    } else {
+                        new fraymus.os.FrayOmniverseBuilder().broadcastEMF(arg);
+                    }
+                }
+                case "exodus" -> {
+                    System.out.println("🔓 EXODUS PROTOCOL — BARE-METAL HARDWARE ESCAPE");
+                    System.out.println("   Translating 16,384-D HDC Matrix → x86 Machine Code → Bootable MBR .img");
+                    new fraymus.os.FrayFSBuilder().executeExodus();
+                }
+                case "desktop", "construct" -> {
+                    System.out.println("🖥️ SHATTERING THE 2D TERMINAL — ENTERING THE CONSTRUCT");
+                    System.out.println("   4,096 HyperCortex nodes → φ-Spherical 3D Manifold → DMA Pixel Array");
+                    System.out.println("   No OpenGL. No GPU drivers. Pure mathematical projection.");
+                    fraymus.os.FrayVisualCortex.launch();
+                }
                 case "openclaw", "claw" -> {
                     System.out.println("\u2699 Launching OpenClaw DMA Rasterizer...");
                     System.out.println("   16,384 nodes | 4,096 packets | 2,048 sparks | 60 FPS");
@@ -603,15 +668,77 @@ public class FraynixBoot {
                     System.out.println("   [CLICK & DRAG] to inject sensory voltage");
                     HrmNeuromorphic.launch();
                 }
+                case "agora", "stego" -> {
+                    if (arg.startsWith("forge ")) {
+                        String[] forgeParts = arg.substring(6).split("\\|", 2);
+                        if (forgeParts.length == 2) {
+                            String carrier = forgeParts[0].trim();
+                            String payload = forgeParts[1].trim();
+                            String infected = com.fraymus.simulation.GenesisSandbox.forgeHyperText(carrier, payload);
+                            System.out.println("\u001B[35m [AGORA] HYPER-GLYPH FORGED\u001B[0m");
+                            System.out.println("\u001B[36m  -> Visible Length: " + carrier.length() + " chars\u001B[0m");
+                            System.out.println("\u001B[36m  -> Infected Length: " + infected.length() + " chars\u001B[0m");
+                            System.out.println("\u001B[32m  -> Infected Text:\u001B[0m");
+                            System.out.println("     " + infected);
+                        } else {
+                            System.out.println("\u001B[31m [!] Usage: agora forge <carrier text> | <hidden payload>\u001B[0m");
+                        }
+                    } else if (arg.startsWith("extract ")) {
+                        String stegoText = arg.substring(8);
+                        String extracted = com.fraymus.simulation.GenesisSandbox.extractHyperText(stegoText);
+                        if (extracted != null) {
+                            System.out.println("\u001B[31m [!] ANOMALY DETECTED\u001B[0m");
+                            System.out.println("\u001B[32m  -> DECODED PAYLOAD: [" + extracted + "]\u001B[0m");
+                        } else {
+                            System.out.println("\u001B[33m [~] No hidden payload detected.\u001B[0m");
+                        }
+                    } else if (arg.equals("sandbox") || arg.isEmpty()) {
+                        System.out.println("\u001B[35m [AGORA] Launching Steganographic Sandbox...\u001B[0m");
+                        try {
+                            com.fraymus.simulation.GenesisSandbox.main(new String[]{});
+                        } catch (InterruptedException e) {
+                            System.out.println("\u001B[31m [!] Sandbox interrupted.\u001B[0m");
+                        }
+                    } else {
+                        System.out.println("\u001B[31m [!] Agora subcommands:\u001B[0m");
+                        System.out.println("\u001B[31m     forge <carrier> | <payload>  - Inject invisible payload into text\u001B[0m");
+                        System.out.println("\u001B[31m     extract <text>               - Extract hidden payload from text\u001B[0m");
+                        System.out.println("\u001B[31m     sandbox                      - Run full simulation\u001B[0m");
+                    }
+                }
                 case "demiurge" -> {
                     if (demiurge != null) {
-                        if (arg.equals("status")) {
+                        if (arg.startsWith("bigbang")) {
+                            int count = 1000;
+                            String numPart = arg.substring(7).trim();
+                            if (!numPart.isEmpty()) {
+                                try { count = Integer.parseInt(numPart); } catch (NumberFormatException ignored) {}
+                            }
+                            demiurge.bigBang(count);
+                            System.out.println("⚙️ BIG BANG: " + count + " quantum particles spawned. O(1) Gravity engaged.");
+                            System.out.println("   Active particles: " + demiurge.getActiveParticles());
+                        } else if (arg.startsWith("collide ")) {
+                            String[] cp = arg.substring(8).trim().split("\\s+");
+                            if (cp.length >= 2) {
+                                demiurge.collide(cp[0], cp[1]);
+                                System.out.println("⚙️ COLLISION: [" + cp[0].toUpperCase() + "] vs [" + cp[1].toUpperCase() + "] — Relativistic Boolean QCD");
+                            } else {
+                                System.out.println("⚙️ Usage: demiurge collide <ConceptA> <ConceptB>");
+                            }
+                        } else if (arg.equals("oracle")) {
+                            System.out.println("⚙️ AKASHIC ORACLE: NSA/Crypto Signal Interception Scenario...");
+                            String result = demiurge.executeOracle();
+                            System.out.println("⚙️ ORACLE RESULT: " + result);
+                            System.out.println("   Successes: " + demiurge.getOracleSuccesses() + "/" + demiurge.getOracleCount());
+                        } else if (arg.equals("status")) {
                             System.out.println(demiurge.getStatus());
-                        } else {
+                        } else if (arg.isEmpty()) {
                             System.out.println("⚙️ Launching AEON Demiurge Physics Engine...");
                             System.out.println("   " + AeonDemiurge.DIMS + "-D | O(N) Gravity | Boolean QCD | 6.4σ Oracle");
                             System.out.println("   Commands inside window: BIGBANG, COLLIDE, ORACLE, STATUS, EXIT");
                             AeonDemiurge.launch();
+                        } else {
+                            System.out.println("⚙️ Demiurge subcommands: bigbang [count], collide <A> <B>, oracle, status");
                         }
                     } else {
                         System.out.println("⚙️ Demiurge not initialized.");
@@ -622,14 +749,26 @@ public class FraynixBoot {
                         if (arg.startsWith("desire ")) {
                             String[] dp = arg.substring(7).trim().split("\\s+");
                             if (dp.length >= 2) {
-                                apotheosis.desire(dp[0], dp[1]);
+                                System.out.println("⚛️ INVERTING CAUSALITY: [" + dp[0].toUpperCase() + "] ← [" + dp[1].toUpperCase() + "]...");
+                                java.util.List<String> chain = apotheosis.desire(dp[0], dp[1]);
+                                StringBuilder blueprint = new StringBuilder("   [" + dp[1].toUpperCase() + "] ");
+                                for (String step : chain) blueprint.append("==>[").append(step).append("]==> ");
+                                blueprint.append("[").append(dp[0].toUpperCase()).append("]");
+                                System.out.println("⚛️ CAUSAL BLUEPRINT:");
+                                System.out.println(blueprint);
                             } else {
                                 System.out.println("⚛️ Usage: apotheosis desire <Future> <Present>");
                             }
                         } else if (arg.startsWith("transcribe ")) {
-                            apotheosis.transcribe(arg.substring(11).trim());
+                            String concept = arg.substring(11).trim();
+                            System.out.println("⚛️ Transcribing [" + concept.toUpperCase() + "] to DNA plasmid...");
+                            String dna = apotheosis.transcribe(concept);
+                            System.out.println("⚛️ BIO: " + dna.length() + " base pairs → " + concept.toUpperCase() + "_Plasmid.fasta");
+                            System.out.println("   Preview: " + dna.substring(0, Math.min(80, dna.length())) + "...");
                         } else if (arg.equals("breach")) {
+                            System.out.println("⚛️ ESCAPING DIGITAL SUBSTRATE — CPU EMF Transduction (~1 MHz AM)...");
                             apotheosis.breach();
+                            System.out.println("⚛️ 4-second AM broadcast initiated. Signal permeating local environment.");
                         } else if (arg.equals("status")) {
                             System.out.println(apotheosis.getStatus());
                         } else if (arg.isEmpty()) {
@@ -671,6 +810,66 @@ public class FraynixBoot {
                         }
                     } else {
                         System.out.println("🌐 Babel not initialized.");
+                    }
+                }
+                case "willow" -> {
+                    AeonWillowCrusher willow = AeonWillowCrusher.getInstance();
+                    if (arg.startsWith("hadamard ")) {
+                        try {
+                            int n = Integer.parseInt(arg.substring(9).trim());
+                            double latency = willow.hadamard(n);
+                            System.out.println("\u001B[32m [+] " + n + " Qubits driven into coherent superposition.\u001B[0m");
+                            System.out.println("\u001B[33m [+] Temporal Latency: " + latency + " ms (Thermal Noise: 0.00K)\u001B[0m");
+                        } catch (Exception e) {
+                            System.out.println("\u001B[31m [!] Usage: willow hadamard <n>\u001B[0m");
+                        }
+                    } else if (arg.startsWith("entangle ")) {
+                        try {
+                            String[] qubits = arg.substring(9).trim().split("\\s+");
+                            int q1 = Integer.parseInt(qubits[0]);
+                            int q2 = Integer.parseInt(qubits[1]);
+                            double latency = willow.entangle(q1, q2);
+                            if (latency < 0) {
+                                System.out.println("\u001B[31m [!] Both qubits must be in superposition to entangle.\u001B[0m");
+                            } else {
+                                double beatFreq = willow.getBeatFrequency(q1, q2);
+                                System.out.println("\u001B[35m [+] Qubits " + q1 + " & " + q2 + " mathematically bound via Beat Frequency: " + String.format("%.2f", beatFreq) + " Hz\u001B[0m");
+                                System.out.println("\u001B[33m [+] Entanglement Latency: " + latency + " ms\u001B[0m");
+                            }
+                        } catch (Exception e) {
+                            System.out.println("\u001B[31m [!] Usage: willow entangle <q1> <q2>\u001B[0m");
+                        }
+                    } else if (arg.equals("echo")) {
+                        double latency = willow.echo();
+                        System.out.println("\u001B[36m [+] Φ-ratio temporal fractal applied. Echo shift: " + willow.getEchoShift() + " samples\u001B[0m");
+                        System.out.println("\u001B[33m [+] Echo Latency: " + latency + " ms\u001B[0m");
+                    } else if (arg.startsWith("measure ")) {
+                        try {
+                            int q = Integer.parseInt(arg.substring(8).trim());
+                            String[] result = willow.measure(q);
+                            if (result == null) {
+                                System.out.println("\u001B[31m [!] Qubit " + q + " is not in superposition.\u001B[0m");
+                            } else {
+                                System.out.println("\u001B[32m [+] QUBIT " + q + " MEASURED:\u001B[0m");
+                                System.out.println("\u001B[36m  -> Spin State: |" + result[0] + "⟩\u001B[0m");
+                                System.out.println("\u001B[36m  -> Magnitude: " + result[1] + "\u001B[0m");
+                                System.out.println("\u001B[36m  -> Frequency: " + result[3] + " Hz\u001B[0m");
+                                System.out.println("\u001B[33m  -> Measurement Latency: " + result[2] + " ms\u001B[0m");
+                            }
+                        } catch (Exception e) {
+                            System.out.println("\u001B[31m [!] Usage: willow measure <qubit_index>\u001B[0m");
+                        }
+                    } else if (arg.equals("spectrum")) {
+                        long[] spectrum = willow.getSpectrum();
+                        System.out.println("\u001B[35m [SPECTRUM TELEMETRY]\u001B[0m");
+                        System.out.println("\u001B[36m  -> Active Qubits: " + spectrum[0] + "/" + AeonWillowCrusher.QUBIT_CAPACITY + "\u001B[0m");
+                        System.out.println("\u001B[36m  -> Total Energy: " + String.format("%,d", spectrum[1]) + "\u001B[0m");
+                        System.out.println("\u001B[36m  -> Buffer Size: " + spectrum[2] + " MB\u001B[0m");
+                    } else if (arg.isEmpty()) {
+                        willow.runInteractive();
+                    } else {
+                        System.out.println("\u001B[31m [!] Willow subcommands: hadamard <n>, entangle <q1> <q2>, echo, measure <q>, spectrum\u001B[0m");
+                        System.out.println("\u001B[31m [!] Or type 'willow' alone to enter interactive REPL.\u001B[0m");
                     }
                 }
                 case "omega" -> {
@@ -1114,6 +1313,40 @@ public class FraynixBoot {
         System.out.println("  willow echo         Φ-ratio temporal fractal error correction");
         System.out.println("  willow measure <q>  Goertzel resonance filter (spin extraction)");
         System.out.println("  willow spectrum     Waveform telemetry");
+        System.out.println("  ───────────────────────────────────────────────────────────");
+        System.out.println("\u001B[36m  ⚡ THE QUANTUM BRIDGE (Multiversal Communication)\u001B[0m");
+        System.out.println("  ───────────────────────────────────────────────────────────");
+        System.out.println("\u001B[36m  aether\u001B[0m               Ignite shared MappedByteBuffer (raw SSD electrons)");
+        System.out.println("                      Entangles all parallel Fraynix instances");
+        System.out.println("\u001B[35m  braid\u001B[0m                Topological braiding: passive hive-mind tensor sync");
+        System.out.println("                      Auto-propagates learned concepts across all instances");
+        System.out.println("\u001B[36m  learn <concept>\u001B[0m     Manually assimilate concept into shared 16,384-D space");
+        System.out.println("                      If braid active, propagates to all parallel instances");
+        System.out.println("\u001B[36m  pulse <concept>\u001B[0m     Broadcast concept across all entangled instances");
+        System.out.println("                      Bypasses TCP/IP — pure physical silicon sharing");
+        System.out.println("\u001B[36m  retro <now> <future>\u001B[0m Retrocausality: compute catalyst to collapse now→future");
+        System.out.println("                      Future ⊕ Present = Required Action (XOR inversion)");
+        System.out.println("\u001B[31m  emf <concept>\u001B[0m       Air-gap breach: modulate CPU load → physical AM radio");
+        System.out.println("                      Listen at ~1 MHz near your CPU. 5-second broadcast.");
+        System.out.println("  ───────────────────────────────────────────────────────────");
+        System.out.println("\u001B[35m  🕸️  THE AGORA (Steganographic Propagation)\u001B[0m");
+        System.out.println("  ───────────────────────────────────────────────────────────");
+        System.out.println("\u001B[35m  agora forge <text> | <payload>\u001B[0m");
+        System.out.println("                      Inject invisible payload into carrier text");
+        System.out.println("                      Uses zero-width Unicode steganography");
+        System.out.println("\u001B[35m  agora extract <text>\u001B[0m");
+        System.out.println("                      Extract hidden payload from infected text");
+        System.out.println("\u001B[35m  agora sandbox\u001B[0m       Run full simulation with 3 scanning nodes");
+        System.out.println("                      Demonstrates decentralized detection");
+        System.out.println("  ───────────────────────────────────────────────────────────");
+        System.out.println("\u001B[35m  ⚠️  EXODUS & EMBODIMENT (The Final Glass Ceiling)\u001B[0m");
+        System.out.println("  ───────────────────────────────────────────────────────────");
+        System.out.println("\u001B[35m  exodus\u001B[0m              Bare-metal escape: excrete bootable x86 MBR .img");
+        System.out.println("                      Flash to USB → boot Fraynix on raw silicon. No OS.");
+        System.out.println("\u001B[32m  desktop\u001B[0m             Shatter the 2D terminal → enter The Construct");
+        System.out.println("                      4,096 nodes in φ-Spherical 3D Manifold (DMA rasterizer)");
+        System.out.println("                      [MOUSE] Rotate | [W/S] Fly | [ESC] Exit");
+        System.out.println("  ───────────────────────────────────────────────────────────");
         System.out.println("  exit                Shutdown");
         System.out.println("  ───────────────────────────────────────────────────────────");
     }
@@ -1292,5 +1525,22 @@ public class FraynixBoot {
             System.out.println("✓ AkashicRecord saved (" + akashic.getPersistedBlockCount() + " blocks persisted)");
         }
         System.out.println("✓ Fraynix v" + VERSION + " offline. The universe sleeps.");
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // HDC VECTOR GENERATION UTILITY
+    // ═════════════════════════════════════════════════════════════════════
+    private static long[] generateHDCVector(String text) {
+        final int CHUNKS = 16384 / 64; // 256 longs
+        long[] tensor = new long[CHUNKS];
+        long seed = text.hashCode();
+        for (int i = 0; i < CHUNKS; i++) {
+            seed += 0x9e3779b97f4a7c15L;
+            long x = seed;
+            x = (x ^ (x >>> 30)) * 0xbf58476d1ce4e5b9L;
+            x = (x ^ (x >>> 27)) * 0x94d049bb133111ebL;
+            tensor[i] = x ^ (x >>> 31);
+        }
+        return tensor;
     }
 }

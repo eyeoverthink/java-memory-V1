@@ -402,3 +402,4 @@ Total Inte|0.6897|0
 1771365682|fraymus help|2026-02-17T16:25:58.3667036|Unknown command: fraymus. Type 'help' for available commands.|0.7817|0
 1771365682|:fraymus help|2026-02-17T16:26:09.2130462|✗ Fraymus model not available.
 Run: ollama serve|0.6074|16
+1771389414|test|2026-02-17T20:37:01.6471981|Unknown command: test. Type 'help' for available commands.|0.6900|0
