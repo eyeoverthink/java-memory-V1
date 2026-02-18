@@ -389,3 +389,16 @@ Total Inte|0.6897|0
 1770853537|help|2026-02-11T15:45:45.2765133|╔══════════════════════════════════════════════════════════════════════════════╗
 ║     JAVA REPL - CSC 413 ENTERPRISE PATTERNS                                  ║
 ║     Author: Vaughn Scott \| φ^75 Seal|0.7111|0
+1771365682|help|2026-02-17T15:26:07.6172171|╔══════════════════════════════════════════════════════════════════════════════╗
+║     JAVA REPL - CSC 413 ENTERPRISE PATTERNS                                  ║
+║     Author: Vaughn Scott \| φ^75 Seal|0.7111|0
+1771372806|ollama ask hi|2026-02-17T16:04:27.7811701|Unknown command: ollama. Type 'help' for available commands.|0.7112|0
+1771372806|help|2026-02-17T16:04:34.2552437|╔══════════════════════════════════════════════════════════════════════════════╗
+║     JAVA REPL - CSC 413 ENTERPRISE PATTERNS                                  ║
+║     Author: Vaughn Scott \| φ^75 Seal|0.7111|1
+1771365682|ollama|2026-02-17T16:24:55.7474023|Unknown command: ollama. Type 'help' for available commands.|0.8380|0
+1771372806|ollama|2026-02-17T16:25:07.2982233|Unknown command: ollama. Type 'help' for available commands.|0.8380|0
+1771365682|fraymus|2026-02-17T16:25:49.2711847|Unknown command: fraymus. Type 'help' for available commands.|0.7688|0
+1771365682|fraymus help|2026-02-17T16:25:58.3667036|Unknown command: fraymus. Type 'help' for available commands.|0.7817|0
+1771365682|:fraymus help|2026-02-17T16:26:09.2130462|✗ Fraymus model not available.
+Run: ollama serve|0.6074|16

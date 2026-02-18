@@ -21,7 +21,7 @@
  * - The @FunctionalInterface annotation means only one abstract method
  * - Factory Pattern = create objects without specifying exact class
  */
-package repl;
+package fraymus.CODE_Generator_UI_Backup.java_repl;
 
 import java.util.*;
 import java.math.BigInteger;
