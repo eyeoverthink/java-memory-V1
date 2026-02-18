@@ -11,7 +11,9 @@
     <mapping directory="$PROJECT_DIR$/Asset-Manager/Lazarus/Fraymus-Full-Quantum-System/Fraymus_Agent_BrainV2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Asset-Manager/Lazarus/Fraymus-Full-Quantum-System/Fraymus_NEXUS_Edition" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Asset-Manager/Lazarus/Fraymus-Full-Quantum-System/Java-Neuro-Center/Asset-Manager" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Asset-Manager/qemu" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Fraymus_Agent_BrainV2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Fraymus_Agent_BrainV2/src/main/java/fraymus/CODE_Generator_UI_Backup/java_repl/CSC-413" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Fraymus_NEXUS_Edition" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Java-Neuro-Center/Asset-Manager" vcs="Git" />
   </component>

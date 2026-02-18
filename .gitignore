@@ -63,9 +63,12 @@ gradle.properties
 *.bin
 *.exe
 
-# AEON system files (persistent state)
+# AEON system files (persistent state - large binary files)
 aeon_genesis.sys
 aeon_drive.sys
+aeon_cortex.sys
+aeon_omega_genesis.sys
+**/genesis_vault/*.sys
 *_Plasmid.fasta
 
 # LTX-Video library (external dependency with large assets)
