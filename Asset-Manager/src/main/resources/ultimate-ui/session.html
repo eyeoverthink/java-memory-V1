@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraymus Nexus | Session</title>
+    <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body data-page="session">
+    <div class="layout">
+        <aside class="sidebar">
+            <a class="brand" href="/">
+                <span class="brand-mark">FN</span>
+                <span class="brand-copy">
+                    <span class="brand-label">Kernel, boot, factory, broadcast, and native runtime surface for the Fraynix offline AGI organism</span>
+                    <span class="brand-title">Fraymus Nexus</span>
+                </span>
+            </a>
+            <nav id="sidebar-nav" class="nav-list"></nav>
+            <section id="sidebar-meta" class="nav-meta"></section>
+        </aside>
+
+        <main class="content">
+            <section class="hero">
+                <div>
+                    <span class="hero-kicker">Session // shell bench</span>
+                    <h1 class="hero-title">Operator bench for the booted machine.</h1>
+                    <p class="hero-subtitle">
+                        Session should feel like FraynixBoot in browser form: commands first, reviews and proofs directly behind them, and no brochure layer between you and the machine.
+                    </p>
+                    <div class="hero-actions">
+                        <button id="session-demo-run" class="btn secondary" type="button">Run guided demo</button>
+                        <a class="button-link primary" href="/companion">Open companion</a>
+                    </div>
+                </div>
+                <aside class="hero-panel">
+                    <div>
+                        <p class="eyebrow">Shell before dashboard</p>
+                        <p>Run the machine here first: `status`, `ai run native status`, `build desktop`, `exodus`, `maxheadroom`, review gates, and shell-native proof checks.</p>
+                    </div>
+                    <div>
+                        <p class="eyebrow">Review under load</p>
+                        <p>Proof reports, connectome contracts, selfbuild memory, and review gates stay here so the operator never loses the build thread while working live.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="section-stack">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Session shell spine</h2>
+                            <p class="panel-subtitle">The primary command families that should dominate this page before any architecture narrative does.</p>
+                        </div>
+                    </div>
+                    <div id="session-command-spine" class="empty-state">Loading session shell spine...</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Operator command lane</h2>
+                            <p class="panel-subtitle">Run practical commands without jumping pages.</p>
+                        </div>
+                    </div>
+                    <form id="session-run-form" class="terminal-shell">
+                        <textarea id="session-run-command" class="terminal-input" placeholder="Loading session shell deck..."></textarea>
+                        <div class="button-row">
+                            <button class="btn primary" type="submit">Run command</button>
+                        </div>
+                        <div id="session-quick-fills" class="button-row" style="margin-top: 12px;">Loading session shell deck...</div>
+                    </form>
+                    <pre id="session-output" class="terminal-output" style="margin-top: 14px;">Run a command to see output here.</pre>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Session summary</h2>
+                            <p class="panel-subtitle">Readable state from the shell command path itself.</p>
+                        </div>
+                    </div>
+                    <div id="session-metrics"></div>
+                    <pre id="session-status" class="terminal-output" style="margin-top: 18px;">Loading session status...</pre>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Grounded system state contract</h2>
+                            <p class="panel-subtitle">Structured SYSTEM_STATE envelope shared with Companion and CLI pathways.</p>
+                        </div>
+                    </div>
+                    <div id="session-system-state" class="empty-state">Loading grounded system state contract...</div>
+                </section>
+
+                <section class="panel">
+                    <details class="command-group">
+                        <summary>
+                            <div>
+                                <h2 class="panel-title">7-day connectome contract</h2>
+                                <p class="panel-subtitle">Week 1-4 nervous/sensory/memory/integration commitments, pinned to live source and tests.</p>
+                            </div>
+                        </summary>
+                        <div class="command-list">
+                            <div id="session-connectome-plan" class="empty-state">Loading 7-day connectome contract...</div>
+                        </div>
+                    </details>
+                </section>
+
+                <section class="panel">
+                    <details class="command-group">
+                        <summary>
+                            <div>
+                                <h2 class="panel-title">Guided demo</h2>
+                                <p class="panel-subtitle">Optional walkthrough lane.</p>
+                            </div>
+                        </summary>
+                        <div class="command-list">
+                            <div id="session-demo"></div>
+                        </div>
+                    </details>
+                </section>
+
+                <section id="session-review-stack" class="panel">
+                    <details class="command-group">
+                        <summary>
+                            <div>
+                                <h2 class="panel-title">Review queue</h2>
+                                <p class="panel-subtitle">Promotions that have been judged and are waiting for you.</p>
+                            </div>
+                        </summary>
+                        <div class="command-list">
+                            <div id="session-reviews" class="empty-state">Loading review queue...</div>
+                        </div>
+                    </details>
+                </section>
+
+                <section class="panel">
+                    <details class="command-group">
+                        <summary>
+                            <div>
+                                <h2 class="panel-title">Recent proof record</h2>
+                                <p class="panel-subtitle">The freshest live Fraynix proof artifact available in this workspace.</p>
+                            </div>
+                        </summary>
+                        <div class="command-list">
+                            <div id="session-proofs" class="empty-state">Loading live proof artifacts...</div>
+                        </div>
+                    </details>
+                </section>
+
+                <section class="panel">
+                    <details id="session-review-detail-stack" class="command-group">
+                        <summary>
+                            <div>
+                                <h2 class="panel-title">Review lens</h2>
+                                <p class="panel-subtitle">Read the proposed patch and proof summary before approving or rejecting.</p>
+                            </div>
+                        </summary>
+                        <div class="command-list">
+                            <div id="session-review-detail" class="empty-state">Choose a review from the queue to inspect its proof and patch directly in the shell.</div>
+                        </div>
+                    </details>
+                </section>
+
+                <section class="panel">
+                    <details class="command-group">
+                        <summary>
+                            <div>
+                                <h2 class="panel-title">Recent selfbuild runs</h2>
+                                <p class="panel-subtitle">What Fraynix has judged most recently against itself.</p>
+                            </div>
+                        </summary>
+                        <div class="command-list">
+                            <div id="session-selfbuild" class="empty-state">Loading recent selfbuild runs...</div>
+                        </div>
+                    </details>
+                </section>
+
+                <section class="panel">
+                    <details class="command-group">
+                        <summary>
+                            <div>
+                                <h2 class="panel-title">Substrate ledger</h2>
+                                <p class="panel-subtitle">Local model inventory, runtime lanes, and license-review posture from the current kernel substrate layer.</p>
+                            </div>
+                        </summary>
+                        <div class="command-list">
+                            <div id="session-ledger" class="empty-state">Loading substrate ledger...</div>
+                        </div>
+                    </details>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+</body>
+</html>

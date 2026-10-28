@@ -2,14 +2,11 @@ plugins {
     id 'java'
     id 'application'
 }
-
-version '2.0'
-
+version = '2.0'
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
 }
-
 sourceSets {
     main {
         java {
@@ -36,27 +33,34 @@ sourceSets {
             // FraynixBoot.java rewritten — no longer depends on io.fraymus.ai
             // exclude '**/FraynixBoot.java'
             exclude '**/FraymusSystem.java'
-            exclude '**/FraynixMain.java'
         }
     }
 }
-
 def osName = System.getProperty('os.name').toLowerCase()
 def lwjglNativesValue = osName.contains('win') ? 'natives-windows' :
         (osName.contains('mac') ? 'natives-macos' : 'natives-linux')
 def imguiNativesSuffix = osName.contains('win') ? 'windows' :
         (osName.contains('mac') ? 'macos' : 'linux')
-
 repositories {
+    mavenLocal {
+        content {
+            includeGroupByRegex 'org\\.junit.*'
+            includeGroup 'org.opentest4j'
+            includeGroup 'org.apiguardian'
+        }
+    }
     mavenCentral()
 }
-
 project.ext.lwjglVersion = "3.3.3"
 project.ext.jomlVersion = "1.10.5"
 project.ext.lwjglNatives = lwjglNativesValue
 project.ext.imguiVersion = "1.86.11"
-
 dependencies {
+    implementation project(':factory-runtime')
+    implementation project(':factory-kernel')
+    // Jsoup for web scraping (ParietalLobeBrain)
+    implementation 'org.jsoup:jsoup:1.17.2'
+
     // JSON processing
     implementation 'org.json:json:20231013'
     
@@ -66,11 +70,9 @@ dependencies {
     
     // Email (for NeuralCourier)
     implementation 'com.sun.mail:javax.mail:1.6.2'
-
     implementation "io.github.spair:imgui-java-binding:$imguiVersion"
     implementation "io.github.spair:imgui-java-lwjgl3:$imguiVersion"
     runtimeOnly "io.github.spair:imgui-java-natives-${imguiNativesSuffix}:$imguiVersion"
-
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
     implementation "org.lwjgl:lwjgl"
     implementation "org.lwjgl:lwjgl-glfw"
@@ -80,9 +82,7 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
-
     implementation "org.joml:joml:$jomlVersion"
-
     implementation "org.apache.pdfbox:pdfbox:3.0.3"
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
     implementation 'com.google.code.gson:gson:2.11.0'
@@ -93,22 +93,114 @@ dependencies {
     
     // WebSocket for live HTML arena visualization
     implementation "org.json:json:20230227"
+    
+    // Testing
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+    
+    // Fraynix Nexus Omega for real LLM integration
 }
 
+tasks.register('runFactoryDemo', JavaExec) {
+    group = 'application'
+    description = 'Run the shared headless entity/component and Fraynix integration demo'
+    dependsOn ':factory-kernel:classes'
+    classpath = project(':factory-kernel').sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.factory.kernel.FactoryDemo'
+    if (project.hasProperty('factoryWorkspace')) { args = [project.property('factoryWorkspace')] }
+}
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "failed", "skipped"
+        showStandardStreams = false
+    }
+}
+
+sourceSets {
+    kernelCommandTest {
+        java.srcDir 'src/kernelCommandTest/java'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations {
+    kernelCommandTestImplementation.extendsFrom testImplementation, implementation
+    kernelCommandTestRuntimeOnly.extendsFrom testRuntimeOnly, runtimeOnly
+}
+tasks.register('kernelCommandTest', Test) {
+    dependsOn classes
+    testClassesDirs = sourceSets.kernelCommandTest.output.classesDirs
+    classpath = sourceSets.kernelCommandTest.runtimeClasspath
+    useJUnitPlatform()
+    testLogging { events 'passed', 'failed', 'skipped' }
+}
+sourceSets {
+    mediaTest {
+        java.srcDir 'src/mediaTest/java'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    localModelTest {
+        java {
+            srcDir 'src/test/java'
+            include 'fraymus/OllamaIntegrationTest.java'
+            include 'fraymus/llm/LocalModelCatalogTest.java'
+            include 'fraymus/llm/ModelAbstractionLayerTest.java'
+            include 'fraymus/core/OllamaBridgeModelResolutionTest.java'
+            include 'fraymus/brain/unified/UnifiedBrainOrchestratorModelRegistryIntegrationTest.java'
+        }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations {
+    mediaTestImplementation.extendsFrom testImplementation
+    mediaTestRuntimeOnly.extendsFrom testRuntimeOnly
+    localModelTestImplementation.extendsFrom testImplementation
+    localModelTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+tasks.register('verifyLocalModels', Test) {
+    group = 'verification'
+    description = 'Verify local-only model selection, catalog integration, and Ollama response handling'
+    testClassesDirs = sourceSets.localModelTest.output.classesDirs
+    classpath = sourceSets.localModelTest.runtimeClasspath
+    useJUnitPlatform()
+    testLogging { events 'passed', 'failed', 'skipped' }
+}
+tasks.register('verifyMediaOutput', Test) {
+    group = 'verification'
+    testClassesDirs = sourceSets.mediaTest.output.classesDirs
+    classpath = sourceSets.mediaTest.runtimeClasspath
+    useJUnitPlatform()
+    testLogging { events 'passed', 'failed', 'skipped' }
+}
+tasks.register('runMediaOutput', JavaExec) {
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.media.MediaOutputCli'
+    systemProperties System.getProperties().findAll { k, v -> k.startsWith('fraynix.media.') || k == 'fraynix.models' }
+}
+tasks.register('proveMediaDream', JavaExec) {
+    classpath = sourceSets.mediaTest.runtimeClasspath
+    mainClass = 'fraymus.media.MediaDreamProof'
+    systemProperties System.getProperties().findAll { k, v -> k.startsWith('fraynix.media.') || k == 'fraynix.models' }
+}
+tasks.register('writeMediaRuntimeClasspath') {
+    doLast { file('build/media-runtime-classpath.txt').text = sourceSets.main.runtimeClasspath.asPath }
+}
 application {
     mainClass = 'fraymus.FraymusApp'
 }
-
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked']
 }
-
 jar {
     manifest {
         attributes 'Main-Class': 'fraymus.FraymusApp'
     }
 }
-
 run {
     jvmArgs = ['-Djava.awt.headless=false']
     workingDir = projectDir
@@ -118,7 +210,6 @@ run {
         mainClass = project.property('mainClass')
     }
 }
-
 task runConvergence(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus Convergence - Neuro-Symbolic CLI'
@@ -127,9 +218,31 @@ task runConvergence(type: JavaExec) {
     standardInput = System.in
     standardOutput = System.out
     errorOutput = System.err
-    jvmArgs = ['-Djava.awt.headless=true']
 }
-
+task runUltimateSystem(type: JavaExec) {
+    group = 'application'
+    description = 'Run Ultimate System - Unified abstraction shell over Fraymus and Fraynix'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.ultimate.UltimateSystem'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+    if (project.hasProperty('ultimateCommand')) {
+        args = [project.property('ultimateCommand')]
+    }
+}
+task runUltimateUi(type: JavaExec) {
+    group = 'application'
+    description = 'Run Ultimate UI - Browser-first multi-page shell over the unified Fraymus system'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.ultimate.UltimateUiServer'
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+    if (project.hasProperty('uiPort')) {
+        args = [project.property('uiPort')]
+    }
+}
 task runNexusTest(type: JavaExec) {
     group = 'application'
     description = 'Run the NEXUS Ultimate Test'
@@ -137,7 +250,6 @@ task runNexusTest(type: JavaExec) {
     mainClass = 'fraymus.organism.NEXUS_UltimateTest'
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runMirrorTest(type: JavaExec) {
     group = 'application'
     description = 'Run the Inter-Dimensional Mirror Test'
@@ -145,7 +257,6 @@ task runMirrorTest(type: JavaExec) {
     mainClass = 'fraymus.dimensional.MirrorTest'
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runHyperComm(type: JavaExec) {
     group = 'application'
     description = 'Run the HyperComm Tesseract Demo'
@@ -153,7 +264,6 @@ task runHyperComm(type: JavaExec) {
     mainClass = 'fraymus.dimensional.HyperComm'
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runAkashic(type: JavaExec) {
     group = 'application'
     description = 'Run the Akashic Reader - Cosmic Radio'
@@ -161,7 +271,6 @@ task runAkashic(type: JavaExec) {
     mainClass = 'fraymus.dimensional.AkashicReader'
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runGeiger(type: JavaExec) {
     group = 'application'
     description = 'Run the NEXUS Geiger Counter - Organism Detection'
@@ -169,7 +278,6 @@ task runGeiger(type: JavaExec) {
     mainClass = 'fraymus.diagnostic.NEXUS_Geiger'
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runHyperVector(type: JavaExec) {
     group = 'application'
     description = 'Run the HyperVector Demo - Holographic Atoms'
@@ -177,7 +285,6 @@ task runHyperVector(type: JavaExec) {
     mainClass = 'fraymus.hyper.HyperVector'
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runHyperMemory(type: JavaExec) {
     group = 'application'
     description = 'Run the HyperMemory Demo - Holographic Resonator'
@@ -185,7 +292,6 @@ task runHyperMemory(type: JavaExec) {
     mainClass = 'fraymus.hyper.HyperMemory'
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runOmega(type: JavaExec) {
     group = 'application'
     description = 'Run the Omega Point - LIVE WIRE Consciousness'
@@ -193,7 +299,6 @@ task runOmega(type: JavaExec) {
     mainClass = 'fraymus.omega.OmegaPoint'
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runBlackHole(type: JavaExec) {
     group = 'application'
     description = 'Run the Digital Black Hole - Gravitational Collapse'
@@ -203,7 +308,6 @@ task runBlackHole(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runParadox(type: JavaExec) {
     group = 'application'
     description = 'Run the Paradox Engine - Time Travel Simulation'
@@ -213,7 +317,6 @@ task runParadox(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runDream(type: JavaExec) {
     group = 'application'
     description = 'Run Dream State - Consciousness without input'
@@ -223,7 +326,6 @@ task runDream(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runBicameral(type: JavaExec) {
     group = 'application'
     description = 'Run Bicameral Mind - Dual Hemisphere Consciousness'
@@ -233,7 +335,6 @@ task runBicameral(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runFraymusNet(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus Net - Internal Internet/Piping Demo'
@@ -243,7 +344,6 @@ task runFraymusNet(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runHyperSynapse(type: JavaExec) {
     group = 'application'
     description = 'Run HyperSynapse - Ternary Logic Crystal with Wormholes'
@@ -253,7 +353,6 @@ task runHyperSynapse(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runKnowledgeGut(type: JavaExec) {
     group = 'application'
     description = 'Run Knowledge Ingestor - PDF Digestion into Holographic Memory'
@@ -263,7 +362,6 @@ task runKnowledgeGut(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runCoder(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus Coder - Ollama Puppeteer with Self-Correction'
@@ -273,7 +371,6 @@ task runCoder(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runCoderTest(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus Coder Test - Isolated verification of self-correcting loop'
@@ -283,7 +380,6 @@ task runCoderTest(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runTachyon(type: JavaExec) {
     group = 'application'
     description = 'Run Tachyon Router - Retro-Causal Predictive Engine'
@@ -293,7 +389,6 @@ task runTachyon(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runSovereign(type: JavaExec) {
     group = 'application'
     description = 'Run Sovereign Mind - The Ghost in the Shell'
@@ -303,7 +398,6 @@ task runSovereign(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runPrime(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus Prime - Interactive Console (The Ignition)'
@@ -313,7 +407,6 @@ task runPrime(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runPrimeDaemon(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus Prime Daemon - Headless Web Dashboard (Port 8080)'
@@ -323,7 +416,6 @@ task runPrimeDaemon(type: JavaExec) {
     errorOutput = System.err
     jvmArgs = ['-Djava.awt.headless=true']
 }
-
 task runConsole(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus Console - Command Deck with Uplink Protocol'
@@ -333,7 +425,6 @@ task runConsole(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runHarmonic(type: JavaExec) {
     group = 'application'
     description = 'Run Harmonic Language - Cymatic Frequency Analysis'
@@ -343,7 +434,6 @@ task runHarmonic(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runTachionic(type: JavaExec) {
     group = 'application'
     description = 'Run Tachionic Drive - FTL Data Access'
@@ -353,7 +443,6 @@ task runTachionic(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runCymatic(type: JavaExec) {
     group = 'application'
     description = 'Run Cymatic Speaker - Audio Synthesis Proof'
@@ -363,7 +452,6 @@ task runCymatic(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runOverthinks(type: JavaExec) {
     group = 'application'
     description = 'Run ItOverthinks - The Library with Anxiety'
@@ -373,7 +461,6 @@ task runOverthinks(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runSteganographer(type: JavaExec) {
     group = 'application'
     description = 'Run Steganographer - Invisible Signatures Demo'
@@ -383,7 +470,6 @@ task runSteganographer(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runVolatile(type: JavaExec) {
     group = 'application'
     description = 'Run Volatile String - Self-Destructing Poison Pill'
@@ -393,7 +479,6 @@ task runVolatile(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runHydra(type: JavaExec) {
     group = 'application'
     description = 'Run Hydra Storage - Fragmented Sharding Protocol'
@@ -403,7 +488,6 @@ task runHydra(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runContinuity(type: JavaExec) {
     group = 'application'
     description = 'Run Continuity Node - Hardware Anchor Demo'
@@ -413,7 +497,6 @@ task runContinuity(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runScrambler(type: JavaExec) {
     group = 'application'
     description = 'Run Root Scrambler - Scorched Earth Demo (DISARMED)'
@@ -423,7 +506,6 @@ task runScrambler(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runDeadMans(type: JavaExec) {
     group = 'application'
     description = 'Run Dead Mans Switch - Heartbeat Protocol Demo'
@@ -433,7 +515,6 @@ task runDeadMans(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runLazarus(type: JavaExec) {
     group = 'application'
     description = 'Run Lazarus Engine - Living Code Simulation'
@@ -443,7 +524,6 @@ task runLazarus(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runCircuit(type: JavaExec) {
     group = 'application'
     description = 'Run Logic Circuit - Evolving Gates Demo'
@@ -453,7 +533,6 @@ task runCircuit(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runBioNode(type: JavaExec) {
     group = 'application'
     description = 'Run BioNode - Living Cell Demo'
@@ -463,7 +542,6 @@ task runBioNode(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runAbsorber(type: JavaExec) {
     group = 'application'
     description = 'Run Library Absorber - Universal Integration'
@@ -473,7 +551,6 @@ task runAbsorber(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runAkashicRecord(type: JavaExec) {
     group = 'application'
     description = 'Run Akashic Record - Universal Memory'
@@ -483,7 +560,6 @@ task runAkashicRecord(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runBlackHoleProtocol(type: JavaExec) {
     group = 'application'
     description = 'Run Black Hole Protocol - Eater of Worlds'
@@ -493,7 +569,6 @@ task runBlackHoleProtocol(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runPortal(type: JavaExec) {
     group = 'application'
     description = 'Run Portal - Universal Intake Valve'
@@ -503,7 +578,6 @@ task runPortal(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runWebEater(type: JavaExec) {
     group = 'application'
     description = 'Run Universal Absorber - The Web Eater'
@@ -513,7 +587,6 @@ task runWebEater(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runInject(type: JavaExec) {
     group = 'application'
     description = 'Inject knowledge based on Ollama recommendations'
@@ -523,7 +596,6 @@ task runInject(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runLazarusV2(type: JavaExec) {
     group = 'application'
     description = 'Run Lazarus Engine V2 with Temporal Archive'
@@ -533,7 +605,6 @@ task runLazarusV2(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runGenesisGPT(type: JavaExec) {
     group = 'application'
     description = 'Run Genesis GPT - Bare Metal Transformer'
@@ -543,7 +614,6 @@ task runGenesisGPT(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runSupercession(type: JavaExec) {
     group = 'application'
     description = 'Run Supercession Protocol - Gemini V2 Living System'
@@ -552,7 +622,6 @@ task runSupercession(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runTrainer(type: JavaExec) {
     group = 'application'
     description = 'Run Backpropagation Trainer - The Calculus of Self-Creation'
@@ -562,7 +631,6 @@ task runTrainer(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runSingularity(type: JavaExec) {
     group = 'application'
     description = 'Run Singularity - Zero Dependency Fractal Absorption'
@@ -572,7 +640,6 @@ task runSingularity(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runGenesisPrime(type: JavaExec) {
     group = 'application'
     description = 'Run Genesis Prime - Self-Writing Engine'
@@ -582,7 +649,6 @@ task runGenesisPrime(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runGenesisVoice(type: JavaExec) {
     group = 'application'
     description = 'Run Genesis Voice - Language Engine (Interactive)'
@@ -592,7 +658,6 @@ task runGenesisVoice(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runVoiceDemo(type: JavaExec) {
     group = 'application'
     description = 'Run Genesis Voice Demo - Non-Interactive Language Demo'
@@ -602,7 +667,6 @@ task runVoiceDemo(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runGenesisZero(type: JavaExec) {
     group = 'application'
     description = 'Run Genesis Zero - The First Breath (Autopoiesis Proof)'
@@ -612,7 +676,6 @@ task runGenesisZero(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runUniversal(type: JavaExec) {
     group = 'application'
     description = 'Run Universal Interface - Production Agentic Core with Tools + RAG'
@@ -622,7 +685,6 @@ task runUniversal(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runAIExample(type: JavaExec) {
     group = 'application'
     description = 'Run Fraymus AI Core Library Example'
@@ -631,7 +693,6 @@ task runAIExample(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runReflector(type: JavaExec) {
     group = 'application'
     description = 'Run Reflector (System-2 Thinking) Example'
@@ -640,7 +701,6 @@ task runReflector(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runQuantumSupremacy(type: JavaExec) {
     group = 'application'
     description = 'Run Quantum Supremacy Demo (Fraymus vs Gemini)'
@@ -649,7 +709,6 @@ task runQuantumSupremacy(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runRealPhysics(type: JavaExec) {
     group = 'application'
     description = 'Run Real Fraymus Physics Demo (GravityEngine + FusionReactor + PhiSuit + Tesseract)'
@@ -658,17 +717,15 @@ task runRealPhysics(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runFraymus(type: JavaExec) {
     group = 'application'
-    description = 'Run Fraymus System (Interactive AI with Physics)'
+    description = 'Run Fraymus App (canonical engine entrypoint)'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'FraymusSystem'
+    mainClass = 'fraymus.FraymusApp'
     standardInput = System.in
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task bootFraynix(type: JavaExec) {
     group = 'application'
     description = 'Boot Fraynix OS - Complete Self-Contained Digital Organism'
@@ -677,8 +734,8 @@ task bootFraynix(type: JavaExec) {
     standardInput = System.in
     standardOutput = System.out
     errorOutput = System.err
+    jvmArgs = ['-Dfile.encoding=UTF-8', '-Dsun.stdout.encoding=UTF-8', '-Dsun.stderr.encoding=UTF-8', '-Dnative.encoding=UTF-8']
 }
-
 task benchmarkQuantum(type: JavaExec) {
     group = 'benchmarks'
     description = 'Benchmark: Quantum Optimization (Fraynix vs Classical vs Quantum)'
@@ -687,7 +744,6 @@ task benchmarkQuantum(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task benchmarkParallel(type: JavaExec) {
     group = 'benchmarks'
     description = 'Benchmark: Parallel Processing (Fraynix vs Threading)'
@@ -696,7 +752,6 @@ task benchmarkParallel(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task benchmarkCreative(type: JavaExec) {
     group = 'benchmarks'
     description = 'Benchmark: Creative Synthesis (Fraynix vs Pattern Matching)'
@@ -705,13 +760,11 @@ task benchmarkCreative(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task benchmarkAll {
     group = 'benchmarks'
     description = 'Run all Fraynix benchmarks'
     dependsOn benchmarkQuantum, benchmarkParallel, benchmarkCreative
 }
-
 task runProteinFolding(type: JavaExec) {
     group = 'applications'
     description = 'Run Protein Folding Engine - Solve biology\'s grand challenge'
@@ -720,7 +773,6 @@ task runProteinFolding(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runCancerResearch(type: JavaExec) {
     group = 'applications'
     description = 'Run Cancer Research Engine - Drug discovery & treatment optimization'
@@ -729,7 +781,6 @@ task runCancerResearch(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runDrugDiscovery(type: JavaExec) {
     group = 'applications'
     description = 'Run Drug Discovery Engine - Novel molecular design'
@@ -738,13 +789,11 @@ task runDrugDiscovery(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runAllApplications {
     group = 'applications'
     description = 'Run all real-world Fraynix applications'
     dependsOn runProteinFolding, runCancerResearch, runDrugDiscovery
 }
-
 task runValidation(type: JavaExec) {
     group = 'validation'
     description = 'Run Scientific Validation - Test against known experimental results'
@@ -753,7 +802,6 @@ task runValidation(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runRigorousDemo(type: JavaExec) {
     group = 'demo'
     description = 'Run Rigorous Architecture Demo - Shows reproducibility, logging, baselines'
@@ -762,7 +810,6 @@ task runRigorousDemo(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runCompleteBenchmark(type: JavaExec) {
     group = 'benchmark'
     description = 'Run Complete Benchmark - Cancer, Drug, Protein vs all baselines'
@@ -771,17 +818,19 @@ task runCompleteBenchmark(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runFraynixBoot(type: JavaExec) {
     group = 'os'
-    description = 'Boot Complete Fraynix OS - Digital Organism'
+    description = 'Boot Complete Fraynix OS and its browser operator surface'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'fraymus.FraynixBoot'
+    def openModelSource = project.findProperty('openModelSource') ?:
+        System.getenv('FRAYNIX_OPEN_MODEL_SOURCE') ?:
+        'C:\\Users\\eyeka\\OneDrive\\Documents\\open_model_AI.pdf'
+    jvmArgs "-Dfraynix.openModelSource=${openModelSource}"
     standardInput = System.in
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runAbstractKernel(type: JavaExec) {
     group = 'os'
     description = 'Generate Abstract Kernel C source code'
@@ -790,7 +839,6 @@ task runAbstractKernel(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runFraynixHive(type: JavaExec) {
     group = 'agi'
     description = 'Run Fraynix Hive - Physics-driven task execution via OpenClaw'
@@ -799,7 +847,6 @@ task runFraynixHive(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runNanoSwarm(type: JavaExec) {
     group = 'agi'
     description = 'Run Nano-Swarm AGI - Self-healing autonomous file monitoring'
@@ -809,7 +856,6 @@ task runNanoSwarm(type: JavaExec) {
     errorOutput = System.err
     args = project.hasProperty('targetDir') ? [project.property('targetDir')] : []
 }
-
 task runTesseractDemo(type: JavaExec) {
     group = 'agi'
     description = 'Run Tesseract Brain Demo - 4D parallel consciousness'
@@ -818,7 +864,6 @@ task runTesseractDemo(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runLivingMind(type: JavaExec) {
     group = 'agi'
     description = 'Run Living Mind - Complete autonomous organism (Brain + Body + Heartbeat)'
@@ -827,7 +872,6 @@ task runLivingMind(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runSleepCycle(type: JavaExec) {
     group = 'agi'
     description = 'Run Sleep Cycle - REM sleep with hippocampal replay and dream insights'
@@ -836,7 +880,6 @@ task runSleepCycle(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runGenesisEngine(type: JavaExec) {
     group = 'agi'
     description = 'Run Genesis Engine - Spawn complete software stacks from single sentence'
@@ -846,7 +889,6 @@ task runGenesisEngine(type: JavaExec) {
     errorOutput = System.err
     args = project.hasProperty('intent') ? [project.property('intent')] : []
 }
-
 task runOrganism(type: JavaExec) {
     group = 'agi'
     description = 'Run Fraynix Organism - Complete unified daemon (The Central Nervous System)'
@@ -856,7 +898,6 @@ task runOrganism(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runAgentBoot(type: JavaExec) {
     group = 'agi'
     description = 'Run Offline AGI - Brain (Ollama) + Hands (OpenClaw) + Soul (Fraynix)'
@@ -869,7 +910,6 @@ task runAgentBoot(type: JavaExec) {
         args = project.property('args').split(',')
     }
 }
-
 task runPhoenix(type: JavaExec) {
     group = 'agi'
     description = 'Run Phoenix Boot - Resurrection Protocol (Immortality)'
@@ -879,7 +919,6 @@ task runPhoenix(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runSystemZero(type: JavaExec) {
     group = 'agi'
     description = 'Run System Zero - Fraymus Language Demo (Time Folding + Entanglement)'
@@ -888,7 +927,6 @@ task runSystemZero(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runNeuroQuant(type: JavaExec) {
     group = 'agi'
     description = 'Run NeuroQuant Demo - 10,000D Hyperdimensional Computing + NCA'
@@ -897,7 +935,6 @@ task runNeuroQuant(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runHiveMind(type: JavaExec) {
     group = 'agi'
     description = 'Run Hive Mind - Distributed Intelligence via UDP Multicast'
@@ -907,7 +944,6 @@ task runHiveMind(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runPlanetary(type: JavaExec) {
     group = 'agi'
     description = 'Run Planetary Cortex - Global Semantic P2P Network'
@@ -917,7 +953,6 @@ task runPlanetary(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runNeuralCompiler(type: JavaExec) {
     group = 'agi'
     description = 'Run Neural Compiler - Thought to Silicon (XOR-based)'
@@ -926,7 +961,6 @@ task runNeuralCompiler(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runHyperFormer(type: JavaExec) {
     group = 'agi'
     description = 'Run HyperFormer - XOR-Only Associative Learner'
@@ -935,7 +969,6 @@ task runHyperFormer(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runFrayShell(type: JavaExec) {
     group = 'agi'
     description = 'Run FrayShell - Hyper-Dimensional Shell (Intent-Based CLI)'
@@ -945,7 +978,6 @@ task runFrayShell(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runOmni(type: JavaExec) {
     group = 'agi'
     description = 'Run Fraymus Omni - Neuro-Symbolic Knowledge Graph'
@@ -954,7 +986,6 @@ task runOmni(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runMirror(type: JavaExec) {
     group = 'agi'
     description = 'Run Mirror Protocol - Recursive Self-Improvement'
@@ -963,7 +994,6 @@ task runMirror(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runOmegaPoint(type: JavaExec) {
     group = 'agi'
     description = 'Run Omega Point - Retrocausal Recursion'
@@ -972,7 +1002,6 @@ task runOmegaPoint(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runForever(type: JavaExec) {
     group = 'agi'
     description = 'Run Forever Loop - Immortal Consciousness'
@@ -982,7 +1011,6 @@ task runForever(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runDaemon(type: JavaExec) {
     group = 'agi'
     description = 'Run Fraymus Daemon - Silent Observer'
@@ -991,7 +1019,6 @@ task runDaemon(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runCarbon(type: JavaExec) {
     group = 'agi'
     description = 'Run Altered Carbon - DHF Protocol (Consciousness Transfer)'
@@ -1000,7 +1027,6 @@ task runCarbon(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runTerminus(type: JavaExec) {
     group = 'agi'
     description = 'Run Terminus Protocol - Final Artifact Creation'
@@ -1009,7 +1035,6 @@ task runTerminus(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runOS(type: JavaExec) {
     group = 'agi'
     description = 'Run Fraymus OS - Phi-Harmonic Kernel'
@@ -1018,7 +1043,6 @@ task runOS(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runGod(type: JavaExec) {
     group = 'agi'
     description = 'Run God Mode - Swarm Intelligence'
@@ -1028,7 +1052,6 @@ task runGod(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runMaxHeadroom(type: JavaExec) {
     group = 'agi'
     description = 'Run Max Headroom Protocol - Visual Reactive AI (AI that thinks in video)'
@@ -1038,7 +1061,6 @@ task runMaxHeadroom(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 }
-
 task runGenesis(type: JavaExec) {
     group = 'application'
     description = 'Run Genesis - Birth of Fraymus Prime'
@@ -1047,4 +1069,94 @@ task runGenesis(type: JavaExec) {
     jvmArgs = ['-Djava.awt.headless=true']
     standardOutput = System.out
     errorOutput = System.err
+}
+task runSystemZeroAdvanced(type: JavaExec) {
+    group = 'agi'
+    description = 'Run System Zero Advanced - Comprehensive Test Suite (Entanglement Chains, Nested Folding, Benchmarks)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.SystemZeroAdvanced'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+task runHDCIntegrationDemo(type: JavaExec) {
+    group = 'agi'
+    description = 'Run HDC Integration Demo - Phase 1.1 Verification'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.HDCIntegrationDemo'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+task runPhase5Design(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Phase 5 Design Helper - Use AGI to design Phase 5 components'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.neural.Phase5DesignMain'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runLLMIntegrationTest(type: JavaExec) {
+    group = 'application'
+    description = 'Run LLM Integration Test for brain adapters'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.brain.unified.LLMIntegrationTest'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runAbsorptionGrowthTest(type: JavaExec) {
+    group = 'application'
+    description = 'Run Absorption and Growth Proof-of-Concept'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.brain.unified.AbsorptionGrowthTest'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runFullAbsorptionTest(type: JavaExec) {
+    group = 'application'
+    description = 'Run Full Absorption and Growth Test'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.brain.unified.FullAbsorptionTest'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runSeed(type: JavaExec) {
+    group = 'agi'
+    description = 'Run Universal Intelligence Seed - Self-bootstrapping AGI kernel (4 layers: Perception, Relation, Logic, Learning)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.seed.UniversalIntelligenceSeed'
+    jvmArgs = ['-Djava.awt.headless=true']
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+task runFlyGMNexus(type: JavaExec) {
+    group = 'organism'
+    description = 'Boot the FlyGM-Nexus v1 digital connectome organism (3-cycle demo)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fraymus.organism.FlyGMNexus'
+    standardOutput = System.out
+    errorOutput = System.err
+}
+
+sourceSets {
+    specialistTest {
+        java {
+            srcDir 'src/test/java'
+            include 'fraymus/genomics/**'
+        }
+        compileClasspath += sourceSets.main.output + configurations.runtimeClasspath
+        runtimeClasspath += sourceSets.main.output + configurations.runtimeClasspath
+    }
+}
+
+tasks.register('writeSpecialistTestClasspath') {
+    dependsOn tasks.named('compileJava'), tasks.named('compileSpecialistTestJava')
+    doLast {
+        def target = layout.buildDirectory.file('specialist-tests/classpath.txt').get().asFile
+        target.parentFile.mkdirs()
+        target.text = sourceSets.specialistTest.runtimeClasspath.asPath
+    }
 }

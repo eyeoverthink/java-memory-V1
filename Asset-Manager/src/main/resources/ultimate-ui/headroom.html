@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraymus Nexus | Headroom</title>
+    <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body data-page="headroom">
+    <div class="layout">
+        <aside class="sidebar">
+            <a class="brand" href="/">
+                <span class="brand-mark">FN</span>
+                <span class="brand-copy">
+                    <span class="brand-label">Kernel, boot, and broadcast surface for the Fraynix offline AGI organism</span>
+                    <span class="brand-title">Fraymus Nexus</span>
+                </span>
+            </a>
+            <nav id="sidebar-nav" class="nav-list"></nav>
+            <section id="sidebar-meta" class="nav-meta"></section>
+        </aside>
+
+        <main class="content">
+            <section class="hero">
+                <div>
+                    <span class="hero-kicker">Headroom // live shell</span>
+                    <h1 class="hero-title">Boot face for the offline organism.</h1>
+                    <p class="hero-subtitle">
+                        Headroom is not decorative. It is the visible signal tied to FraynixBoot, the broadcast controller, the Fraymus arena,
+                        and the command surface you actually operate.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button-link primary" href="/launchpad">Open launchpad</a>
+                        <a class="button-link secondary" href="/session">Open session lane</a>
+                        <a class="button-link ghost" href="/runtime">Open runtime</a>
+                    </div>
+                </div>
+                <aside class="hero-panel">
+                    <div>
+                        <p class="eyebrow">Broadcast lane</p>
+                        <p>HeadroomInterface and MaxHeadroomLive keep the signal social, but the shell stays anchored to kernel truth.</p>
+                    </div>
+                    <div>
+                        <p class="eyebrow">Kernel lane</p>
+                        <p>FraynixBoot, FraymusNexus, and FraymusUI stay first-class beneath the face, not hidden behind branding.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="section-stack">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Kernel spine</h2>
+                            <p class="panel-subtitle">The original boot, factory, broadcast, and cockpit pillars restored as first-class Headroom context.</p>
+                        </div>
+                    </div>
+                    <div id="headroom-kernel-spine" class="empty-state">Loading kernel spine...</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Signal presence</h2>
+                            <p class="panel-subtitle">The visible shell of Fraynix, now shown as a broadcast surface backed by real boot and runtime state.</p>
+                        </div>
+                    </div>
+                    <div id="headroom-presence" class="empty-state">Rendering signal presence...</div>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Mode transition</h2>
+                                <p class="panel-subtitle">Switch between broadcast emphasis and wider cognition without losing the operator frame.</p>
+                            </div>
+                        </div>
+                        <div id="headroom-mode" class="empty-state">Loading Headroom and Garden modes...</div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Emotional state</h2>
+                                <p class="panel-subtitle">Signal posture shown as interface behavior and workload pressure, not fake biology.</p>
+                            </div>
+                        </div>
+                        <div id="headroom-emotion" class="empty-state">Calculating visible signal state...</div>
+                    </section>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Cognitive atmosphere</h2>
+                            <p class="panel-subtitle">Visible scale, backlog, runtime pressure, and command readiness as part of the living shell.</p>
+                        </div>
+                    </div>
+                    <div id="headroom-atmosphere" class="empty-state">Reading atmospheric cognition signals...</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Headroom signal</h2>
+                            <p class="panel-subtitle">Go live, speak, broadcast selected thought images, and pulse the signal from Fraynix's embodied visual shell.</p>
+                        </div>
+                    </div>
+                    <div id="companion-headroom" class="empty-state">Loading Headroom signal state...</div>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Signal posture</h2>
+                                <p class="panel-subtitle">Live model, media readiness, and signal-state posture for the Headroom surface.</p>
+                            </div>
+                        </div>
+                        <div id="companion-status"></div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Selected context</h2>
+                                <p class="panel-subtitle">The current thought image or audio grounding the signal should use.</p>
+                            </div>
+                        </div>
+                        <div id="companion-selection" class="empty-state">No visual or audio context selected yet.</div>
+                    </section>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Companion thread</h2>
+                                <p class="panel-subtitle">Recent local exchange feeding the Headroom signal with language and context.</p>
+                            </div>
+                        </div>
+                        <div id="companion-thread" class="empty-state">Loading companion transcript...</div>
+                        <form id="companion-form" class="terminal-shell" style="margin-top: 18px;">
+                            <textarea id="companion-prompt" class="terminal-input" placeholder="Ask Fraynix something, then route it through Headroom."></textarea>
+                            <div id="companion-quick-prompts" class="button-row" style="margin-top: 12px;"></div>
+                            <div class="button-row" style="margin-top: 12px;">
+                                <button class="btn primary" type="submit">Send to Fraynix</button>
+                                <button class="btn secondary" type="button" data-companion-dream="true">Dream visual</button>
+                            </div>
+                            <div id="companion-dream-status" class="empty-state" style="margin-top: 12px;">No dream visual manifested yet.</div>
+                        </form>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Local visual library</h2>
+                                <p class="panel-subtitle">Thought images and dream artifacts the Headroom surface can project into the signal.</p>
+                            </div>
+                        </div>
+                        <div id="companion-visual-library" class="empty-state">Loading local visual library...</div>
+                    </section>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Local audio library</h2>
+                            <p class="panel-subtitle">Local audio artifacts Fraynix can inspect while you build the signal context.</p>
+                        </div>
+                    </div>
+                    <div id="companion-audio-library" class="empty-state">Loading local audio library...</div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraymus Nexus | Knowledge</title>
+    <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body data-page="knowledge">
+    <div class="layout">
+        <aside class="sidebar">
+            <a class="brand" href="/">
+                <span class="brand-mark">FN</span>
+                <span class="brand-copy">
+                    <span class="brand-label">Kernel, boot, factory, broadcast, and native runtime surface for the Fraynix offline AGI organism</span>
+                    <span class="brand-title">Fraymus Nexus</span>
+                </span>
+            </a>
+            <nav id="sidebar-nav" class="nav-list"></nav>
+            <section id="sidebar-meta" class="nav-meta"></section>
+        </aside>
+
+        <main class="content">
+            <section class="hero">
+                <div>
+                    <span class="hero-kicker">Source memory</span>
+                    <h1 class="hero-title">Docs should answer to the machine.</h1>
+                    <p class="hero-subtitle">
+                        Knowledge exists to support boot, build, broadcast, and execution. Search, graph, math, and docs matter here because they anchor the machine back to source truth, not because they make a prettier story.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button-link primary" href="/artifacts/ultimate-architecture.md" target="_blank" rel="noreferrer">Open architecture markdown</a>
+                        <a class="button-link secondary" href="/artifacts/ultimate-knowledge-graph.json" target="_blank" rel="noreferrer">Open graph JSON</a>
+                        <a class="button-link secondary" href="/artifacts/fraynix-math-canon.md" target="_blank" rel="noreferrer">Open math canon</a>
+                    </div>
+                </div>
+                <aside class="hero-panel">
+                    <div>
+                        <p class="eyebrow">Operator memory</p>
+                        <p>The page is powered by the live repo index, but it should stay loyal to FraynixBoot, FraymusNexus, Headroom, and the shell menu that gave those docs meaning.</p>
+                    </div>
+                    <div>
+                        <p class="eyebrow">Grounded previews</p>
+                        <p>Search hits resolve back to indexed file previews so you can verify what the system is actually reading before you let the browser retell it.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="section-stack">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Operator anchors</h2>
+                            <p class="panel-subtitle">The original Fraynix pillars that the graph, docs, and math canon should keep answering to.</p>
+                        </div>
+                    </div>
+                    <div id="knowledge-legacy-spine" class="empty-state">Loading operator anchors...</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Knowledge summary</h2>
+                            <p class="panel-subtitle">The size and shape of the current knowledge footprint.</p>
+                        </div>
+                    </div>
+                    <div id="knowledge-summary"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Grounded system state contract</h2>
+                            <p class="panel-subtitle">Shared SYSTEM_STATE envelope from the same truth endpoint used across the operator shell.</p>
+                        </div>
+                    </div>
+                    <div id="knowledge-system-state" class="empty-state">Loading grounded system state contract...</div>
+                </section>
+
+                <section class="card-grid">
+                    <section id="knowledge-modules" class="panel"></section>
+                    <section id="knowledge-signals" class="panel"></section>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Live operator map</h2>
+                                <p class="panel-subtitle">The exported graph, rendered back into AGI lanes inside the browser shell.</p>
+                            </div>
+                        </div>
+                        <div id="knowledge-graph-map" class="empty-state">Loading the live operator map...</div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Graph semantics</h2>
+                                <p class="panel-subtitle">Lane legend, grouping policy, and renderer-facing cluster metadata from the operator record.</p>
+                            </div>
+                        </div>
+                        <div id="knowledge-graph-brief" class="empty-state">Loading graph semantics...</div>
+                    </section>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Math canon</h2>
+                                <p class="panel-subtitle">Core constants, Fraynix-native math families, and major AI math families rendered live inside the shell.</p>
+                            </div>
+                        </div>
+                        <div id="knowledge-math-canon" class="empty-state">Loading the Fraynix math canon...</div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Implementation anchors</h2>
+                                <p class="panel-subtitle">Jump from the mathematical spine into the subsystems and file-bearing lanes that embody it.</p>
+                            </div>
+                        </div>
+                        <div id="knowledge-math-anchors" class="empty-state">Loading mathematical implementation anchors...</div>
+                    </section>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Search the index</h2>
+                                <p class="panel-subtitle">Look across docs, code, build files, and readmes.</p>
+                            </div>
+                        </div>
+                        <form id="knowledge-search-form" class="search-shell">
+                            <input id="knowledge-search-input" class="search-input" type="search" placeholder="Search for phi, nexus, kernel, readme, graph, memory...">
+                            <div class="button-row">
+                                <button class="btn primary" type="submit">Search</button>
+                            </div>
+                        </form>
+                        <div id="knowledge-results" style="margin-top: 18px;"></div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Preview</h2>
+                                <p class="panel-subtitle">Click a result to see the indexed preview block.</p>
+                            </div>
+                        </div>
+                        <div id="knowledge-preview" class="empty-state">Choose a search result to preview its indexed content.</div>
+                    </section>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Anchor docs</h2>
+                                <p class="panel-subtitle">Top readmes and markdown files in the abstraction layer.</p>
+                            </div>
+                        </div>
+                        <div id="knowledge-readmes"></div>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Current abstract</h2>
+                                <p class="panel-subtitle">The repo-wide synthesis generated by the ultimate shell.</p>
+                            </div>
+                        </div>
+                        <pre id="knowledge-abstract" class="code-block"></pre>
+                    </section>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Artifacts</h2>
+                            <p class="panel-subtitle">Generated architecture outputs for external tools and human inspection.</p>
+                        </div>
+                    </div>
+                    <div id="knowledge-artifacts"></div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+</body>
+</html>

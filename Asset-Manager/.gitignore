@@ -3,6 +3,13 @@
 *.war
 *.ear
 *.log
+*.pem
+obsidian/open-code-api.md
+obsidian/open-code-api.md.backup
+hs_err_pid*.log
+.akashic/blocks.dat
+brain_architecture/.brain_memory/
+brain_architecture/.northstar-kernel/
 target/
 build/
 out/
@@ -12,8 +19,9 @@ out/
 *.swp
 *.swo
 .gradle/
-gradle/
-gradlew
-gradlew.bat
 data/
 bin/
+node_modules/
+
+# The wrapper jar is the one jar a clone needs in order to boot.
+!gradle/wrapper/gradle-wrapper.jar

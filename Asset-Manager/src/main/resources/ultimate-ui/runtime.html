@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraymus Nexus | Runtime</title>
+    <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body data-page="runtime">
+    <div class="layout">
+        <aside class="sidebar">
+            <a class="brand" href="/">
+                <span class="brand-mark">FN</span>
+                <span class="brand-copy">
+                    <span class="brand-label">Kernel, boot, factory, broadcast, and native runtime surface for the Fraynix offline AGI organism</span>
+                    <span class="brand-title">Fraymus Nexus</span>
+                </span>
+            </a>
+            <nav id="sidebar-nav" class="nav-list"></nav>
+            <section id="sidebar-meta" class="nav-meta"></section>
+        </aside>
+
+        <main class="content">
+            <section class="hero">
+                <div>
+                    <span class="hero-kicker">Kernel body</span>
+                    <h1 class="hero-title">Native body under the shell.</h1>
+                    <p class="hero-subtitle">
+                        Runtime is the in-process body FraynixBoot wakes: kernel controls, proof lanes, recent native events, and direct actions that move the organism without pretending they are separate from the shell.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button-link primary" href="/launchpad">Open browser command runner</a>
+                        <a class="button-link secondary" href="/surfaces">See native command groups</a>
+                    </div>
+                </div>
+                <aside class="hero-panel">
+                    <div>
+                        <p class="eyebrow">Booted body</p>
+                        <p>Aether, braid, qbox, nexus, miving, gravity, and fusion are body controls under the same boot discipline the shell uses.</p>
+                    </div>
+                    <div>
+                        <p class="eyebrow">Proof before ornament</p>
+                        <p>The runtime page should prove native state and control, not decorate it. This is where browser UX meets the body of the machine.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="section-stack">
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Kernel spine</h2>
+                                <p class="panel-subtitle">The original operator pillars that the runtime body is still serving underneath the browser shell.</p>
+                            </div>
+                        </div>
+                        <div id="runtime-legacy-spine" class="empty-state">Loading kernel spine...</div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Runtime command spine</h2>
+                                <p class="panel-subtitle">The command families that should remain one hop away while you are operating the native body.</p>
+                            </div>
+                        </div>
+                        <div id="runtime-command-spine" class="empty-state">Loading runtime command spine...</div>
+                    </section>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Runtime AGI role</h2>
+                            <p class="panel-subtitle">How the native runtime sits inside the wider Fraynix organism.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-role"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Math family focus</h2>
+                            <p class="panel-subtitle">Promote the runtime actions and subsystem paths that best match the active mathematical lane.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-math-focus" class="empty-state">Choose a math family from Knowledge to drive the runtime lens from the mathematical side.</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Living proof focus</h2>
+                            <p class="panel-subtitle">Promote the runtime actions and subsystem paths that best match the active living proof lane.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-proof-focus" class="empty-state">Choose a living proof lane from Surfaces to drive the runtime lens from the proof side.</div>
+                </section>
+
+                <section class="panel" data-runtime-panel="focus">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Runtime focus lens</h2>
+                            <p class="panel-subtitle">Deep-linked runtime panel and action context for the selected subsystem.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-focus" class="empty-state">Open a runtime-aware subsystem from the operator map to focus its live panel here.</div>
+                </section>
+
+                <section class="panel" data-runtime-panel="summary">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Runtime summary</h2>
+                            <p class="panel-subtitle">State from the current immortal kernel snapshot, framed as part of the living Fraynix system.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-metrics"></div>
+                </section>
+
+                <section class="panel" data-runtime-panel="system-state">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Grounded system state contract</h2>
+                            <p class="panel-subtitle">Shared SYSTEM_STATE envelope from the same truth endpoint used by Session, Companion, and Knowledge.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-system-state" class="empty-state">Loading grounded system state contract...</div>
+                </section>
+
+                <section class="card-grid">
+                    <section class="panel" data-runtime-panel="actions">
+                        <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Runtime / factory actions</h2>
+                            <p class="panel-subtitle">Wake the kernel body, then keep factory, exodus, and broadcast exits one hop away.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-actions" class="button-row"></div>
+                    <pre id="runtime-output" class="terminal-output" style="margin-top: 18px;">Choose an action to send a live command through the runtime.</pre>
+                    </section>
+
+                    <section class="panel" data-runtime-panel="status">
+                        <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Kernel status</h2>
+                            <p class="panel-subtitle">Structured state plus the raw native status report, with AGI-role context.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-status"></div>
+                </section>
+                </section>
+
+                <section class="panel" data-runtime-panel="events">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Recent events</h2>
+                            <p class="panel-subtitle">Latest aether, nexus, miving, gravity, and fusion transitions.</p>
+                        </div>
+                    </div>
+                    <div id="runtime-events"></div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+</body>
+</html>

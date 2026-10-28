@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraymus Nexus | Launchpad</title>
+    <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body data-page="launchpad">
+    <div class="layout">
+        <aside class="sidebar">
+            <a class="brand" href="/">
+                <span class="brand-mark">FN</span>
+                <span class="brand-copy">
+                    <span class="brand-label">Kernel, boot, and broadcast surface for the Fraynix offline AGI organism</span>
+                    <span class="brand-title">Fraymus Nexus</span>
+                </span>
+            </a>
+            <nav id="sidebar-nav" class="nav-list"></nav>
+            <section id="sidebar-meta" class="nav-meta"></section>
+        </aside>
+
+        <main class="content">
+            <section class="hero">
+                <div>
+                    <span class="hero-kicker">Browser command deck</span>
+                    <h1 class="hero-title">Run the menu like Fraynix means it.</h1>
+                    <p class="hero-subtitle">
+                        Launchpad should feel like the Fraynix shell in browser form: boot commands, build lanes, bare-metal paths,
+                        runtime inspection, and direct execution without losing the kernel.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button-link primary" href="/runtime">Open runtime controls</a>
+                        <a class="button-link secondary" href="/">Open Headroom</a>
+                        <a class="button-link ghost" href="/surfaces">Open surfaces</a>
+                    </div>
+                </div>
+                <aside class="hero-panel">
+                    <div>
+                        <p class="eyebrow">Command truth</p>
+                        <p>The browser runner follows the Fraynix menu hierarchy instead of hiding it behind generic presets.</p>
+                    </div>
+                    <div>
+                        <p class="eyebrow">Boot first</p>
+                        <p>FraynixBoot, bare-metal build lanes, and runtime proof commands stay visible before subsystem brochure copy does.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="section-stack">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Primary menu spine</h2>
+                            <p class="panel-subtitle">The shell families that should dominate launchpad behavior and natural-language routing.</p>
+                        </div>
+                    </div>
+                    <div id="launchpad-command-spine"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Launchpad role map</h2>
+                            <p class="panel-subtitle">How this runner relates to the restored boot, factory, broadcast, and operator spine.</p>
+                        </div>
+                    </div>
+                    <div id="launchpad-role"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Presets</h2>
+                            <p class="panel-subtitle">High-signal commands pulled from the primary Fraynix menu rather than generic browser shortcuts.</p>
+                        </div>
+                    </div>
+                    <div id="launchpad-presets" class="button-row"></div>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Command runner</h2>
+                                <p class="panel-subtitle">Send a command through the ultimate shell and read the response below.</p>
+                            </div>
+                        </div>
+                        <form id="launchpad-form" class="terminal-shell">
+                            <textarea id="launchpad-command" class="terminal-input" placeholder="Try: status&#10;Try: build desktop&#10;Try: exodus&#10;Try: maxheadroom&#10;Try: native status"></textarea>
+                            <div class="button-row">
+                                <button class="btn primary" type="submit">Run command</button>
+                            </div>
+                        </form>
+                        <pre id="launchpad-output" class="terminal-output"></pre>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Launch routes</h2>
+                                <p class="panel-subtitle">Fast-fill the runner with subsystem inspection and routing commands while keeping the kernel/menu context in view.</p>
+                            </div>
+                        </div>
+                        <div id="launchpad-routes" class="card-grid"></div>
+                    </section>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+</body>
+</html>

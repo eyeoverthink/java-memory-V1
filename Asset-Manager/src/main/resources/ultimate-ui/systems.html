@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraymus Nexus | Systems</title>
+    <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body data-page="systems">
+    <div class="layout">
+        <aside class="sidebar">
+            <a class="brand" href="/">
+                <span class="brand-mark">FN</span>
+                <span class="brand-copy">
+                    <span class="brand-label">Kernel, boot, factory, broadcast, and native runtime surface for the Fraynix offline AGI organism</span>
+                    <span class="brand-title">Fraymus Nexus</span>
+                </span>
+            </a>
+            <nav id="sidebar-nav" class="nav-list"></nav>
+            <section id="sidebar-meta" class="nav-meta"></section>
+        </aside>
+
+        <main class="content">
+            <section class="hero">
+                <div>
+                    <span class="hero-kicker">Organism registry</span>
+                    <h1 class="hero-title">Read the machine from its organs.</h1>
+                    <p class="hero-subtitle">
+                        The subsystem atlas should start from the old Fraynix spine and then fan outward into families, role strata, and proof lanes. This page exists to tell you what organ you are touching when you touch the machine.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button-link primary" href="/surfaces">See command surfaces</a>
+                        <a class="button-link secondary" href="/launchpad">Route commands</a>
+                    </div>
+                </div>
+                <aside class="hero-panel">
+                    <div>
+                        <p class="eyebrow">Factory and broadcast roots</p>
+                        <p>The registry only matters if it stays tied to boot, factory, broadcast, cockpit, and the live shell instead of becoming a floating taxonomy.</p>
+                    </div>
+                    <div>
+                        <p class="eyebrow">Registry with operator context</p>
+                        <p>Family still matters, but the page should read systems as working organs inside Fraynix, not as detached cards in a browser catalog.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="section-stack">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Operator origin</h2>
+                            <p class="panel-subtitle">The restored boot, factory, broadcast, cockpit, and live-signal pillars behind the subsystem registry.</p>
+                        </div>
+                    </div>
+                    <div id="systems-legacy-spine" class="empty-state">Loading operator origin...</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Registry summary</h2>
+                            <p class="panel-subtitle">How many subsystems are currently wired into the abstraction layer, and how they distribute across AGI roles.</p>
+                        </div>
+                    </div>
+                    <div id="systems-summary"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">AGI role summary</h2>
+                            <p class="panel-subtitle">Subsystem density across governing, cognition, organism, absorption, proof, and substrate lanes.</p>
+                        </div>
+                    </div>
+                    <div id="systems-strata"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Math family focus</h2>
+                            <p class="panel-subtitle">Use the Fraynix math canon to sort and highlight the subsystems that embody the active mathematical lane.</p>
+                        </div>
+                    </div>
+                    <div id="systems-math-focus" class="empty-state">Choose a math family from Knowledge to drive the subsystem atlas from the mathematical side.</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Living proof focus</h2>
+                            <p class="panel-subtitle">Use the living proof lanes from Surfaces to sort and highlight the subsystems that embody Morse, Ouroboros, organism validation, proof, or substrate transduction.</p>
+                        </div>
+                    </div>
+                    <div id="systems-proof-focus" class="empty-state">Choose a living proof lane from Surfaces to drive the subsystem atlas from the proof side.</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Family filters</h2>
+                            <p class="panel-subtitle">Shift between orchestration, interface, AI, OS, science, and more without losing the AGI-role framing.</p>
+                        </div>
+                    </div>
+                    <div id="systems-filters" class="button-row"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Focused subsystem lens</h2>
+                            <p class="panel-subtitle">Deep-linked system context, routing, and next actions for the currently selected subsystem.</p>
+                        </div>
+                    </div>
+                    <div id="systems-focus" class="empty-state">Select a subsystem from the operator map to open its focused lens here.</div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Subsystem cards</h2>
+                            <p class="panel-subtitle">The strongest launch surfaces, paths, capabilities, and AGI-role strata in your workspace.</p>
+                        </div>
+                    </div>
+                    <div id="systems-grid" class="card-grid"></div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+</body>
+</html>

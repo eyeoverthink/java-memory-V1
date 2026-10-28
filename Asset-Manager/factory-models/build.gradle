@@ -1,0 +1,31 @@
+plugins { id 'java-library' }
+group = 'ai.fraymus'
+version = '0.1.0'
+repositories { mavenCentral() }
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+dependencies { implementation 'org.json:json:20231013' }
+sourceSets.main.java {
+    srcDirs = ['src/main/java', '../src/main/java']
+    include 'fraymus/factory/models/**'
+    include 'fraymus/OllamaIntegration.java'
+    // Shared JDK-only JSON parser used by catalog discovery and Ollama protocols.
+    include 'fraymus/core/FraymusJSON.java'
+    ['CapabilityProfile', 'ModelBackend', 'ModelDescriptor', 'ModelRole', 'ModelSelectionPolicy',
+     'ModelSelectionResult', 'OpenModelRegistry', 'ModelAbstractionLayer', 'LocalModelCatalog', 'SpecialistModelRegistry'].each {
+        include "fraymus/llm/${it}.java"
+    }
+    ['CapabilityProfile', 'ModelDescriptor', 'ModelAdapter', 'LocalOllamaModelAdapter'].each {
+        include "fraymus/model/${it}.java"
+    }
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.named('test') { enabled = false }
+tasks.register('verifyModels', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'fraymus.factory.models.FactoryModelsTest'
+}
+tasks.named('check') { dependsOn 'verifyModels' }

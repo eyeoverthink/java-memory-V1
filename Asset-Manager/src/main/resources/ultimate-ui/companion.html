@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraymus Nexus | Companion</title>
+    <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body data-page="companion">
+    <div class="layout">
+        <aside class="sidebar">
+            <a class="brand" href="/">
+                <span class="brand-mark">FN</span>
+                <span class="brand-copy">
+                    <span class="brand-label">Kernel, boot, factory, broadcast, and native runtime surface for the Fraynix offline AGI organism</span>
+                    <span class="brand-title">Fraymus Nexus</span>
+                </span>
+            </a>
+            <nav id="sidebar-nav" class="nav-list"></nav>
+            <section id="sidebar-meta" class="nav-meta"></section>
+        </aside>
+
+        <main class="content">
+            <section class="hero">
+                <div>
+                    <span class="hero-kicker">Companion // mouth lane</span>
+                    <h1 class="hero-title">Ground the organism before it broadcasts.</h1>
+                    <p class="hero-subtitle">
+                        Companion is the local mouth under Headroom: text, image, and audio grounding before the signal goes live. Use it to stage context, inspect local media, and keep the exchange tied to the same booted organism the shell is running.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button-link primary" href="/headroom">Open Headroom</a>
+                        <a class="button-link secondary" href="/session">Open session</a>
+                        <a class="button-link ghost" href="/knowledge">Open knowledge</a>
+                    </div>
+                </div>
+                <aside class="hero-panel">
+                    <div>
+                        <p class="eyebrow">Mouth below signal</p>
+                        <p>Companion is where the organism speaks quietly, gathers context, and lines up the next move before Headroom takes it public.</p>
+                    </div>
+                    <div>
+                        <p class="eyebrow">Boot-aligned context</p>
+                        <p>The point is not generic chat. The point is feeding the same boot, factory, broadcast, and cockpit spine that the rest of Fraynix answers to.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="section-stack">
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Companion spine</h2>
+                                <p class="panel-subtitle">The original operator pillars Companion is feeding: boot, factory, broadcast, cockpit, and live signal.</p>
+                            </div>
+                        </div>
+                        <div id="companion-legacy-spine" class="empty-state">Loading companion spine...</div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Headroom handoff</h2>
+                                <p class="panel-subtitle">What happens when this conversation lane crosses into the visible signal controller.</p>
+                            </div>
+                        </div>
+                        <div id="companion-headroom" class="empty-state">Loading Headroom handoff...</div>
+                    </section>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Companion status</h2>
+                            <p class="panel-subtitle">Live mouth, memory, media grounding, and signal readiness.</p>
+                        </div>
+                    </div>
+                    <div id="companion-status"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Grounded system state contract</h2>
+                            <p class="panel-subtitle">Structured SYSTEM_STATE envelope that matches Session and CLI truth semantics.</p>
+                        </div>
+                    </div>
+                    <div id="companion-system-state" class="empty-state">Loading grounded system state contract...</div>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Companion thread</h2>
+                                <p class="panel-subtitle">Browser-native exchange with local media context.</p>
+                            </div>
+                        </div>
+                        <div id="companion-thread" class="empty-state">Loading companion transcript...</div>
+                        <form id="companion-form" class="terminal-shell" style="margin-top: 18px;">
+                            <textarea id="companion-prompt" class="terminal-input" placeholder="Ask Fraynix something real. Attach a local image or audio artifact if you want grounded context."></textarea>
+                            <div id="companion-quick-prompts" class="button-row" style="margin-top: 12px;"></div>
+                            <div class="button-row" style="margin-top: 12px;">
+                                <button class="btn primary" type="submit">Send to Fraynix</button>
+                                <button class="btn secondary" type="button" data-companion-dream="true">Dream visual</button>
+                            </div>
+                            <div id="companion-dream-status" class="empty-state" style="margin-top: 12px;">No dream visual manifested yet.</div>
+                        </form>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Selected context</h2>
+                                <p class="panel-subtitle">What Fraynix will use as local media grounding for the next reply or the next manifested visual.</p>
+                            </div>
+                        </div>
+                        <div id="companion-selection" class="empty-state">No visual or audio context selected yet.</div>
+                    </section>
+                </section>
+
+                <section class="split-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Local visual library</h2>
+                                <p class="panel-subtitle">Recent local image artifacts Fraynix can inspect or use as context.</p>
+                            </div>
+                        </div>
+                        <div id="companion-visual-library" class="empty-state">Loading local visual library...</div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h2 class="panel-title">Local audio library</h2>
+                                <p class="panel-subtitle">Recent local audio artifacts Fraynix can transcribe or classify.</p>
+                            </div>
+                        </div>
+                        <div id="companion-audio-library" class="empty-state">Loading local audio library...</div>
+                    </section>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/assets/app.js"></script>
+</body>
+</html>

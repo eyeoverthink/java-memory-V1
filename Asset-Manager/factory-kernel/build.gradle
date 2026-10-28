@@ -1,0 +1,27 @@
+plugins { id 'java-library' }
+group = 'ai.fraymus'
+version = '0.1.0'
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+dependencies { api project(':factory-runtime') }
+sourceSets.main.java {
+    srcDirs = ['src/main/java', '../brain_architecture/src/main/java', '../src/main/java']
+    include 'fraymus/factory/kernel/**'
+    include 'brain_architecture/kernel/**'
+    include 'brain_architecture/integration/unified/**'
+    include 'fraymus/causal/**'
+    include 'fraymus/hdc/**'
+    include 'fraymus/execution/**'
+    include 'fraymus/llm/ModelLoader.java'
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+// This JDK-only module uses an executable test harness rather than a JUnit dependency.
+tasks.named('test') { enabled = false }
+tasks.register('verifyIntegration', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'fraymus.factory.kernel.FactoryKernelIntegrationTest'
+}
+tasks.named('check') { dependsOn 'verifyIntegration' }

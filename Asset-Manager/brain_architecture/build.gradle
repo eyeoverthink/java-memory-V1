@@ -1,0 +1,89 @@
+plugins {
+    id 'java'
+}
+
+group = 'brain_architecture'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', '../src/main/java']
+            include 'brain_architecture/**'
+            include 'fraymus/causal/**'
+            include 'fraymus/hdc/**'
+            include 'fraymus/execution/**'
+            include 'fraymus/llm/ModelLoader.java'
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+    }
+}
+
+task runWebServer(type: JavaExec) {
+    mainClass = 'brain_architecture.kernel.WebServer'
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['F:\\Full-AI-System', '8080']
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // JUnit 5 for testing
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.0'
+    
+    // HTTP client for API calls
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    
+    // JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
+
+test {
+    useJUnitPlatform()
+    
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat = "full"
+        showStandardStreams = false
+    }
+}
+
+task runProof(type: JavaExec) {
+    mainClass = 'brain_architecture.proof.QuantumOracleProof'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runFraynixSystemExample(type: JavaExec) {
+    mainClass = 'brain_architecture.examples.FraynixSystemExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runGemmaTest(type: JavaExec) {
+    mainClass = 'brain_architecture.examples.GemmaTest'
+    classpath = sourceSets.main.runtimeClasspath
+    if (project.hasProperty('apiKey')) {
+        systemProperty 'GOOGLE_API_KEY', project.apiKey
+    }
+}
+
+task runCernBlindTest(type: JavaExec) {
+    mainClass = 'brain_architecture.examples.CernBlindTest'
+    classpath = sourceSets.main.runtimeClasspath
+    if (project.hasProperty('apiKey')) {
+        systemProperty 'GOOGLE_API_KEY', project.apiKey
+    }
+}

@@ -1,0 +1,26 @@
+[kernel]
+runtime = "air-gapped"
+java = "17"
+verify = "scripts/verify-offline-kernel.ps1"
+run = "scripts/run-offline-kernel.ps1"
+smoke_test = "brain_architecture.kernel.KernelSmokeTest"
+persistence_test = "brain_architecture.kernel.KernelPersistenceTest"
+substrate_test = "brain_architecture.kernel.SubstrateConformanceTest"
+cli = "brain_architecture.kernel.OfflineKernelCli"
+
+[rust]
+toolchain = "../../../f0_engine/rust-toolchain.toml"
+verify = "scripts/verify-f0-engine.ps1"
+
+[hydra]
+run = "scripts/run-hydra-operator.ps1"
+commands = ["status", "evolve", "proof"]
+
+[open_model]
+refresh = "scripts/refresh-open-model-absorption.ps1"
+rules = "OPEN_MODEL_ABSORPTION_RULES.md"
+log = "OPEN_MODEL_ABSORPTION_LOG.md"
+
+[notes]
+legacy_gradle_path = "build.gradle"
+legacy_gradle_requires_network = true
