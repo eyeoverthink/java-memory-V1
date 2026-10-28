@@ -1,0 +1,15 @@
+{
+  "parsers": [
+    {
+      "default-parser": {
+        "_exclude": ["executable-parser"],
+        "_mime-exclude": ["image/jpeg", "application/pdf"]
+      }
+    },
+    {
+      "empty-parser": {
+        "_mime-include": ["application/pdf"]
+      }
+    }
+  ]
+}

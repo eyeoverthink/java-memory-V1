@@ -1,0 +1,37 @@
+{
+  "parsers": [
+    {"pdf-parser": {}}
+  ],
+
+  "parse-context": {
+    "retry-config": {
+      "timeout": 5000,
+      "retries": 3,
+      "enabled": true
+    },
+
+    "simple-handler": "org.apache.tika.config.loader.ConfigLoaderTest$SimpleHandlerImpl",
+
+    "configured-handler-impl": {
+      "maxSize": 100000,
+      "prefix": "test-"
+    },
+
+    "test-timeout-config": {
+      "millis": 30000
+    },
+
+    "spooling-strategy": {
+      "spoolTypes": ["application/zip", "application/pdf"]
+    },
+
+    "my-feature-settings": {
+      "featureName": "test-feature",
+      "priority": 10
+    },
+
+    "abstract-handler": {
+      "someProperty": "value"
+    }
+  }
+}

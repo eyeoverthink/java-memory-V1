@@ -1,0 +1,77 @@
+{
+  "content-handler-factory": {
+    "basic-content-handler-factory": {
+      "type": "TEXT",
+      "writeLimit": -1,
+      "throwOnWriteLimitReached": true
+    }
+  },
+  "fetchers": {
+    "s3f": {
+      "s3-fetcher": {
+        "region": "REGION",
+        "bucket": "FETCH_BUCKET",
+        "credentialsProvider": "key_secret",
+        "accessKey": "ACCESS_KEY",
+        "secretKey": "SECRET_KEY",
+        "endpointConfigurationService": "ENDPOINT_CONFIGURATION_SERVICE",
+        "pathStyleAccessEnabled": true,
+        "maxConnections": 50,
+        "throttleSeconds": [
+          30,
+          120,
+          600,
+          1200
+        ]
+      }
+    }
+  },
+  "emitters": {
+    "s3e": {
+      "s3-emitter": {
+        "region": "REGION",
+        "bucket": "EMIT_BUCKET",
+        "credentialsProvider": "key_secret",
+        "accessKey": "ACCESS_KEY",
+        "secretKey": "SECRET_KEY",
+        "endpointConfigurationService": "ENDPOINT_CONFIGURATION_SERVICE",
+        "pathStyleAccessEnabled": true,
+        "maxConnections": 50,
+        "fileExtension": "json",
+        "spoolToTemp": true
+      }
+    }
+  },
+  "pipes-iterator": {
+    "s3-pipes-iterator": {
+      "region": "REGION",
+      "bucket": "PIPE_ITERATOR_BUCKET",
+      "credentialsProvider": "key_secret",
+      "accessKey": "ACCESS_KEY",
+      "secretKey": "SECRET_KEY",
+      "endpointConfigurationService": "ENDPOINT_CONFIGURATION_SERVICE",
+      "pathStyleAccessEnabled": true,
+      "fetcherId": "s3f",
+      "emitterId": "s3e"
+    }
+  },
+  "pipes": {
+    "parseMode": "PARSE_MODE",
+    "onParseException": "EMIT",
+    "emitMaxEstimatedBytes": 100000,
+    "emitWithinMillis": 10,
+    "numEmitters": 1,
+    "numClients": 1,
+    "forkedJvmArgs": [
+      "-Xmx1g",
+      "-XX:ParallelGCThreads=2",
+      "-XX:+ExitOnOutOfMemoryError",
+      "LOG4J_JVM_ARG"
+    ],
+    "emitStrategy": {
+      "type": "DYNAMIC",
+      "thresholdBytes": 10000
+    }
+  },
+  "plugin-roots": "target/plugins"
+}

@@ -1,0 +1,40 @@
+{
+  "parse-context": {
+    "timeout-limits": {
+      "progressTimeoutMillis": 60000
+    }
+  },
+  "pipes": {
+    "javaPath": "JAVA_PATH",
+    "numClients": 2,
+    "forkedJvmArgs": [
+      "-Xmx1g",
+      "-XX:ParallelGCThreads=2"
+    ],
+    "emitStrategy": {
+      "type": "PASSBACK_ALL"
+    },
+    "staleFetcherTimeoutSeconds": 600,
+    "staleFetcherDelaySeconds": 60
+  },
+  "fetchers": {
+    "nick1:is:cool:super/class org.apache.tika.pipes.fetcher.fs.FileSystemFetcher": {
+      "file-system-fetcher": {
+        "basePath": "FETCHER_BASE_PATH",
+        "extractFileSystemMetadata": true
+      }
+    },
+    "httpFetcherIdHere": {
+      "http-fetcher": {
+        "requestTimeout": 30000,
+        "socketTimeout": 30000,
+        "connectTimeout": 20000,
+        "maxConnectionsPerRoute": 200,
+        "maxRedirects": 0,
+        "maxSpoolSize": -1,
+        "overallTimeout": 50000
+      }
+    }
+  },
+  "plugin-roots": "PLUGIN_ROOTS"
+}

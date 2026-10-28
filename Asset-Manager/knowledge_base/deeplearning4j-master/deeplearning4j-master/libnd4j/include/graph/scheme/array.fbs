@@ -1,0 +1,84 @@
+/* ******************************************************************************
+ *
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ *  See the NOTICE file distributed with this work for additional
+ *  information regarding copyright ownership.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ******************************************************************************/
+
+namespace graph;
+
+// byte order for arrays/buffers
+enum ByteOrder:byte {
+    LE,
+    BE,
+}
+
+// DataType for arrays/buffers
+enum DType:byte {
+    INHERIT,
+    BOOL,
+    FLOAT8,
+    HALF,
+    HALF2,
+    FLOAT,
+    DOUBLE,
+    INT8,
+    INT16,
+    INT32,
+    INT64,
+    UINT8,
+    UINT16,
+    UINT32,
+    UINT64,
+    QINT8,
+    QINT16,
+    BFLOAT16 = 17,
+    UTF8 = 50,
+    UTF16 = 51,
+    UTF32 = 52,
+}
+
+enum LossReduce:byte {
+  NONE,
+  SUM,
+  MEAN_BY_WEIGHT,
+  MEAN_BY_NONZERO_WEIGHT_COUNT
+}
+
+
+// this structure describe NDArray
+// Buffer chunk for large data
+table BufferChunk {
+    index:long;      // Position in the logical buffer
+    data:[byte];     // Chunk data (limited to <2GB per chunk)
+}
+
+// Extended FlatArray with support for both small and large buffers
+// as well as external storage for arrays larger than 2GB
+table FlatArray {
+    shape:[long];
+    buffer:[byte];                     // Used for small buffers (<2GB)
+    dtype:DType;
+    byteOrder:ByteOrder;
+
+    // Fields for large buffer support via chunking
+    bufferChunks:[BufferChunk];        // Used for large buffers
+    totalBufferSize:long;              // Total size when using chunks
+    
+    // Fields for external file storage
+    externalDataFilename:[string];     // Filename for externally stored data
+    isExternal:bool = false;           // Flag indicating if data is stored externally
+}
+
+root_type FlatArray;

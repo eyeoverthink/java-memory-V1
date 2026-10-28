@@ -1,0 +1,5 @@
+{
+  "auto-detect-parser": {
+    "contentHandlerDecoratorFactory": "doubling-content-handler-decorator-factory"
+  }
+}

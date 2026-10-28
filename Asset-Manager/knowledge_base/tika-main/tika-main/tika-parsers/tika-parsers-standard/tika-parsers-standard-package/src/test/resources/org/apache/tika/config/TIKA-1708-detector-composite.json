@@ -1,0 +1,13 @@
+{
+  "detectors": [
+    {
+      "poifs-container-detector": {}
+    },
+    {
+      "mime-types": {}
+    }
+  ],
+  "translator": {
+    "class": "default-translator"
+  }
+}

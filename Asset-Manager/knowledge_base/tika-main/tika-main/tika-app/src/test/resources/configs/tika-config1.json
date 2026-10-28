@@ -1,0 +1,16 @@
+{
+  "parsers": [
+    {
+      "jsoup-parser": {
+        "_mime-include": [
+          "application/vnd.wap.xhtml+xml",
+          "application/x-asp",
+          "application/xhtml+xml",
+          "text/html",
+          "application/xml",
+          "text/xml"
+        ]
+      }
+    }
+  ]
+}

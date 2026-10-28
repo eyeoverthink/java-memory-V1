@@ -1,0 +1,5 @@
+{
+  "parse-context": {
+    "handler": "com.example.NonExistentClass"
+  }
+}

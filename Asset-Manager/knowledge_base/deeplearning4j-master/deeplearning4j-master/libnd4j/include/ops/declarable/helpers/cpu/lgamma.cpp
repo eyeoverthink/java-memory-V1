@@ -1,0 +1,52 @@
+/*
+ *  ******************************************************************************
+ *  *
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Apache License, Version 2.0 which is available at
+ *  * https://www.apache.org/licenses/LICENSE-2.0.
+ *  *
+ *  * See the NOTICE file distributed with this work for additional
+ *  * information regarding copyright ownership.
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *  * License for the specific language governing permissions and limitations
+ *  * under the License.
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *  *****************************************************************************
+ */
+
+//
+// @author George A. Shulinok <sgazeos@gmail.com>
+//
+#include <execution/Threads.h>
+#include <ops/declarable/helpers/lgamma.h>
+#if NOT_EXCLUDED(OP_lgamma)
+namespace sd {
+namespace ops {
+namespace helpers {
+
+//////////////////////////////////////////////////////////////////////////
+// calculate digamma function for array elements
+template <typename T>
+static void lgamma_(NDArray* x, NDArray* z) {
+  auto lgammaProc = LAMBDA_T(x_) {
+    auto output = math::sd_lgamma<T,T>(x_);
+    return output;
+  });
+
+  x->applyLambda<T>(lgammaProc, z);
+}
+
+void lgamma(sd::LaunchContext* context, NDArray* x, NDArray* z) {
+  BUILD_SINGLE_SELECTOR(x->dataType(), lgamma_, (x, z), SD_FLOAT_TYPES);
+}
+
+BUILD_SINGLE_TEMPLATE( void lgamma_, (NDArray * x, NDArray* z), SD_FLOAT_TYPES);
+
+}  // namespace helpers
+}  // namespace ops
+}  // namespace sd
+#endif

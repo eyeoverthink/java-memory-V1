@@ -1,0 +1,40 @@
+{
+  "fetchers": {
+    "file-system-fetcher": {
+      "file-system-fetcher": {
+        "allowAbsolutePaths": true
+      }
+    }
+  },
+  "emitters": {
+    "unpack-emitter": {
+      "file-system-emitter": {
+        "basePath": "UNPACK_EMITTER_BASE_PATH",
+        "onExists": "REPLACE"
+      }
+    }
+  },
+  "pipes": {
+    "numClients": 2,
+    "emitIntermediateResults": false,
+    "forkedJvmArgs": [
+      "-Xmx512m"
+    ]
+  },
+  "auto-detect-parser": {
+    "throwOnZeroBytes": false
+  },
+  "parse-context": {
+    "digester-factory": {
+      "commons-digester-factory": {
+        "digests": [
+          { "algorithm": "MD5" }
+        ]
+      }
+    },
+    "timeout-limits": {
+      "progressTimeoutMillis": "TIMEOUT_MILLIS"
+    }
+  },
+  "plugin-roots": "PLUGINS_PATHS"
+}

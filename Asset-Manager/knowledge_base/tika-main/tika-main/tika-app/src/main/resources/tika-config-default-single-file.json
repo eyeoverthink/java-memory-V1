@@ -1,0 +1,29 @@
+{
+  "parsers": [
+    {
+      "default-parser": {}
+    },
+    {
+      "pdf-parser": {
+        "extractActions": true,
+        "extractInlineImages": true,
+        "accessCheckMode": "ALLOW_EXTRACTION_FOR_ACCESSIBILITY",
+        "extractIncrementalUpdateInfo": true,
+        "parseIncrementalUpdates":true
+
+      }
+    },
+    {
+      "ooxml-parser": {
+        "includeDeletedContent": true,
+        "includeMoveFromContent": true,
+        "extractMacros": true
+      }
+    },
+    {
+      "office-parser": {
+        "extractMacros": true
+      }
+    }
+  ]
+}

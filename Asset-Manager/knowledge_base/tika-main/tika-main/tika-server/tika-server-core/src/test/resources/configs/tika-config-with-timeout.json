@@ -1,0 +1,14 @@
+{
+  "parsers": [
+    {
+      "pdf-parser": {
+        "extractInlineImages": true
+      }
+    }
+  ],
+  "parse-context": {
+    "timeout-limits": {
+      "progressTimeoutMillis": 30000
+    }
+  }
+}

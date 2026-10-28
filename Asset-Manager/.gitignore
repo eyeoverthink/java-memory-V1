@@ -7,7 +7,12 @@
 obsidian/open-code-api.md
 obsidian/open-code-api.md.backup
 hs_err_pid*.log
+# The live 2 GB chain is assembled on boot from blocks.parts.
 .akashic/blocks.dat
+.akashic/blocks.dat.assembling
+# Upstream TLS test keys. GitHub push protection rejects them. Keynote .key fixtures stay.
+knowledge_base/**/local-cert/*.key
+knowledge_base/**/certs/*.key
 brain_architecture/.brain_memory/
 brain_architecture/.northstar-kernel/
 target/

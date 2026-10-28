@@ -1,0 +1,89 @@
+/*
+ *  ******************************************************************************
+ *  *
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Apache License, Version 2.0 which is available at
+ *  * https://www.apache.org/licenses/LICENSE-2.0.
+ *  *
+ *  *  See the NOTICE file distributed with this work for additional
+ *  *  information regarding copyright ownership.
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *  * License for the specific language governing permissions and limitations
+ *  * under the License.
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *  *****************************************************************************
+ */
+
+package org.datavec.api.transform.analysis.columns;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.datavec.api.transform.ColumnType;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+@NoArgsConstructor //For Jackson deserialization
+public class DoubleAnalysis extends NumericalColumnAnalysis {
+
+    private double min;
+    private double max;
+    private long countNaN;
+
+    private DoubleAnalysis(Builder builder) {
+        super(builder);
+        this.min = builder.min;
+        this.max = builder.max;
+        this.countNaN = builder.countNaN;
+    }
+
+    @Override
+    public String toString() {
+        return "DoubleAnalysis(min=" + min + ",max=" + max + "," + super.toString() + ")";
+    }
+
+    @Override
+    public double getMinDouble() {
+        return min;
+    }
+
+    @Override
+    public double getMaxDouble() {
+        return max;
+    }
+
+    @Override
+    public ColumnType getColumnType() {
+        return ColumnType.Double;
+    }
+
+    public static class Builder extends NumericalColumnAnalysis.Builder<Builder> {
+
+        private double min;
+        private double max;
+        private long countNaN;
+
+        public Builder min(double min) {
+            this.min = min;
+            return this;
+        }
+
+        public Builder max(double max) {
+            this.max = max;
+            return this;
+        }
+
+        public Builder countNaN(long countNaN) {
+            this.countNaN = countNaN;
+            return this;
+        }
+
+        public DoubleAnalysis build() {
+            return new DoubleAnalysis(this);
+        }
+    }
+}

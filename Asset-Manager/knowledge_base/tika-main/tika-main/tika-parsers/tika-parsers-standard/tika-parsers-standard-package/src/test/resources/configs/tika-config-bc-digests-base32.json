@@ -1,0 +1,12 @@
+{
+  "auto-detect-parser": {
+    "throwOnZeroBytes": false
+  },
+  "parse-context": {
+    "bouncy-castle-digester-factory": {
+        "digests": [
+          { "algorithm": "SHA1", "encoding": "BASE32" }
+        ]
+      }
+    }
+}

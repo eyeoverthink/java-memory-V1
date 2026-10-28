@@ -1,0 +1,63 @@
+{
+  "content-handler-factory": {
+    "basic-content-handler-factory": {
+      "type": "TEXT",
+      "writeLimit": -1,
+      "throwOnWriteLimitReached": true
+    }
+  },
+  "parsers": [
+    {
+      "default-parser": {}
+    },
+    {
+      "pdf-parser": {
+        "extractActions": true,
+        "extractInlineImages": true,
+        "extractIncrementalUpdateInfo": true,
+        "parseIncrementalUpdates": true
+      }
+    },
+    {
+      "ooxml-parser": {
+        "includeDeletedContent": true,
+        "includeMoveFromContent": true,
+        "extractMacros": true
+      }
+    },
+    {
+      "office-parser": {
+        "extractMacros": true
+      }
+    }
+  ],
+  "fetchers": {
+    "fsf": {
+      "file-system-fetcher": {
+        "basePath": "FETCHER_BASE_PATH",
+        "extractFileSystemMetadata": false
+      }
+    }
+  },
+  "emitters": {
+    "fse": {
+      "file-system-emitter": {
+        "basePath": "EMITTER_BASE_PATH",
+        "fileExtension": "json",
+        "onExists": "EXCEPTION"
+      }
+    }
+  },
+  "pipes-iterator": {
+    "file-system-pipes-iterator": {
+      "basePath": "FETCHER_BASE_PATH",
+      "countTotal": true,
+      "fetcherId": "fsf",
+      "emitterId": "fse"
+    }
+  },
+  "pipes": {
+    "parseMode": "RMETA"
+  },
+  "plugin-roots": "PLUGIN_ROOTS"
+}

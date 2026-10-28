@@ -1,0 +1,85 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.tika.parser.html;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import org.apache.tika.TikaTest;
+import org.apache.tika.config.loader.TikaLoader;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.parser.Parser;
+
+public class HtmlParserTest extends TikaTest {
+
+    @Test
+    public void testDataURI() throws Exception {
+        List<Metadata> metadataList = getRecursiveMetadata("testHTML_embedded_img.html");
+        assertEquals(2, metadataList.size());
+        String content = metadataList
+                .get(0)
+                .get(TikaCoreProperties.TIKA_CONTENT);
+        assertContains("some content", content);
+        //make sure that you've truncated the data: value
+        assertContains("src=\"data:\"", content);
+        Metadata imgMetadata = metadataList.get(1);
+        // When tesseract is available, image types may get an "ocr-" prefix
+        String imgType = imgMetadata.get(Metadata.CONTENT_TYPE);
+        assertTrue("image/jpeg".equals(imgType) || "image/ocr-jpeg".equals(imgType),
+                "Expected image/jpeg or image/ocr-jpeg but got: " + imgType);
+        assertContains("moscow-birds", Arrays.asList(imgMetadata.getValues(TikaCoreProperties.SUBJECT)));
+    }
+
+    @Test
+    public void testDataURIInJS() throws Exception {
+
+        Parser p = TikaLoader
+                .load(getPath("tika-config-extract-scripts.json"))
+                .loadAutoDetectParser();
+        List<Metadata> metadataList = getRecursiveMetadata("testHTML_embedded_img_in_js.html", p);
+        assertEquals(3, metadataList.size());
+        String content = metadataList
+                .get(0)
+                .get(TikaCoreProperties.TIKA_CONTENT);
+        assertContains("some content", content);
+        Metadata imgMetadata = metadataList.get(1);
+        // When tesseract is available, image types may get an "ocr-" prefix
+        String imgType = imgMetadata.get(Metadata.CONTENT_TYPE);
+        assertTrue("image/jpeg".equals(imgType) || "image/ocr-jpeg".equals(imgType),
+                "Expected image/jpeg or image/ocr-jpeg but got: " + imgType);
+        assertContains("moscow-birds", Arrays.asList(imgMetadata.getValues(TikaCoreProperties.SUBJECT)));
+    }
+
+    private Path getPath(String config) {
+        try {
+            return Paths.get(HtmlParserTest.class
+                    .getResource("/configs/" + config)
+                    .toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

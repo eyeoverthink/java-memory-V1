@@ -1,0 +1,63 @@
+{
+  "fetchers": {
+    "fsf": {
+      "file-system-fetcher": {
+        "basePath": "FETCHER_BASE_PATH",
+        "extractFileSystemMetadata": false
+      }
+    }
+  },
+  "emitters": {
+    "fse-json": {
+      "file-system-emitter": {
+        "basePath": "JSON_EMITTER_BASE_PATH",
+        "fileExtension": "json",
+        "onExists": "EXCEPTION"
+      }
+    },
+    "fse-bytes": {
+      "file-system-emitter": {
+        "basePath": "BYTES_EMITTER_BASE_PATH",
+        "fileExtension": "",
+        "onExists": "EXCEPTION"
+      }
+    }
+  },
+  "server": {
+    "port": 9999,
+    "taskTimeoutMillis": "TIMEOUT_MILLIS",
+    "taskPulseMillis": 100,
+    "enableUnsecureFeatures": true,
+    "endpoints": [
+      "rmeta",
+      "status",
+      "async",
+      "pipes"
+    ]
+  },
+  "pipes": {
+    "numClients": 2,
+    "emitIntermediateResults": false,
+    "forkedJvmArgs": [
+      "-Xmx512m"
+    ],
+    "emitStrategy": {
+      "type": "EMIT_ALL"
+    }
+  },
+  "auto-detect-parser": {
+    "throwOnZeroBytes": false
+  },
+  "parse-context": {
+    "commons-digester-factory": {
+        "digests": [
+          { "algorithm": "MD5" },
+          { "algorithm": "SHA1", "encoding": "BASE32" }
+        ]
+      },
+    "timeout-limits": {
+      "progressTimeoutMillis": "TIMEOUT_MILLIS"
+    }
+  },
+  "plugin-roots": "PLUGINS_PATHS"
+}

@@ -1,0 +1,62 @@
+/*
+ *  ******************************************************************************
+ *  *
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Apache License, Version 2.0 which is available at
+ *  * https://www.apache.org/licenses/LICENSE-2.0.
+ *  *
+ *  *  See the NOTICE file distributed with this work for additional
+ *  *  information regarding copyright ownership.
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *  * License for the specific language governing permissions and limitations
+ *  * under the License.
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *  *****************************************************************************
+ */
+
+package org.datavec.api.transform.sequence.window;
+
+import org.datavec.api.transform.schema.Schema;
+import org.datavec.api.writable.Writable;
+import org.nd4j.shade.jackson.annotation.JsonInclude;
+import org.nd4j.shade.jackson.annotation.JsonTypeInfo;
+
+import java.io.Serializable;
+import java.util.List;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+public interface WindowFunction extends Serializable {
+
+    /**
+     * Apply the windowing function to the given sequence
+     * @param sequence the input sequence
+     * @return the sequence with the window function applied
+     */
+    List<List<List<Writable>>> applyToSequence(List<List<Writable>> sequence);
+
+    /**
+     *
+     * @param schema
+     */
+    void setInputSchema(Schema schema);
+
+    /**
+     *
+     * @return
+     */
+    Schema getInputSchema();
+
+    /** Get the output schema, given the input schema. Typically the output schema is the same as the input schema,
+     * but not necessarily (for example, if the window function adds columns for the window start/end times)
+     * @param inputSchema    Schema of the input data
+     * @return Schema of the output windows
+     */
+    Schema transform(Schema inputSchema);
+
+
+}

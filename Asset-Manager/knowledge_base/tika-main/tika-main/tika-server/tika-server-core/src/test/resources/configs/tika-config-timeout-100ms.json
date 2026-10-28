@@ -1,0 +1,11 @@
+{
+  "server": {
+    "enableUnsecureFeatures": true,
+    "enableLogFile": true
+  },
+  "parse-context": {
+    "timeout-limits": {
+      "progressTimeoutMillis": 100
+    }
+  }
+}

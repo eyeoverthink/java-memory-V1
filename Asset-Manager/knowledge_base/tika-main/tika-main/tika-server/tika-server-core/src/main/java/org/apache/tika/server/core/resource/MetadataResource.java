@@ -1,0 +1,190 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.tika.server.core.resource;
+
+import static org.apache.tika.server.core.resource.TikaResource.fillMetadata;
+import static org.apache.tika.server.core.resource.TikaResource.setupMultipartConfig;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.apache.tika.exception.TikaConfigException;
+import org.apache.tika.extractor.DocumentSelector;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.language.detect.LanguageHandler;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
+
+
+@Path("/meta")
+public class MetadataResource {
+    private static final Logger LOG = LoggerFactory.getLogger(MetadataResource.class);
+
+    @POST
+    @Consumes("multipart/form-data")
+    @Produces({"text/csv", "application/json"})
+    @Path("form")
+    public Response getMetadataFromMultipart(Attachment att, @Context UriInfo info) throws Exception {
+        ParseContext context = TikaResource.createParseContext();
+        try (TikaInputStream tis = TikaInputStream.get(att.getObject(InputStream.class))) {
+            return Response
+                    .ok(parseMetadata(tis, Metadata.newInstance(context), att.getHeaders(), info))
+                    .build();
+        }
+    }
+
+    /**
+     * Multipart endpoint with per-request ParseContext configuration.
+     * Accepts two parts: "file" (the document) and "config" (JSON configuration with parseContext).
+     */
+    @POST
+    @Consumes("multipart/form-data")
+    @Produces({"text/csv", "application/json"})
+    @Path("config")
+    public Response getMetadataWithConfig(
+            List<Attachment> attachments,
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo info) throws Exception {
+
+        // Load default context from config, then overlay with request config
+        ParseContext context = TikaResource.createParseContext();
+        Metadata metadata = Metadata.newInstance(context);
+        try (TikaInputStream tis = setupMultipartConfig(attachments, metadata, context)) {
+            // No need to parse embedded docs for metadata-only extraction
+            context.set(DocumentSelector.class, metadata1 -> false);
+
+            Parser parser = TikaResource.createParser();
+            TikaResource.logRequest(LOG, "/meta/config", metadata);
+            TikaResource.parse(parser, LOG, info.getPath(), tis, new LanguageHandler() {
+                public void endDocument() {
+                    metadata.set("language", getLanguage().getLanguage());
+                }
+            }, metadata, context);
+
+            return Response.ok(metadata).build();
+        }
+    }
+
+    @PUT
+    @Produces({"text/csv", "application/json"})
+    public Response getMetadata(InputStream is, @Context HttpHeaders httpHeaders, @Context UriInfo info) throws Exception {
+        ParseContext context = TikaResource.createParseContext();
+        Metadata metadata = Metadata.newInstance(context);
+        try (TikaInputStream tis = TikaInputStream.get(is)) {
+            return Response
+                    .ok(parseMetadata(tis, metadata, httpHeaders.getRequestHeaders(), info))
+                    .build();
+        }
+    }
+
+    /**
+     * Get a specific metadata field. If the input stream cannot be parsed, but a
+     * value was found for the given metadata field, then the value of the field
+     * is returned as part of a 200 OK response; otherwise a
+     * {@link javax.ws.rs.core.Response.Status#BAD_REQUEST} is generated. If the stream
+     * was successfully parsed but the specific metadata field was not found, then a
+     * {@link javax.ws.rs.core.Response.Status#NOT_FOUND} is returned.
+     * <p/>
+     * Note that this method handles multivalue fields and returns possibly more
+     * metadata value than requested.
+     * <p/>
+     * If you want XMP, you must be careful to specify the exact XMP key.
+     * For example, "Author" will return nothing, but "dc:creator" will return the correct value.
+     *
+     * @param is          inputstream
+     * @param httpHeaders httpheaders
+     * @param info        info
+     * @param field       the tika metadata field name
+     * @return one of {@link javax.ws.rs.core.Response.Status#OK},
+     * {@link javax.ws.rs.core.Response.Status#NOT_FOUND}, or
+     * {@link javax.ws.rs.core.Response.Status#BAD_REQUEST}
+     * @throws Exception
+     */
+    @PUT
+    @Path("{field}")
+    @Produces({"text/csv", "application/json", "text/plain"})
+    public Response getMetadataField(InputStream is, @Context HttpHeaders httpHeaders, @Context UriInfo info, @PathParam("field") String field) throws Exception {
+
+        // use BAD request to indicate that we may not have had enough data to
+        // process the request
+        Response.Status defaultErrorResponse = Response.Status.BAD_REQUEST;
+        ParseContext context = TikaResource.createParseContext();
+        Metadata metadata = Metadata.newInstance(context);
+        boolean success = false;
+        try (TikaInputStream tis = TikaInputStream.get(is)) {
+            parseMetadata(tis, metadata, httpHeaders.getRequestHeaders(), info);
+            // once we've parsed the document successfully, we should use NOT_FOUND
+            // if we did not see the field
+            defaultErrorResponse = Response.Status.NOT_FOUND;
+            success = true;
+        } catch (Exception e) {
+            LOG.info("Failed to process field {}", field, e);
+        }
+
+        if (success == false || metadata.get(field) == null) {
+            return Response
+                    .status(defaultErrorResponse)
+                    .entity("Failed to get metadata field " + field)
+                    .build();
+        }
+
+        // remove fields we don't care about for the response
+        for (String name : metadata.names()) {
+            if (!field.equals(name)) {
+                metadata.remove(name);
+            }
+        }
+        return Response
+                .ok(metadata)
+                .build();
+    }
+
+    protected Metadata parseMetadata(TikaInputStream tis, Metadata metadata, MultivaluedMap<String, String> httpHeaders, UriInfo info)
+            throws IOException, TikaConfigException {
+        // Load default context from config (includes DigesterFactory from parse-context)
+        final ParseContext context = TikaResource.createParseContext();
+        Parser parser = TikaResource.createParser();
+        fillMetadata(parser, metadata, httpHeaders);
+        //no need to parse embedded docs
+        context.set(DocumentSelector.class, metadata1 -> false);
+
+        TikaResource.logRequest(LOG, "/meta", metadata);
+        TikaResource.parse(parser, LOG, info.getPath(), tis, new LanguageHandler() {
+            public void endDocument() {
+                metadata.set("language", getLanguage().getLanguage());
+            }
+        }, metadata, context);
+        return metadata;
+    }
+}

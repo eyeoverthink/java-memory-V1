@@ -1,0 +1,12 @@
+{
+  "parsers": [
+    {
+      "configurable-test-parser": {
+        "_mime-include": ["application/pdf", "text/plain"],
+        "_mime-exclude": ["application/pdf+fdf"],
+        "name": "filtered-parser",
+        "bufferSize": 4096
+      }
+    }
+  ]
+}

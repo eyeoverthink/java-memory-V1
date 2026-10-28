@@ -1,0 +1,47 @@
+{
+  "parsers": [
+    {
+      "default-parser": {
+        "_exclude": [
+          "tesseract-ocr-parser"
+        ]
+      }
+    },
+    {
+      "pdf-parser": {
+        "extractActions": true,
+        "accessCheckMode": "ALLOW_EXTRACTION_FOR_ACCESSIBILITY"
+      }
+    },
+    {
+      "ooxml-parser": {
+        "includeDeletedContent": true,
+        "includeMoveFromContent": true,
+        "extractMacros": true
+      }
+    },
+    {
+      "office-parser": {
+        "extractMacros": true
+      }
+    }
+  ],
+  "metadata-filters": [
+    {
+      "date-normalizing-metadata-filter": {}
+    },
+    {
+      "field-name-mapping-filter": {
+        "excludeUnmapped": true,
+        "mappings": {
+          "X-TIKA:content": "content_s",
+          "Content-Length": "length_i",
+          "dc:creator": "creators_ss",
+          "dc:title": "title_s",
+          "Content-Type": "mime_s",
+          "X-TIKA:EXCEPTION:container_exception": "tika_exception_s"
+        }
+      }
+    }
+  ]
+}

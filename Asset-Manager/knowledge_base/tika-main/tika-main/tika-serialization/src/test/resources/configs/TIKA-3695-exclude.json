@@ -1,0 +1,10 @@
+{
+  "parsers": [
+    "default-parser"
+  ],
+  "parse-context": {
+    "standard-metadata-limiter-factory": {
+      "excludeFields": ["subject"]
+    }
+  }
+}

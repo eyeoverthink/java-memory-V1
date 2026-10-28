@@ -1,0 +1,51 @@
+{
+  "server": {
+    "port": 9999,
+    "enableUnsecureFeatures": true,
+    "endpoints": [
+      "rmeta"
+    ],
+    "tlsConfig": {
+      "active": true,
+      "keyStoreType": "myType",
+      "keyStorePassword": "pass",
+      "keyStoreFile": "/something/or/other",
+      "trustStoreType": "myType2",
+      "trustStorePassword": "pass2",
+      "trustStoreFile": "/something/or/other2"
+    }
+  },
+  "fetchers": {
+    "file-system-fetcher": {
+      "file-system-fetcher": {
+        "allowAbsolutePaths": true
+      }
+    },
+    "fsf": {
+      "file-system-fetcher": {
+        "basePath": "BASE_PATH",
+        "extractFileSystemMetadata": false
+      }
+    }
+  },
+  "emitters": {
+    "fse-json": {
+      "file-system-emitter": {
+        "basePath": "BASE_PATH",
+        "onExists": "EXCEPTION"
+      }
+    }
+  },
+  "parse-context": {
+    "timeout-limits": {
+      "progressTimeoutMillis": 120000
+    }
+  },
+  "pipes": {
+    "numClients": 2,
+    "forkedJvmArgs": [
+      "-Xmx256m"
+    ]
+  },
+  "plugin-roots": "target/plugins"
+}

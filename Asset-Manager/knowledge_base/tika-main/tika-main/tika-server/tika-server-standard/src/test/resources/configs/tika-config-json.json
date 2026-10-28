@@ -1,0 +1,22 @@
+{
+  "metadata-list": {
+    "maxStringLength": 50000000
+  },
+  "fetchers": {
+    "file-system-fetcher": {
+      "file-system-fetcher": {
+        "allowAbsolutePaths": true
+      }
+    }
+  },
+  "parse-context": {
+    "timeout-limits": {
+      "progressTimeoutMillis": 120000
+    }
+  },
+  "pipes": {
+    "numClients": 2,
+    "forkedJvmArgs": ["-Xmx1g"]
+  },
+  "plugin-roots": "target/plugins"
+}

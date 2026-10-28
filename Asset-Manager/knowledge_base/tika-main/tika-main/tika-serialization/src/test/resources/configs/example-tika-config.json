@@ -1,0 +1,51 @@
+{
+  "parsers": [
+    {
+      "pdf-parser": {
+        "_mime-include": ["application/pdf"],
+        "_mime-exclude": ["application/pdf+fdf"],
+        "ocrStrategy": "AUTO",
+        "extractInlineImages": true
+      }
+    },
+    {
+      "html-parser": {
+        "_mime-exclude": ["application/xhtml+xml"],
+        "encoding": "UTF-8"
+      }
+    },
+    {
+      "empty-parser": {}
+    }
+  ],
+  "detectors": [
+    {
+      "mime-magic-detector": {}
+    },
+    {
+      "zip-container-detector": {
+        "maxDepth": 10
+      }
+    },
+    {
+      "type-detector": {}
+    }
+  ],
+  "encoding-detectors": [
+    {
+      "icu4j-detector": {}
+    },
+    {
+      "html-encoding-detector": {}
+    }
+  ],
+  "metadata-filters": [
+    {
+      "field-name-mapping-filter": {
+        "mappings": {
+          "dc:title": "title"
+        }
+      }
+    }
+  ]
+}

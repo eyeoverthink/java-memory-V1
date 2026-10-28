@@ -1,0 +1,92 @@
+/*
+ *  ******************************************************************************
+ *  *
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Apache License, Version 2.0 which is available at
+ *  * https://www.apache.org/licenses/LICENSE-2.0.
+ *  *
+ *  *  See the NOTICE file distributed with this work for additional
+ *  *  information regarding copyright ownership.
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *  * License for the specific language governing permissions and limitations
+ *  * under the License.
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *  *****************************************************************************
+ */
+
+package org.nd4j.linalg.api.ops.impl.transforms.custom;
+
+import lombok.extern.slf4j.Slf4j;
+import org.nd4j.autodiff.samediff.SameDiff;
+import org.nd4j.common.base.Preconditions;
+import org.nd4j.imports.descriptors.properties.AttributeAdapter;
+import org.nd4j.imports.descriptors.properties.PropertyMapping;
+import org.nd4j.linalg.api.buffer.DataType;
+import org.nd4j.linalg.api.ops.DynamicCustomOp;
+import org.tensorflow.framework.AttrValue;
+import org.tensorflow.framework.GraphDef;
+import org.tensorflow.framework.NodeDef;
+
+import java.util.*;
+
+@Slf4j
+public class ParallelConcat extends DynamicCustomOp {
+
+    public ParallelConcat() {
+        // we know that axis is always 0 for PC
+        iArguments.add(0L);
+    }
+
+    @Override
+    public void initFromTensorFlow(NodeDef nodeDef, SameDiff initWith, Map<String, AttrValue> attributesForNode, GraphDef graph) {
+        throw new UnsupportedOperationException("Use the new Tensorflow Importer instead. This method is now removed.");
+
+    }
+
+    @Override
+    public String opName() {
+        // :)
+        return "ParallelConcat";
+    }
+
+
+    @Override
+    public int getNumOutputs() {
+        return 1;
+    }
+
+    @Override
+    public String tensorflowName() {
+        return "ParallelConcat";
+    }
+
+    @Override
+    public Map<String, Map<String, AttributeAdapter>> attributeAdaptersForFunction() {
+        Map<String, Map<String, AttributeAdapter>> ret = new HashMap<>();
+        Map<String, AttributeAdapter> tfMappings = new LinkedHashMap<>();
+
+        return ret;
+    }
+
+    @Override
+    public Map<String, Map<String, PropertyMapping>> mappingsForFunction() {
+        Map<String, Map<String, PropertyMapping>> ret = new HashMap<>();
+        Map<String, PropertyMapping> map = new HashMap<>();
+
+        return ret;
+    }
+
+    @Override
+    public List<DataType> calculateOutputDataTypes(List<DataType> dataTypes){
+        DataType first = dataTypes.get(0);
+        for(int i = 1; i < dataTypes.size(); i++) {
+            DataType dt = dataTypes.get(i);
+            Preconditions.checkState(first == dt, "Data types must all be equal: got %s", dataTypes);
+        }
+        return Collections.singletonList(first);
+    }
+}

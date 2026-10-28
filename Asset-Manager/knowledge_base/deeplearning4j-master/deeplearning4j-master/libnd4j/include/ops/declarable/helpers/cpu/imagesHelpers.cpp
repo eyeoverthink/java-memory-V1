@@ -1,0 +1,326 @@
+/* ******************************************************************************
+ *
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ *  See the NOTICE file distributed with this work for additional
+ *  information regarding copyright ownership.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ******************************************************************************/
+
+//
+// @author Oleh Semeniv (oleg.semeniv@gmail.com)
+// @author AbdelRauf    (rauf@konduit.ai)
+//
+
+#include <execution/Threads.h>
+#include <helpers/ConstantTadHelper.h>
+#include <ops/declarable/helpers/adjust_hue.h>
+#include <ops/declarable/helpers/imagesHelpers.h>
+
+namespace sd {
+namespace ops {
+namespace helpers {
+
+template <typename T>
+static void rgbToGrs_(NDArray& input, NDArray& output, const int dimC) {
+  const T* x = input.bufferAsT<T>();
+  T* z = output.bufferAsT<T>();
+  const int rank = input.rankOf();
+
+  if (dimC == rank - 1 && 'c' == input.ordering() && 1 == input.ews() && 'c' == output.ordering() &&
+      1 == output.ews()) {
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i++) {
+        const auto xStep = i * 3;
+        z[i] = 0.2989f * x[xStep] + 0.5870f * x[xStep + 1] + 0.1140f * x[xStep + 2];
+      }
+    };
+
+    samediff::Threads::parallel_for(func, 0, output.lengthOf(), 1);
+    return;
+  }
+
+  sd::LongType *outputShape = shape::shapeOf(output.shapeInfo());
+  sd::LongType *outputStride = shape::stride(output.shapeOf());
+  sd::LongType *inputStride = shape::stride(input.shapeInfo());
+  auto func = PRAGMA_THREADS_FOR {
+    sd::LongType coords[SD_MAX_RANK];
+    for (auto i = start; i < stop; i++) {
+      INDEX2COORDS(i, rank,outputShape, coords);
+      sd::LongType zOffset, xOffset0, xOffset1, xOffset2;
+      COORDS2INDEX(rank, outputStride, coords, zOffset);
+      COORDS2INDEX(rank, inputStride, coords, xOffset0);
+      coords[dimC]++;
+      COORDS2INDEX(rank,inputStride, coords, xOffset1);
+      coords[dimC]++;
+      COORDS2INDEX(rank, inputStride, coords, xOffset2);
+      z[zOffset] = 0.2989f * x[xOffset0] + 0.5870f * x[xOffset1] + 0.1140f * x[xOffset2];
+    }
+  };
+
+  samediff::Threads::parallel_for(func, 0, output.lengthOf(), 1);
+  return;
+}
+
+void transformRgbGrs(sd::LaunchContext* context, NDArray& input, NDArray& output, const int dimC) {
+  BUILD_SINGLE_SELECTOR(input.dataType(), rgbToGrs_, (input, output, dimC), SD_NUMERIC_TYPES);
+}
+
+template <typename T>
+SD_INLINE static void tripleTransformer(NDArray* input, NDArray* output, const int dimC, T (&tr)[3][3]) {
+  const int rank = input->rankOf();
+
+  const T* x = input->bufferAsT<T>();
+  T* z = output->bufferAsT<T>();
+  // TODO: Use tensordot or other optimizied helpers to see if we can get better performance.
+
+  if (dimC == rank - 1 && input->ews() == 1 && output->ews() == 1 && input->ordering() == 'c' &&
+      output->ordering() == 'c') {
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i += increment) {
+        // simple M*v //tr.T*v.T // v * tr  //rule: (AB)' =B'A'
+        // v.shape (1,3) row vector
+        T x0, x1, x2;
+        x0 = x[i];  // just additional hint
+        x1 = x[i + 1];
+        x2 = x[i + 2];
+        z[i] = x0 * tr[0][0] + x1 * tr[1][0] + x2 * tr[2][0];
+        z[i + 1] = x0 * tr[0][1] + x1 * tr[1][1] + x2 * tr[2][1];
+        z[i + 2] = x0 * tr[0][2] + x1 * tr[1][2] + x2 * tr[2][2];
+      }
+    };
+
+    samediff::Threads::parallel_for(func, 0, input->lengthOf(), 3);
+  } else {
+    auto packX = sd::ConstantTadHelper::getInstance().tadForDimensions(input->shapeInfo(), dimC);
+    auto packZ = sd::ConstantTadHelper::getInstance().tadForDimensions(output->shapeInfo(), dimC);
+
+    const sd::LongType numOfTads = packX->numberOfTads();
+    const sd::LongType xDimCstride = input->stridesOf()[dimC];
+    const sd::LongType zDimCstride = output->stridesOf()[dimC];
+
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i++) {
+        const T* xTad = x + packX->platformOffsets()[i];
+        T* zTad = z + packZ->platformOffsets()[i];
+        // simple M*v //tr.T*v
+        T x0, x1, x2;
+        x0 = xTad[0];
+        x1 = xTad[xDimCstride];
+        x2 = xTad[2 * xDimCstride];
+        zTad[0] = x0 * tr[0][0] + x1 * tr[1][0] + x2 * tr[2][0];
+        zTad[zDimCstride] = x0 * tr[0][1] + x1 * tr[1][1] + x2 * tr[2][1];
+        zTad[2 * zDimCstride] = x0 * tr[0][2] + x1 * tr[1][2] + x2 * tr[2][2];
+      }
+    };
+
+    samediff::Threads::parallel_tad(func, 0, numOfTads);
+  }
+}
+
+template <typename T>
+SD_INLINE static void rgbYiq(NDArray* input, NDArray* output, const int dimC) {
+  T arr[3][3] = {{(T)0.299, (T)0.59590059, (T)0.2115},
+                 {(T)0.587, (T)-0.27455667, (T)-0.52273617},
+                 {(T)0.114, (T)-0.32134392, (T)0.31119955}};
+  return tripleTransformer<T>(input, output, dimC, arr);
+}
+
+template <typename T>
+SD_INLINE static void yiqRgb(NDArray* input, NDArray* output, const int dimC) {
+  // TODO: this operation does not use the clamp operation, so there is a possibility being out of range.
+  // Justify that it  will not be out of range for images data
+  T arr[3][3] = {{(T)1, (T)1, (T)1},
+                 {(T)0.95598634, (T)-0.27201283, (T)-1.10674021},
+                 {(T)0.6208248, (T)-0.64720424, (T)1.70423049}};
+  return tripleTransformer<T>(input, output, dimC, arr);
+}
+
+template <typename T>
+SD_INLINE static void hsvRgb(NDArray* input, NDArray* output, const int dimC) {
+  const int rank = input->rankOf();
+
+  const T* x = input->bufferAsT<T>();
+  T* z = output->bufferAsT<T>();
+
+  if (dimC == rank - 1 && input->ews() == 1 && output->ews() == 1 && input->ordering() == 'c' &&
+      output->ordering() == 'c') {
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i += increment) {
+        sd::ops::helpers::hsvToRgb<T>(x[i], x[i + 1], x[i + 2], z[i], z[i + 1], z[i + 2]);
+      }
+    };
+
+    samediff::Threads::parallel_for(func, 0, input->lengthOf(), 3);
+  } else {
+    auto packX = sd::ConstantTadHelper::getInstance().tadForDimensions(input->shapeInfo(), dimC);
+    auto packZ = sd::ConstantTadHelper::getInstance().tadForDimensions(output->shapeInfo(), dimC);
+
+    const sd::LongType numOfTads = packX->numberOfTads();
+    const sd::LongType xDimCstride = input->stridesOf()[dimC];
+    const sd::LongType zDimCstride = output->stridesOf()[dimC];
+
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i += increment) {
+        const T* xTad = x + packX->platformOffsets()[i];
+        T* zTad = z + packZ->platformOffsets()[i];
+        sd::ops::helpers::hsvToRgb<T>(xTad[0], xTad[xDimCstride], xTad[2 * xDimCstride], zTad[0], zTad[zDimCstride],
+                                      zTad[2 * zDimCstride]);
+      }
+    };
+
+    samediff::Threads::parallel_tad(func, 0, numOfTads);
+  }
+}
+
+template <typename T>
+SD_INLINE static void rgbHsv(NDArray* input, NDArray* output, const int dimC) {
+  const int rank = input->rankOf();
+
+  const T* x = input->bufferAsT<T>();
+  T* z = output->bufferAsT<T>();
+
+  if (dimC == rank - 1 && input->ews() == 1 && output->ews() == 1 && input->ordering() == 'c' &&
+      output->ordering() == 'c') {
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i += increment) {
+        sd::ops::helpers::rgbToHsv<T>(x[i], x[i + 1], x[i + 2], z[i], z[i + 1], z[i + 2]);
+      }
+    };
+
+    samediff::Threads::parallel_for(func, 0, input->lengthOf(), 3);
+  } else {
+    auto packX = sd::ConstantTadHelper::getInstance().tadForDimensions(input->shapeInfo(), dimC);
+    auto packZ = sd::ConstantTadHelper::getInstance().tadForDimensions(output->shapeInfo(), dimC);
+
+    const sd::LongType numOfTads = packX->numberOfTads();
+    const sd::LongType xDimCstride = input->stridesOf()[dimC];
+    const sd::LongType zDimCstride = output->stridesOf()[dimC];
+
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i += increment) {
+        const T* xTad = x + packX->platformOffsets()[i];
+        T* zTad = z + packZ->platformOffsets()[i];
+        sd::ops::helpers::rgbToHsv<T>(xTad[0], xTad[xDimCstride], xTad[2 * xDimCstride], zTad[0], zTad[zDimCstride],
+                                      zTad[2 * zDimCstride]);
+      }
+    };
+
+    samediff::Threads::parallel_tad(func, 0, numOfTads);
+  }
+}
+
+template <typename T>
+SD_INLINE static void rgbYuv_(NDArray& input, NDArray& output, const int dimC) {
+  const T* x = input.bufferAsT<T>();
+  T* z = output.bufferAsT<T>();
+  const int rank = input.rankOf();
+  bool bSimple = (dimC == rank - 1 && 'c' == input.ordering() && 1 == input.ews() && 'c' == output.ordering() &&
+                  1 == output.ews());
+
+  if (bSimple) {
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i += increment) {
+        sd::ops::helpers::rgbYuv<T>(x[i], x[i + 1], x[i + 2], z[i], z[i + 1], z[i + 2]);
+      }
+    };
+
+    samediff::Threads::parallel_for(func, 0, input.lengthOf(), 3);
+    return;
+  }
+
+  auto packX = sd::ConstantTadHelper::getInstance().tadForDimensions(input.shapeInfo(), dimC);
+  auto packZ = sd::ConstantTadHelper::getInstance().tadForDimensions(output.shapeInfo(), dimC);
+
+  const sd::LongType numOfTads = packX->numberOfTads();
+  const sd::LongType xDimCstride = input.stridesOf()[dimC];
+  const sd::LongType zDimCstride = output.stridesOf()[dimC];
+
+  auto func = PRAGMA_THREADS_FOR {
+    for (auto i = start; i < stop; i += increment) {
+      const T* xTad = x + packX->platformOffsets()[i];
+      T* zTad = z + packZ->platformOffsets()[i];
+      sd::ops::helpers::rgbYuv<T>(xTad[0], xTad[xDimCstride], xTad[2 * xDimCstride], zTad[0], zTad[zDimCstride],
+                                  zTad[2 * zDimCstride]);
+    }
+  };
+
+  samediff::Threads::parallel_tad(func, 0, numOfTads);
+  return;
+}
+
+template <typename T>
+SD_INLINE static void yuvRgb_(NDArray& input, NDArray& output, const int dimC) {
+  const T* x = input.bufferAsT<T>();
+  T* z = output.bufferAsT<T>();
+  const int rank = input.rankOf();
+  bool bSimple = (dimC == rank - 1 && 'c' == input.ordering() && 1 == input.ews() && 'c' == output.ordering() &&
+                  1 == output.ews());
+
+  if (bSimple) {
+    auto func = PRAGMA_THREADS_FOR {
+      for (auto i = start; i < stop; i += increment) {
+        sd::ops::helpers::yuvRgb<T>(x[i], x[i + 1], x[i + 2], z[i], z[i + 1], z[i + 2]);
+      }
+    };
+
+    samediff::Threads::parallel_for(func, 0, input.lengthOf(), 3);
+    return;
+  }
+
+  auto packX = sd::ConstantTadHelper::getInstance().tadForDimensions(input.shapeInfo(), dimC);
+  auto packZ = sd::ConstantTadHelper::getInstance().tadForDimensions(output.shapeInfo(), dimC);
+
+  const sd::LongType numOfTads = packX->numberOfTads();
+  const sd::LongType xDimCstride = input.stridesOf()[dimC];
+  const sd::LongType zDimCstride = output.stridesOf()[dimC];
+
+  auto func = PRAGMA_THREADS_FOR {
+    for (auto i = start; i < stop; i += increment) {
+      const T* xTad = x + packX->platformOffsets()[i];
+      T* zTad = z + packZ->platformOffsets()[i];
+      sd::ops::helpers::yuvRgb<T>(xTad[0], xTad[xDimCstride], xTad[2 * xDimCstride], zTad[0], zTad[zDimCstride],
+                                  zTad[2 * zDimCstride]);
+    }
+  };
+
+  samediff::Threads::parallel_tad(func, 0, numOfTads);
+  return;
+}
+
+void transformRgbYuv(sd::LaunchContext* context, NDArray& input, NDArray& output, const int dimC) {
+  BUILD_SINGLE_SELECTOR(input.dataType(), rgbYuv_, (input, output, dimC), SD_FLOAT_TYPES);
+}
+
+void transformYuvRgb(sd::LaunchContext* context, NDArray& input, NDArray& output, const int dimC) {
+  BUILD_SINGLE_SELECTOR(input.dataType(), yuvRgb_, (input, output, dimC), SD_FLOAT_TYPES);
+}
+
+void transformHsvRgb(sd::LaunchContext* context, NDArray* input, NDArray* output, const int dimC) {
+  BUILD_SINGLE_SELECTOR(input->dataType(), hsvRgb, (input, output, dimC), SD_FLOAT_TYPES);
+}
+
+void transformRgbHsv(sd::LaunchContext* context, NDArray* input, NDArray* output, const int dimC) {
+  BUILD_SINGLE_SELECTOR(input->dataType(), rgbHsv, (input, output, dimC), SD_FLOAT_TYPES);
+}
+
+void transformYiqRgb(sd::LaunchContext* context, NDArray* input, NDArray* output, const int dimC) {
+  BUILD_SINGLE_SELECTOR(input->dataType(), yiqRgb, (input, output, dimC), SD_FLOAT_TYPES);
+}
+
+void transformRgbYiq(sd::LaunchContext* context, NDArray* input, NDArray* output, const int dimC) {
+  BUILD_SINGLE_SELECTOR(input->dataType(), rgbYiq, (input, output, dimC), SD_FLOAT_TYPES);
+}
+
+}  // namespace helpers
+}  // namespace ops
+}  // namespace sd

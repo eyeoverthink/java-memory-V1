@@ -1,0 +1,12 @@
+{
+  "auto-detect-parser": {
+    "contentHandlerDecoratorFactory": "upcasing-content-handler-decorator-factory",
+    "throwOnZeroBytes": true
+  },
+  "parse-context": {
+    "commons-digester-factory": {},
+    "sax-output-config": {
+      "writeFileNameToContent": true
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "parsers": [
+    {
+      "default-parser": {}
+    },
+    {
+      "pdf-parser": {
+        "sortByPosition": true
+      }
+    }
+  ],
+  "auto-detect-parser": {
+    "throwOnZeroBytes": false
+  },
+  "parse-context": {
+    "timeout-limits": {
+      "progressTimeoutMillis": 30000
+    },
+    "commons-digester-factory": {
+        "digests": [
+          { "algorithm": "MD5" },
+          { "algorithm": "SHA1", "encoding": "BASE32" }
+        ]
+      }
+    },
+  "fetchers": {
+    "file-system-fetcher": {
+      "file-system-fetcher": {
+        "allowAbsolutePaths": true
+      }
+    }
+  },
+  "pipes": {
+    "numClients": 2
+  },
+  "plugin-roots": "target/plugins"
+}

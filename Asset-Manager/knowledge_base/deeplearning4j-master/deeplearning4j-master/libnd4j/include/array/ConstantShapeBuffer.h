@@ -1,0 +1,98 @@
+/*
+ *  ******************************************************************************
+ *  *
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Apache License, Version 2.0 which is available at
+ *  * https://www.apache.org/licenses/LICENSE-2.0.
+ *  *
+ *  * See the NOTICE file distributed with this work for additional
+ *  * information regarding copyright ownership.
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *  * License for the specific language governing permissions and limitations
+ *  * under the License.
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *  *****************************************************************************
+ */
+
+//
+// @author raver119@gmail.com
+//
+
+#ifndef SD_ARRAY_CONSTANTSHAPEBUFFER_H_
+#define SD_ARRAY_CONSTANTSHAPEBUFFER_H_
+
+#include <array/PointerWrapper.h>
+#include <system/common.h>
+
+#include <atomic>
+#include <memory>
+#include <string>
+#ifndef  __JAVACPP_HACK__
+#if defined(SD_GCC_FUNCTRACE)
+#include <exceptions/backward.hpp>
+#endif
+#endif
+namespace sd {
+
+class SD_LIB_EXPORT ConstantShapeBuffer {
+ private:
+  static constexpr uint32_t MAGIC_VALID = 0x58A9EB0F;  // Magic number for validity check
+  uint32_t _magic;  // Validity marker to detect use-after-free/garbage pointers
+  PointerWrapper* _primaryShapeInfo;
+  PointerWrapper*  _specialShapeInfo;
+  std::atomic<int> _refCount;
+
+
+ public:
+  ConstantShapeBuffer( PointerWrapper* primary);
+  ConstantShapeBuffer( PointerWrapper* primary, PointerWrapper* special);
+  ConstantShapeBuffer();
+  ~ConstantShapeBuffer();
+
+  /**
+   * Check if this buffer is valid (not garbage/use-after-free).
+   * Uses magic number validation.
+   */
+  inline bool isValid() const { return _magic == MAGIC_VALID; }
+#ifndef  __JAVACPP_HACK__
+#if defined(SD_GCC_FUNCTRACE)
+  backward::StackTrace st;
+#endif
+#endif
+  LongType *primary() ;
+  LongType *special() ;
+  LongType *platform() ;
+
+  /**
+   * Get the stack trace as a formatted string.
+   * Returns empty string if functrace is not enabled.
+   */
+  std::string getStackTraceAsString() const;
+
+  /**
+   * Manual reference counting for safe cross-JNI ownership.
+   * Increments reference count - call when handing out a pointer.
+   */
+  void addRef();
+
+  /**
+   * Manual reference counting for safe cross-JNI ownership.
+   * Decrements reference count and deletes when reaching zero.
+   * Call when done with a pointer (e.g., in deleteConstantShapeBuffer).
+   */
+  void release();
+
+  /**
+   * Get current reference count (for debugging).
+   */
+  int getRefCount() const;
+};
+
+
+}  // namespace sd
+
+#endif  // SD_ARRAY_CONSTANTSHAPEBUFFER_H_

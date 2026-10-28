@@ -1,0 +1,7 @@
+{
+  "parse-context": {
+    "sax-output-config": {
+      "writeFileNameToContent": true
+    }
+  }
+}

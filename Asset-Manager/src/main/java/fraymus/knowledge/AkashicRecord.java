@@ -61,6 +61,58 @@ public class AkashicRecord {
     private static long queriesProcessed = 0;
     private static long chainLength = 0;
 
+    /**
+     * GitHub rejects the single 2 GB block file. The chain is stored as
+     * .akashic/blocks.parts/part-00 and joined here before the record loads.
+     */
+    private static void ensureBlocksMaterialized() {
+        try {
+            Path blocks = Paths.get(BLOCKS_FILE);
+            Path partsDir = Paths.get(".akashic/blocks.parts");
+            if (!Files.isDirectory(partsDir)) {
+                return;
+            }
+            List<Path> parts = new ArrayList<>();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(partsDir, "part-*")) {
+                for (Path part : stream) {
+                    if (Files.isRegularFile(part)) {
+                        parts.add(part);
+                    }
+                }
+            }
+            if (parts.isEmpty()) {
+                return;
+            }
+            parts.sort(Comparator.comparing(path -> path.getFileName().toString()));
+            long expected = 0L;
+            for (Path part : parts) {
+                expected += Files.size(part);
+            }
+            long existing = Files.isRegularFile(blocks) ? Files.size(blocks) : 0L;
+            if (existing >= expected) {
+                return;
+            }
+            Path temp = Paths.get(BLOCKS_FILE + ".assembling");
+            byte[] buffer = new byte[1024 * 1024];
+            try (OutputStream out = Files.newOutputStream(temp)) {
+                for (Path part : parts) {
+                    try (InputStream in = Files.newInputStream(part)) {
+                        int read;
+                        while ((read = in.read(buffer)) >= 0) {
+                            if (read > 0) {
+                                out.write(buffer, 0, read);
+                            }
+                        }
+                    }
+                }
+            }
+            Files.move(temp, blocks, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("   Akashic blocks assembled from " + parts.size() + " parts");
+        } catch (Exception e) {
+            System.out.println("   Akashic blocks were not assembled: " + e.getMessage());
+        }
+    }
+
     public AkashicRecord() {
         synchronized (INIT_LOCK) {
             if (!initialized) {
@@ -74,6 +126,7 @@ public class AkashicRecord {
                     // Ignore
                 }
 
+                ensureBlocksMaterialized();
                 loadAll();
                 initialized = true;
             }

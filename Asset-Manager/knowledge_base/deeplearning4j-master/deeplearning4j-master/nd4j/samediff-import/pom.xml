@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ /* ******************************************************************************
+  ~  *
+  ~  *
+  ~  * This program and the accompanying materials are made available under the
+  ~  * terms of the Apache License, Version 2.0 which is available at
+  ~  * https://www.apache.org/licenses/LICENSE-2.0.
+  ~  *
+  ~  *  See the NOTICE file distributed with this work for additional
+  ~  *  information regarding copyright ownership.
+  ~  * Unless required by applicable law or agreed to in writing, software
+  ~  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  ~  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  ~  * License for the specific language governing permissions and limitations
+  ~  * under the License.
+  ~  *
+  ~  * SPDX-License-Identifier: Apache-2.0
+  ~  ******************************************************************************/
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.eclipse.deeplearning4j</groupId>
+    <artifactId>nd4j</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+
+  <groupId>org.eclipse.deeplearning4j</groupId>
+  <artifactId>samediff-import</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <name>samediff-import</name>
+  <packaging>pom</packaging>
+
+
+
+
+  <modules>
+    <module>samediff-import-api</module>
+    <module>samediff-import-onnx</module>
+    <module>samediff-import-tensorflow</module>
+  </modules>
+
+  <properties>
+    <kotlin.version>1.7.20</kotlin.version>
+    <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
+    <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+    <junit.version>5.8.0-M1</junit.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <javapoet.version>1.13.0</javapoet.version>
+    <java.version>11</java.version>
+    <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
+    <test.heap.size>2g</test.heap.size>
+    <test.offheap.size>2g</test.offheap.size>
+    <dokka.version>1.4.30</dokka.version>
+  </properties>
+
+
+  <dependencies>
+
+
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-reflect</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib-jdk8</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-test</artifactId>
+    </dependency>
+  </dependencies>
+
+
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok-maven-plugin</artifactId>
+          <version>1.18.12.0</version>
+          <executions>
+            <execution>
+              <id>delombok</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>delombok</goal>
+              </goals>
+              <configuration>
+                <formatPreferences>
+                  <javaLangAsFQN>skip</javaLangAsFQN>
+                </formatPreferences>
+                <verbose>true</verbose>
+              </configuration>
+            </execution>
+            <execution>
+              <id>test-delombok</id>
+              <phase>generate-test-sources</phase>
+              <goals>
+                <goal>testDelombok</goal>
+              </goals>
+              <configuration>
+                <verbose>true</verbose>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>3.0.0</version>
+          <executions>
+            <execution>
+              <id>add-source</id>
+              <phase>generate-sources</phase>
+              <goals><goal>add-source</goal></goals>
+              <configuration>
+                <sources>
+                  <source>src/main/stubs</source>
+                </sources>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+
+        <plugin>
+          <groupId>org.jetbrains.kotlin</groupId>
+          <artifactId>kotlin-maven-plugin</artifactId>
+        </plugin>
+
+        <!-- https://kotlinlang.org/docs/reference/using-maven.html -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <compilerArgs>
+              <source>${maven.compiler.source}</source>
+              <target>${maven.compiler.target}</target>
+              <arg>--add-exports</arg>
+              <arg>java.base/java.nio=ALL-UNNAMED</arg>
+              <arg>--add-opens</arg>
+              <arg>java.base/java.nio=ALL-UNNAMED</arg>
+            </compilerArgs>
+          </configuration>
+          <executions>
+            <!-- Replacing default-compile as it is treated specially by maven -->
+            <execution>
+              <id>default-compile</id>
+              <phase>none</phase>
+            </execution>
+            <!-- Replacing default-testCompile as it is treated specially by maven -->
+            <execution>
+              <id>default-testCompile</id>
+              <phase>none</phase>
+            </execution>
+            <execution>
+              <id>java-compile</id>
+              <phase>compile</phase>
+              <goals> <goal>compile</goal> </goals>
+            </execution>
+            <execution>
+              <id>java-test-compile</id>
+              <phase>test-compile</phase>
+              <goals> <goal>testCompile</goal> </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <profiles>
+
+    <profile>
+      <id>release</id>
+      <repositories>
+        <repository>
+          <id>jetbrains-kotlinx</id>
+          <url>https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven</url>
+          <name>Kotlinx repo</name>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+        </repository>
+      </repositories>
+      <build>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

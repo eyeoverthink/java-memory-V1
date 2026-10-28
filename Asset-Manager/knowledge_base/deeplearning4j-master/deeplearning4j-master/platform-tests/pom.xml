@@ -1,0 +1,1076 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ /* ******************************************************************************
+  ~  *
+  ~  *
+  ~  * This program and the accompanying materials are made available under the
+  ~  * terms of the Apache License, Version 2.0 which is available at
+  ~  * https://www.apache.org/licenses/LICENSE-2.0.
+  ~  *
+  ~  *  See the NOTICE file distributed with this work for additional
+  ~  *  information regarding copyright ownership.
+  ~  * Unless required by applicable law or agreed to in writing, software
+  ~  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  ~  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  ~  * License for the specific language governing permissions and limitations
+  ~  * under the License.
+  ~  *
+  ~  * SPDX-License-Identifier: Apache-2.0
+  ~  ******************************************************************************/
+  -->
+
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.eclipse.deeplearning4j</groupId>
+    <artifactId>platform-tests</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <name>platform-tests</name>
+
+    <parent>
+        <groupId>org.eclipse.deeplearning4j</groupId>
+        <artifactId>deeplearning4j</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+
+    <repositories>
+        <!-- Mainly for dokka/kotlinx. Not used outside of releases for kotlin related modules-->
+        <repository>
+            <id>jetbrains-kotlinx</id>
+            <url>https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven</url>
+            <name>Kotlinx repo</name>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+
+    </repositories>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <dl4j.version>1.0.0-SNAPSHOT</dl4j.version>
+        <platform.classifier>${javacpp.platform}</platform.classifier>
+        <backend.artifactId>nd4j-native</backend.artifactId>
+        <!-- UDF package names for TestUdf -->
+        <org.nd4j.linalg.api.ops.udf.classes></org.nd4j.linalg.api.ops.udf.classes>
+        <lombok.version>1.18.42</lombok.version>
+        <derby.version>10.13.1.1</derby.version>
+        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
+        <jackson.version>2.14.2</jackson.version>
+        <jackson.databind.version>2.14.2</jackson.databind.version>
+        <logback.version>1.2.3</logback.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <jdk9.exports>--add-opens java.base/java.lang.ref=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED  --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.nio.cs=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED</jdk9.exports>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <kotlin.version>1.9.24</kotlin.version>
+        <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
+        <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+        <junit.version>5.11.0-M1</junit.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <lz4.version>1.8.0</lz4.version>
+
+        <dokka.version>1.4.30</dokka.version>
+        <maven-surefire-plugin.version>3.2.2</maven-surefire-plugin.version>
+        <maven-surefire.version>${maven-surefire-plugin.version}</maven-surefire.version>
+
+        <java.version>11</java.version>
+        <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
+        <log4j2.version>2.17.2</log4j2.version>
+        <netty.version>4.1.74.Final</netty.version>
+        <test.heap.size>32g</test.heap.size>
+        <test.offheap.size>32g</test.offheap.size>
+        <!-- Note this will not use the embedded java shell script if forks is set to 0. Uset fork count 0 with address sanitizer only.-->
+        <surefire.forks>1</surefire.forks>
+        <surefire.threads>1</surefire.threads>
+
+        <test.nogc>true</test.nogc>
+        <test.prefix></test.prefix>
+        <org.bytedeco.javacpp.logger.debug>true</org.bytedeco.javacpp.logger.debug>
+        <!-- Needed for CUDA: https://github.com/google/sanitizers/issues/629 -->
+        <test.asan.options></test.asan.options>
+        <tests></tests>
+        <excludedTests></excludedTests>
+        <!--
+        Some notes on preload:
+        1. Typical uses for debugging are pre loading address sanitizer or jemalloc to track down allocation bugs.
+        2. You must also pre load libtsan if you build with thread sanitizer like so:
+        export LD_PRELOAD=/lib64/libtsan.so.0
+        The reason for this is you run in to errors like:  libtsan.so: cannot allocate memory in static TLS block
+        This at least always seems to happen with cuda + thread sanitizer but may happen with other combinations.
+        Note that you can't use ASAN and UBSAN together. Otherwise issues occur. See:
+        https://github.com/google/sanitizers/issues/856
+
+        Of note when running in to address overlap issues also:
+        1. Can't be run with valgrind.
+        2. On linux try these settings:
+            sudo sysctl vm.mmap_rnd_bits=28
+            sudo sysctl -w kernel.randomize_va_space=0
+        -->
+        <preload></preload>
+        <jemalloc.path></jemalloc.path>
+        <jemalloc.mallocconf></jemalloc.mallocconf>
+        <!-- Used with the testing script when the valgrind script can't automatically identify where the libjvm.so is. -->
+        <libjvm.path></libjvm.path>
+    </properties>
+
+
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-scala_2.12</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-kotlin</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.jpountz.lz4</groupId>
+                <artifactId>lz4</artifactId>
+                <version>1.2.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>${lz4.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4-pure-java</artifactId>
+                <version>${lz4.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4</artifactId>
+                <version>1.8.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-buffer</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven.surefire</groupId>
+                <artifactId>maven-surefire-common</artifactId>
+                <version>${maven-surefire.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>1.14.15</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>nd4j-onnxruntime</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- This is for building an uberjar and being able to run junit tests from the command line for
+        usage in benchmarking applications.
+        https://stackoverflow.com/questions/2235276/how-to-run-junit-test-cases-from-the-command-line
+        -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-console-standalone</artifactId>
+            <version>1.11.0-M1</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-parallel-wrapper</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>nd4j-arrow</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>5.3.15</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>python4j-numpy</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>resources</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-datavec-iterators</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-datasets</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>datavec-api</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-common-tests</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>${backend.artifactId}</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>${backend.artifactId}</artifactId>
+            <version>${dl4j.version}</version>
+            <classifier>${platform.classifier}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>nd4j-tensorflow-lite</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>nd4j-tvm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-modelimport</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>datavec-arrow</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>datavec-jdbc</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>samediff-import-onnx</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>samediff-import-tensorflow</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-ui-components</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-ui-model</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-vertx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-ui</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>omnihub</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.zeroturnaround</groupId>
+            <artifactId>zt-exec</artifactId>
+            <version>1.12</version>
+        </dependency>
+
+
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>datavec-local</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>nd4j-native</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derby</artifactId>
+            <version>${derby.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>nd4j-common-tests</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-graph</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-nlp</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>dl4j-test-resources</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test</artifactId>
+            <version>${kotlin.version}</version>
+
+        </dependency>
+
+
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+
+        </dependency>
+
+        <!-- Needed for running tests on command line:
+        https://github.com/junit-team/junit5/issues/2813
+        -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.version}</version>
+
+        </dependency>
+
+
+
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-zoo</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-parallel-wrapper</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-vertx</artifactId>
+            <version>${project.version}</version>
+
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5-api</artifactId>
+            <version>0.14.1</version>
+
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>datavec-excel</artifactId>
+            <version>${project.version}</version>
+
+
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+
+        </dependency>
+
+        <!-- Needed for running tests on command line:
+        https://github.com/junit-team/junit5/issues/2813
+        -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.deeplearning4j</groupId>
+            <artifactId>nd4j-tensorflow</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+        <profile>
+            <id>cpu-dep</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>backend.artifactId</name>
+                    <value>nd4j-native</value>
+                </property>
+            </activation>
+            <!-- Uses the new system properties resolution on nd4j backend
+            to handle the backend selection. Note this only used to work via
+            environment variables.
+            -->
+            <properties>
+                <org.nd4j.cpu.priority>10000</org.nd4j.cpu.priority>
+                <org.nd4j.gpu.priority>0</org.nd4j.gpu.priority>
+                <org.nd4j.noarraygc>false</org.nd4j.noarraygc>
+            </properties>
+        </profile>
+        <profile>
+            <id>cuda-dep</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>backend.artifactId</name>
+                    <value>nd4j-cuda</value>
+                </property>
+            </activation>
+            <properties>
+                <cuda.version>12.3</cuda.version>
+                <cudnn.version>8.9</cudnn.version>
+                <javacpp-presets.cuda.version>1.5.10</javacpp-presets.cuda.version>
+                <test.heap.size>14g</test.heap.size>
+                <test.offheap.size>14g</test.offheap.size>
+                <surefire.threads>4</surefire.threads>
+                <org.nd4j.noarraygc>false</org.nd4j.noarraygc>
+
+                <!-- Uses the new system properties resolution on nd4j backend
+       to handle the backend selection. Note this only used to work via
+       environment variables.
+       -->
+                <org.nd4j.cpu.priority>0</org.nd4j.cpu.priority>
+                <org.nd4j.gpu.priority>10000</org.nd4j.gpu.priority>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.eclipse.deeplearning4j</groupId>
+                    <artifactId>${backend.artifactId}</artifactId>
+                    <version>${dl4j.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.deeplearning4j</groupId>
+                    <artifactId>nd4j-cuda</artifactId>
+                    <version>${dl4j.version}</version>
+                    <classifier>${platform.classifier}</classifier>
+                </dependency>
+
+            </dependencies>
+
+        </profile>
+
+        <profile>
+            <id>jemalloc</id>
+            <properties>
+                <preload>${jemalloc.path}</preload>
+                <jemalloc.mallocconf>prof:true,lg_prof_interval:31,lg_prof_sample:17,prof_prefix:jeprof.out</jemalloc.mallocconf>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>javacpp-platform-default</id>
+            <activation>
+                <property>
+                    <name>!javacpp.platform</name>
+                </property>
+            </activation>
+            <properties>
+                <javacpp.platform>${os.name}-${os.arch}</javacpp.platform>
+            </properties>
+        </profile>
+        <!-- Profiles to set the default javacpp.platform property: If someone knows a better way to do this, please do let me know! -->
+        <profile>
+            <id>linux</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                </os>
+            </activation>
+            <properties>
+                <os.kernel>linux</os.kernel>
+                <os.name>linux</os.name>
+            </properties>
+        </profile>
+        <profile>
+            <id>macosx</id>
+            <activation>
+                <os>
+                    <name>mac os x</name>
+                </os>
+            </activation>
+            <properties>
+                <os.kernel>darwin</os.kernel>
+                <os.name>macosx</os.name>
+            </properties>
+        </profile>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <os.kernel>windows</os.kernel>
+                <os.name>windows</os.name>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>arm</id>
+            <activation>
+                <os>
+                    <arch>arm</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>armhf</os.arch>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>android</id>
+            <activation>
+                <os><name>android</name></os>
+            </activation>
+            <properties>
+                <os.kernel>linux</os.kernel>
+                <os.name>android</os.name>
+                <os.arch>arm</os.arch>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>aarch64</id>
+            <activation>
+                <os>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>arm64</os.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>armv8</id>
+            <activation>
+                <os>
+                    <arch>armv8</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>arm64</os.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>i386</id>
+            <activation>
+                <os>
+                    <arch>i386</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>x86_64</os.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>i486</id>
+            <activation>
+                <os>
+                    <arch>i486</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>x86_64</os.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>i586</id>
+            <activation>
+                <os>
+                    <arch>i586</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>x86_64</os.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>i686</id>
+            <activation>
+                <os>
+                    <arch>i686</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>x86_64</os.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>x86</id>
+            <activation>
+                <os>
+                    <arch>x86</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>x86_64</os.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>amd64</id>
+            <activation>
+                <os>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>x86_64</os.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>x86-64</id>
+            <activation>
+                <os>
+                    <arch>x86-64</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.arch>x86_64</os.arch>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>cpu-profile</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>backend.artifactId</name>
+                    <value>nd4j-native</value>
+                </property>
+            </activation>
+            <properties>
+                <test.heap.size>34g</test.heap.size>
+                <test.offheap.size>34g</test.offheap.size>
+                <surefire.forks>1</surefire.forks>
+                <surefire.threads>1</surefire.threads>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+
+            <!-- This is for being able to run tests on the command line.-->
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven-shade-plugin.version}</version>
+                <configuration>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <filters>
+                        <filter>
+
+                            <artifact>*:*</artifact>
+                            <includes>
+                                <include>**/*</include>
+                            </includes>
+                            <excludes>
+                                <exclude>org/datanucleus/**</exclude>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <shadeTestJar>true</shadeTestJar>
+
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven-dependency-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- https://kotlinlang.org/docs/reference/using-maven.html -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <compilerArgs>
+                        <arg>--add-exports</arg>
+                        <arg>java.base/java.nio=ALL-UNNAMED</arg>
+                    </compilerArgs>
+                </configuration>
+                <executions>
+                    <!-- Replacing default-compile as it is treated specially by maven -->
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <!-- Replacing default-testCompile as it is treated specially by maven -->
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>java-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>java-test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-maven-plugin</artifactId>
+                <version>1.18.12.0</version>
+                <executions>
+                    <execution>
+                        <id>delombok</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>delombok</goal>
+                        </goals>
+                        <configuration>
+                            <formatPreferences>
+                                <javaLangAsFQN>skip</javaLangAsFQN>
+                            </formatPreferences>
+                            <verbose>true</verbose>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-delombok</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>testDelombok</goal>
+                        </goals>
+                        <configuration>
+                            <verbose>true</verbose>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/stubs</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src/test/java/</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter</artifactId>
+                        <version>${junit.version}</version>
+
+                    </dependency>
+
+                    <!-- Needed for running tests on command line:
+                    https://github.com/junit-team/junit5/issues/2813
+                    -->
+
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junit.version}</version>
+
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+                    <excludedGroups>${excludedTests}</excludedGroups>
+                    <trimStackTrace>false</trimStackTrace>
+                    <reuseForks>false</reuseForks>
+                    <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                    <trimStackTrace>false</trimStackTrace>
+                    <testFailureIgnore>false</testFailureIgnore>
+                    <properties>
+                        <org.nd4j.imports.tfgraphs.failfast>true</org.nd4j.imports.tfgraphs.failfast>
+                        <org.bytedeco.javacpp.logger.debug>true</org.bytedeco.javacpp.logger.debug>
+                    </properties>
+                    <environmentVariables>
+                        <CUDA_LAUNCH_BLOCKING>1</CUDA_LAUNCH_BLOCKING>
+                        <CUDA_VISIBLE_DEVICES>1</CUDA_VISIBLE_DEVICES>
+                        <OPENBLAS_CORETYPE>Haswell</OPENBLAS_CORETYPE>
+                        <OMP_NUM_THREADS>1</OMP_NUM_THREADS>
+                        <LD_PRELOAD>${preload}</LD_PRELOAD>
+                        <PRINT_MATH_FUNCTION_NAME></PRINT_MATH_FUNCTION_NAME>
+                        <MALLOC_CONF>${jemalloc.mallocconf}</MALLOC_CONF>
+                        <ASAN_OPTIONS>${test.asan.options}</ASAN_OPTIONS>
+                        <!-- For usage with the wrapper script in bin. Do NOT delete that script. See the readme in the bin directory for more information.-->
+                        <TEST_RUNNER_PREFIX>${test.prefix}</TEST_RUNNER_PREFIX>
+                        <LIBJVM_PATH>${libjvm.path}</LIBJVM_PATH>
+                        <TEST_FILTER></TEST_FILTER>
+                    </environmentVariables>
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExclude>org.junit:junit</classpathDependencyExclude>
+                        <classpathDependencyExclude>com.google.android:android
+                        </classpathDependencyExclude>
+                    </classpathDependencyExcludes>
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
+                    <shutdown>kill</shutdown>
+                    <argLine>-Djava.compiler=NONE -Dorg.bytedeco.javacpp.logger.debug=true   ${jdk9.exports}  -Dorg.nd4j.arraynogc=${test.nogc}  -Dorg.bytedeco.javacpp.nopointergc=${test.nogc} -Xmx${test.heap.size} -Dorg.bytedeco.javacpp.maxphysicalbytes=${test.offheap.size} -Dorg.bytedeco.javacpp.maxbytes=${test.offheap.size} </argLine>
+                    <forkCount>${surefire.forks}</forkCount>
+                    <threadCount>${surefire.threads}</threadCount>
+                    <perCoreThreadCount>false</perCoreThreadCount>
+                    <reuseForks>false</reuseForks>
+                    <!-- Do not delete this. This is used to specify a wrapper script allowing us to insert valgrind and other things in to the surefire sub processes.-->
+                    <jvm>${project.basedir}/bin/java</jvm>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

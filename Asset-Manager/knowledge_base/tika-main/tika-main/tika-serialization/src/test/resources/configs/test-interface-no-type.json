@@ -1,0 +1,8 @@
+{
+  "parse-context": {
+    "handler-no-type": {
+      "maxSize": 50000,
+      "prefix": "no-type-"
+    }
+  }
+}

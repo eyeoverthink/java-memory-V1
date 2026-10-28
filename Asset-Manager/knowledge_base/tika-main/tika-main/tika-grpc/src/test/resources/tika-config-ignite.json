@@ -1,0 +1,24 @@
+{
+  "pipes": {
+    "configStoreType": "ignite",
+    "configStoreParams": "{\"tableName\":\"my_tika_cache\",\"igniteInstanceName\":\"MyTikaCluster\",\"replicas\":2,\"partitions\":10,\"autoClose\":true}"
+  },
+  "fetchers": [
+    {
+      "id": "fs",
+      "name": "file-system",
+      "params": {
+        "basePath": "/tmp/input"
+      }
+    }
+  ],
+  "emitters": [
+    {
+      "id": "fs",
+      "name": "file-system",
+      "params": {
+        "basePath": "/tmp/output"
+      }
+    }
+  ]
+}

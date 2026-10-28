@@ -1,0 +1,12 @@
+{
+  "auto-detect-parser": {
+    "throwOnZeroBytes": false
+  },
+  "parse-context": {
+    "commons-digester-factory": {
+        "digests": [
+          { "algorithm": "SHA256" }
+        ]
+      }
+    }
+}

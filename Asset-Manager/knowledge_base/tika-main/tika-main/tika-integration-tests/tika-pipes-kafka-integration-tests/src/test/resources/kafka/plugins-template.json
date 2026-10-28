@@ -1,0 +1,110 @@
+{
+  "content-handler-factory": {
+    "basic-content-handler-factory": {
+      "type": "TEXT",
+      "writeLimit": -1,
+      "throwOnWriteLimitReached": true
+    }
+  },
+  "parsers": [
+    {
+      "default-parser": {}
+    },
+    {
+      "pdf-parser": {
+        "extractActions": true
+      }
+    },
+    {
+      "ooxml-parser": {
+        "includeDeletedContent": true,
+        "includeMoveFromContent": true,
+        "extractMacros": true
+      }
+    },
+    {
+      "office-parser": {
+        "extractMacros": true
+      }
+    }
+  ],
+  "metadata-filters": [
+    {
+      "date-normalizing-metadata-filter": {}
+    },
+    {
+      "field-name-mapping-filter": {
+        "excludeUnmapped": true,
+        "mappings": {
+          "X-TIKA:content": "content_s",
+          "Content-Length": "length_i",
+          "dc:creator": "creators_ss",
+          "dc:title": "title_s",
+          "Content-Type": "mime_s",
+          "X-TIKA:EXCEPTION:container_exception": "tika_exception_s"
+        }
+      }
+    }
+  ],
+  "fetchers": {
+    "fsf": {
+      "file-system-fetcher": {
+        "basePath": "FETCHER_BASE_PATH"
+      }
+    }
+  },
+  "emitters": {
+    "ke": {
+      "kafka-emitter": {
+        "topic": "EMITTER_TOPIC",
+        "bootstrapServers": "BOOTSTRAP_SERVERS",
+        "acks": "all",
+        "lingerMs": 5000,
+        "batchSize": 16384,
+        "bufferMemory": 33554432,
+        "compressionType": "none",
+        "connectionsMaxIdleMs": 540000,
+        "deliveryTimeoutMs": 120000,
+        "enableIdempotence": false,
+        "maxBlockMs": 60000,
+        "maxInFlightRequestsPerConnection": 5,
+        "maxRequestSize": 1048576,
+        "metadataMaxAgeMs": 300000,
+        "requestTimeoutMs": 30000,
+        "retries": 2147483647,
+        "retryBackoffMs": 100,
+        "transactionTimeoutMs": 60000
+      }
+    }
+  },
+  "pipes-iterator": {
+    "kafka-pipes-iterator": {
+      "topic": "PIPE_ITERATOR_TOPIC",
+      "bootstrapServers": "BOOTSTRAP_SERVERS",
+      "groupId": "grpid",
+      "autoOffsetReset": "earliest",
+      "pollDelayMs": 1000,
+      "fetcherId": "fsf",
+      "emitterId": "ke"
+    }
+  },
+  "pipes": {
+    "parseMode": "PARSE_MODE",
+    "onParseException": "EMIT",
+    "emitMaxEstimatedBytes": 100000,
+    "emitWithinMillis": 10,
+    "numEmitters": 1,
+    "numClients": 1,
+    "forkedJvmArgs": [
+      "-Xmx1g",
+      "-XX:ParallelGCThreads=2",
+      "-XX:+ExitOnOutOfMemoryError",
+      "LOG4J_JVM_ARG"
+    ],
+    "emitStrategy": {
+      "type": "DYNAMIC",
+      "thresholdBytes": 10000
+    }
+  },
+  "plugin-roots": "target/plugins"
+}

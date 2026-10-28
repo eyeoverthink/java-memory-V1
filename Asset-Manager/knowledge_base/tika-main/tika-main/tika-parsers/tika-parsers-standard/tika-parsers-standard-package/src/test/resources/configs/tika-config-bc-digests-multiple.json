@@ -1,0 +1,16 @@
+{
+  "auto-detect-parser": {
+    "throwOnZeroBytes": false
+  },
+  "parse-context": {
+    "bouncy-castle-digester-factory": {
+        "digests": [
+          { "algorithm": "MD5" },
+          { "algorithm": "SHA256" },
+          { "algorithm": "SHA384" },
+          { "algorithm": "SHA512" },
+          { "algorithm": "SHA3_512" }
+        ]
+      }
+    }
+}

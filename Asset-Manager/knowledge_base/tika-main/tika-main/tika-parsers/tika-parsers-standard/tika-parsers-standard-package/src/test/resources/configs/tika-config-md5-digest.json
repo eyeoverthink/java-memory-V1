@@ -1,0 +1,9 @@
+{
+  "parse-context": {
+    "commons-digester-factory": {
+        "digests": [
+          { "algorithm": "MD5" }
+        ]
+      }
+    }
+}

@@ -331,7 +331,7 @@ Other Gradle entry points exist for narrower demos (`runLivingMind`, `runGenesis
 
 ## Persistence
 
-AkashicRecord is the long memory. A normal `exit` asks it to save. The large local block file `.akashic/blocks.dat` is intentionally not in this repository. A fresh clone starts with an empty record and fills it from the running organism. Genesis vault files that the boot expects are included where they are part of the source tree. Your private biometric captures and model weights stay on your machine.
+AkashicRecord is the long memory. A normal `exit` asks it to save. GitHub cannot store the single 2 GB `.akashic/blocks.dat`, so those same bytes are `.akashic/blocks.parts/part-00` onward. The first boot joins the parts into `.akashic/blocks.dat` when that file is missing or shorter than the parts. `.akashic/chain.dat` is the hash chain that those blocks belong to. `.akashic/index.dat`, `stats.dat`, and `cortex_state.dat` are the matching saved state. `knowledge_base/` is the absorbed library the organism reads. Genesis vault files that the boot expects are included where they are part of the source tree. Your private biometric captures and model weights stay on your machine.
 
 ## Build and test
 
@@ -367,7 +367,7 @@ Avatar checks use stand-in capture scripts. Exodus checks boot a generated image
 ## What a clone does not include
 
 - Ollama weights and the Carbon weight files
-- `.akashic/blocks.dat`, the multi-gigabyte local memory store
+- The assembled `.akashic/blocks.dat`. The repository stores the same bytes as `.akashic/blocks.parts`, and the boot joins them
 - Private key material. `*.pem` is gitignored. API keys and OAuth client secrets are not part of the published tree; set them in the environment on your machine
 - Local brain runtime state in `brain_architecture/.brain_memory` and `brain_architecture/.northstar-kernel`
 - Third-party textbooks that had been dropped in `attached_assets` for local reading

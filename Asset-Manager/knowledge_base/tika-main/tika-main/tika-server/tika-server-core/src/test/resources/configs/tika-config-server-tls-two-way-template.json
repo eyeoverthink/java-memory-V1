@@ -1,0 +1,38 @@
+{
+  "fetchers": {
+    "file-system-fetcher": {
+      "file-system-fetcher": {
+        "allowAbsolutePaths": true
+      }
+    }
+  },
+  "server": {
+    "port": 9999,
+    "endpoints": [
+      "rmeta"
+    ],
+    "tlsConfig": {
+      "active": true,
+      "keyStoreType": "PKCS12",
+      "keyStorePassword": "tika-secret",
+      "keyStoreFile": "{SSL_KEYS}/tika-server-keystore.p12",
+      "trustStoreType": "PKCS12",
+      "trustStorePassword": "tika-secret",
+      "trustStoreFile": "{SSL_KEYS}/tika-server-truststore.p12",
+      "clientAuthenticationWanted": true,
+      "clientAuthenticationRequired": true
+    }
+  },
+  "parse-context": {
+    "timeout-limits": {
+      "progressTimeoutMillis": 120000
+    }
+  },
+  "pipes": {
+    "numClients": 2,
+    "forkedJvmArgs": [
+      "-Xmx256m"
+    ]
+  },
+  "plugin-roots": "target/plugins"
+}

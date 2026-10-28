@@ -1,0 +1,17 @@
+{
+  "parse-context": {
+    "retry-config": {
+      "enabled": true
+    },
+
+    "retry-config-full": {
+      "timeout": 10000,
+      "retries": 5,
+      "enabled": false
+    },
+
+    "test-timeout-config": {
+      "millis": 30000
+    }
+  }
+}
