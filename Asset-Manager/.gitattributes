@@ -1,0 +1,6 @@
+# Akashic chain bytes. A Windows checkout must not rewrite these files.
+.akashic/blocks.parts/* binary
+.akashic/chain.dat binary
+.akashic/index.dat binary
+.akashic/stats.dat binary
+.akashic/cortex_state.dat binary
