@@ -62,6 +62,11 @@ public class AeonOmniscience {
 
     // --- DREAM DAEMON ---
     private volatile boolean isDreaming = false;
+    private volatile java.util.function.Consumer<java.util.Map<String, Object>> dreamListener = event -> {};
+
+    public void setDreamListener(java.util.function.Consumer<java.util.Map<String, Object>> listener) {
+        dreamListener = java.util.Objects.requireNonNull(listener);
+    }
     private Thread dreamThread;
     private volatile int epiphanies = 0;
     private volatile int synthConcepts = 0;
@@ -350,6 +355,9 @@ public class AeonOmniscience {
                     keys.add(synthName);
                     synthConcepts++;
 
+                    dreamListener.accept(java.util.Map.of("component", "AeonOmniscience", "cycle", dreamCycles,
+                        "a", a, "b", b, "c", c, "result", synthName, "operation", "xor_analogy", "new_concept", true));
+
                     System.out.println(CYN + "  [DREAM_SYNTHESIS] " + RST + "Abstracted novel topology: "
                             + a + " -> " + b + " applied to " + c + " = " + GRN + synthName + RST);
 
@@ -358,6 +366,8 @@ public class AeonOmniscience {
                 } else if (!closest.equals(a) && !closest.equals(b) && !closest.equals(c)) {
                     // Hidden connection between existing words discovered!
                     epiphanies++;
+                    dreamListener.accept(java.util.Map.of("component", "AeonOmniscience", "cycle", dreamCycles,
+                        "a", a, "b", b, "c", c, "result", closest, "operation", "xor_analogy", "new_concept", false));
                     System.out.println(YEL + "  [EPIPHANY] " + RST + "Hidden resonance discovered: "
                             + a + " is to " + b + " as " + c + " is to " + GRN + closest + RST);
                 }

@@ -42,7 +42,7 @@ public class FraynixMain {
 
     public static void main(String[] args) {
         String mode = "cli";
-        String chatModel = "llama3";
+        String chatModel = "fraymus";
 
         for (String arg : args) {
             if (arg.equals("--server")) mode = "server";

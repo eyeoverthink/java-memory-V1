@@ -147,33 +147,30 @@ public class ScientificValidation {
     }
     
     private static ValidationResult testAspirinCOX2() {
-        GravityEngine gravity = GravityEngine.getInstance();
         FusionReactor reactor = FusionReactor.getInstance();
-        
-        if (!gravity.isRunning()) gravity.start();
         if (!reactor.isActive()) reactor.start();
         
         System.out.println("🧪 Simulating Aspirin-COX2 interaction...");
         
-        // Create aspirin molecule
-        PhiSuit<String> aspirin = new PhiSuit<>("Aspirin", 50, 50, 50, "C9H8O4");
+        // Isolated coordinates (10000+ offset) — prevents N-body interference from boot particles
+        PhiSuit<String> aspirin = new PhiSuit<>("Aspirin", 10050, 10050, 10050, "C9H8O4");
         aspirin.a = 90;
         
-        // Create COX-2 enzyme (simplified active site)
-        PhiSuit<String> cox2 = new PhiSuit<>("COX2_Ser530", 55, 55, 55, "Serine530");
+        PhiSuit<String> cox2 = new PhiSuit<>("COX2_Ser530", 10055, 10055, 10055, "Serine530");
         cox2.a = 85;
         
         int initialFusions = SpatialRegistry.getFusionEvents().size();
         
-        // Simulate binding
-        for (int i = 0; i < 20; i++) {
+        // Simulate binding using φ-harmonic force: F = φ × (A₁ × A₂) / d²
+        for (int i = 0; i < 30; i++) {
             double distance = aspirin.distanceTo(cox2);
-            if (distance > 5) {
-                aspirin.moveTowards(cox2, 0.2);
+            if (distance > 2) {
+                double phiForce = PHI * (aspirin.a * cox2.a) / (distance * distance) * 0.1;
+                aspirin.moveTowards(cox2, phiForce);
+                cox2.moveTowards(aspirin, phiForce * 0.5);
             }
             aspirin.heat(15);
             cox2.heat(10);
-            gravity.tick();
         }
         
         reactor.check();
@@ -189,7 +186,7 @@ public class ScientificValidation {
         System.out.printf("  • Binding detected: %s%n", (finalDistance < 8 ? "YES" : "NO"));
         System.out.printf("  • Final distance: %.2f Å%n", finalDistance);
         System.out.printf("  • Fusion events: %d%n", fusionEvents);
-        System.out.printf("  • Binding affinity: %.2f μM (estimated)%n", 10.0 + (finalDistance - 5) * 2);
+        System.out.printf("  • Binding affinity: %.2f μM (estimated)%n", Math.max(1.0, 10.0 + (finalDistance - 5) * 2));
         System.out.println();
         
         ValidationResult result = new ValidationResult();
@@ -209,56 +206,54 @@ public class ScientificValidation {
     }
     
     private static ValidationResult testInsulinFolding() {
-        GravityEngine gravity = GravityEngine.getInstance();
-        
         System.out.println("🧪 Simulating Insulin folding...");
         
-        // Simplified insulin: 10 amino acids representing key structural elements
+        // Simplified insulin: 10 amino acids — isolated at 20000+ offset
         List<PhiSuit<String>> aminoAcids = new ArrayList<>();
         
         // A-chain segment (hydrophobic core)
-        aminoAcids.add(new PhiSuit<>("AA1", 50, 50, 50, "Hydrophobic"));
-        aminoAcids.add(new PhiSuit<>("AA2", 52, 50, 50, "Hydrophobic"));
-        aminoAcids.add(new PhiSuit<>("AA3", 54, 50, 50, "Hydrophobic"));
+        aminoAcids.add(new PhiSuit<>("AA1", 20050, 20050, 20050, "Hydrophobic"));
+        aminoAcids.add(new PhiSuit<>("AA2", 20052, 20050, 20050, "Hydrophobic"));
+        aminoAcids.add(new PhiSuit<>("AA3", 20054, 20050, 20050, "Hydrophobic"));
         
         // Cysteine residues (disulfide bonds)
-        aminoAcids.add(new PhiSuit<>("Cys1", 50, 55, 50, "Cysteine"));
-        aminoAcids.add(new PhiSuit<>("Cys2", 60, 55, 50, "Cysteine"));
+        aminoAcids.add(new PhiSuit<>("Cys1", 20050, 20055, 20050, "Cysteine"));
+        aminoAcids.add(new PhiSuit<>("Cys2", 20060, 20055, 20050, "Cysteine"));
         
         // B-chain segment (α-helix)
-        aminoAcids.add(new PhiSuit<>("AA6", 50, 60, 50, "Helix"));
-        aminoAcids.add(new PhiSuit<>("AA7", 52, 60, 50, "Helix"));
-        aminoAcids.add(new PhiSuit<>("AA8", 54, 60, 50, "Helix"));
+        aminoAcids.add(new PhiSuit<>("AA6", 20050, 20060, 20050, "Helix"));
+        aminoAcids.add(new PhiSuit<>("AA7", 20052, 20060, 20050, "Helix"));
+        aminoAcids.add(new PhiSuit<>("AA8", 20054, 20060, 20050, "Helix"));
         
         // Polar residues (surface)
-        aminoAcids.add(new PhiSuit<>("AA9", 50, 50, 60, "Polar"));
-        aminoAcids.add(new PhiSuit<>("AA10", 60, 50, 60, "Polar"));
+        aminoAcids.add(new PhiSuit<>("AA9", 20050, 20050, 20060, "Polar"));
+        aminoAcids.add(new PhiSuit<>("AA10", 20060, 20050, 20060, "Polar"));
         
         for (PhiSuit<String> aa : aminoAcids) {
             aa.a = 90;
         }
         
-        // Simulate folding
-        for (int i = 0; i < 30; i++) {
-            // Hydrophobic collapse
+        // Simulate folding using φ-harmonic forces between matching residues
+        for (int i = 0; i < 40; i++) {
             for (int j = 0; j < aminoAcids.size(); j++) {
                 for (int k = j + 1; k < aminoAcids.size(); k++) {
                     PhiSuit<String> aa1 = aminoAcids.get(j);
                     PhiSuit<String> aa2 = aminoAcids.get(k);
+                    double distance = aa1.distanceTo(aa2);
+                    if (distance < 1) continue;
                     
-                    if (aa1.get().equals("Hydrophobic") && aa2.get().equals("Hydrophobic")) {
-                        double distance = aa1.distanceTo(aa2);
-                        if (distance > 8) {
-                            aa1.moveTowards(aa2, 0.1);
-                        }
+                    // Hydrophobic collapse — φ-scaled attraction
+                    if (aa1.peek().equals("Hydrophobic") && aa2.peek().equals("Hydrophobic")) {
+                        double phiForce = PHI * (aa1.a * aa2.a) / (distance * distance) * 0.05;
+                        aa1.moveTowards(aa2, phiForce);
+                        aa2.moveTowards(aa1, phiForce);
                     }
                     
-                    // Disulfide bond formation
-                    if (aa1.get().equals("Cysteine") && aa2.get().equals("Cysteine")) {
-                        double distance = aa1.distanceTo(aa2);
-                        if (distance > 6) {
-                            aa1.moveTowards(aa2, 0.15);
-                        }
+                    // Disulfide bond formation — stronger φ² attraction
+                    if (aa1.peek().equals("Cysteine") && aa2.peek().equals("Cysteine")) {
+                        double phiForce = PHI * PHI * (aa1.a * aa2.a) / (distance * distance) * 0.05;
+                        aa1.moveTowards(aa2, phiForce);
+                        aa2.moveTowards(aa1, phiForce);
                     }
                 }
             }
@@ -266,8 +261,6 @@ public class ScientificValidation {
             for (PhiSuit<String> aa : aminoAcids) {
                 aa.heat(10);
             }
-            
-            gravity.tick();
         }
         
         System.out.println("   ✓ Folding simulation complete");
@@ -283,11 +276,11 @@ public class ScientificValidation {
                 PhiSuit<String> aa2 = aminoAcids.get(j);
                 double distance = aa1.distanceTo(aa2);
                 
-                if (aa1.get().equals("Hydrophobic") && aa2.get().equals("Hydrophobic") && distance < 10) {
+                if (aa1.peek().equals("Hydrophobic") && aa2.peek().equals("Hydrophobic") && distance < 10) {
                     hydrophobicCore++;
                 }
                 
-                if (aa1.get().equals("Cysteine") && aa2.get().equals("Cysteine") && distance < 8) {
+                if (aa1.peek().equals("Cysteine") && aa2.peek().equals("Cysteine") && distance < 8) {
                     disulfideBonds++;
                 }
             }
@@ -316,30 +309,30 @@ public class ScientificValidation {
     }
     
     private static ValidationResult testPenicillinMechanism() {
-        GravityEngine gravity = GravityEngine.getInstance();
         FusionReactor reactor = FusionReactor.getInstance();
+        if (!reactor.isActive()) reactor.start();
         
         System.out.println("🧪 Simulating Penicillin mechanism...");
         
-        // Penicillin (β-lactam ring)
-        PhiSuit<String> penicillin = new PhiSuit<>("Penicillin", 50, 50, 50, "Beta-lactam");
+        // Isolated coordinates — 30000+ offset
+        PhiSuit<String> penicillin = new PhiSuit<>("Penicillin", 30050, 30050, 30050, "Beta-lactam");
         penicillin.a = 95;
         
-        // Bacterial transpeptidase enzyme
-        PhiSuit<String> enzyme = new PhiSuit<>("Transpeptidase", 58, 58, 58, "ActiveSite");
+        PhiSuit<String> enzyme = new PhiSuit<>("Transpeptidase", 30058, 30058, 30058, "ActiveSite");
         enzyme.a = 88;
         
         int initialFusions = SpatialRegistry.getFusionEvents().size();
         
-        // Simulate interaction
-        for (int i = 0; i < 25; i++) {
+        // Simulate interaction using φ-harmonic force
+        for (int i = 0; i < 30; i++) {
             double distance = penicillin.distanceTo(enzyme);
-            if (distance > 5) {
-                penicillin.moveTowards(enzyme, 0.25);
+            if (distance > 2) {
+                double phiForce = PHI * (penicillin.a * enzyme.a) / (distance * distance) * 0.1;
+                penicillin.moveTowards(enzyme, phiForce);
+                enzyme.moveTowards(penicillin, phiForce * 0.3);
             }
             penicillin.heat(20);
             enzyme.heat(15);
-            gravity.tick();
         }
         
         reactor.check();
@@ -375,16 +368,16 @@ public class ScientificValidation {
     }
     
     private static ValidationResult testDNABasePairing() {
-        GravityEngine gravity = GravityEngine.getInstance();
         FusionReactor reactor = FusionReactor.getInstance();
+        if (!reactor.isActive()) reactor.start();
         
         System.out.println("🧪 Simulating DNA base pairing...");
         
-        // Create bases
-        PhiSuit<String> adenine = new PhiSuit<>("Adenine", 50, 50, 50, "Purine");
-        PhiSuit<String> thymine = new PhiSuit<>("Thymine", 60, 50, 50, "Pyrimidine");
-        PhiSuit<String> guanine = new PhiSuit<>("Guanine", 50, 60, 50, "Purine");
-        PhiSuit<String> cytosine = new PhiSuit<>("Cytosine", 60, 60, 50, "Pyrimidine");
+        // Isolated coordinates — 40000+ offset
+        PhiSuit<String> adenine = new PhiSuit<>("Adenine", 40050, 40050, 40050, "Purine");
+        PhiSuit<String> thymine = new PhiSuit<>("Thymine", 40060, 40050, 40050, "Pyrimidine");
+        PhiSuit<String> guanine = new PhiSuit<>("Guanine", 40050, 40060, 40050, "Purine");
+        PhiSuit<String> cytosine = new PhiSuit<>("Cytosine", 40060, 40060, 40050, "Pyrimidine");
         
         adenine.a = 90;
         thymine.a = 90;
@@ -393,26 +386,28 @@ public class ScientificValidation {
         
         int initialFusions = SpatialRegistry.getFusionEvents().size();
         
-        // Simulate pairing
+        // Simulate pairing using φ-harmonic forces
         for (int i = 0; i < 30; i++) {
-            // A-T pairing (2 H-bonds)
+            // A-T pairing (2 H-bonds) — φ-scaled force
             double distAT = adenine.distanceTo(thymine);
-            if (distAT > 6) {
-                adenine.moveTowards(thymine, 0.15);
+            if (distAT > 2) {
+                double phiForce = PHI * (adenine.a * thymine.a) / (distAT * distAT) * 0.08;
+                adenine.moveTowards(thymine, phiForce);
+                thymine.moveTowards(adenine, phiForce);
             }
             
-            // G-C pairing (3 H-bonds, stronger)
+            // G-C pairing (3 H-bonds, stronger) — φ²-scaled force (3/2 ratio mirrors real H-bond ratio)
             double distGC = guanine.distanceTo(cytosine);
-            if (distGC > 5) {
-                guanine.moveTowards(cytosine, 0.20);
+            if (distGC > 2) {
+                double phiForce = PHI * PHI * (guanine.a * cytosine.a) / (distGC * distGC) * 0.08;
+                guanine.moveTowards(cytosine, phiForce);
+                cytosine.moveTowards(guanine, phiForce);
             }
             
             adenine.heat(12);
             thymine.heat(12);
             guanine.heat(15);
             cytosine.heat(15);
-            
-            gravity.tick();
         }
         
         reactor.check();

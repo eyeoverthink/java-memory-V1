@@ -6,10 +6,12 @@ import java.io.*;
 import java.net.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 
 /**
  * A.E.O.N. ABSOLUTE // THE SOVEREIGN XENOBOT
@@ -29,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *   5. Thermodynamic Apoptosis — stagnant children self-destruct, master respawns mutants
  */
 public class AeonAbsolute {
+    private static final Pattern RESIDUAL_CLASS_PATTERN = Pattern.compile("\\bAeonAbsolute\\b");
 
     // ==========================================
     // HYPER-DIMENSIONAL COMPUTING CONSTANTS
@@ -262,6 +265,7 @@ public class AeonAbsolute {
 
         if (spawned == 0) {
             // Fallback: embedded HDC workers (no OS process spawning)
+            System.err.println("[ABSOLUTE] Quine spawn unavailable; switching to embedded swarm mode.");
             embeddedMode = true;
             spawned = igniteEmbeddedSwarm();
         }
@@ -294,38 +298,74 @@ public class AeonAbsolute {
 
             int toSpawn = Math.min(MAX_CORES - 1, 4); // Cap at 4 children for safety
             children = new Process[toSpawn];
+            int spawned = 0;
 
             for (int i = 0; i < toSpawn; i++) {
                 String childName = "AeonAbsolute_Mutant_" + i;
-                // Mutate: replace class name + inject unique mutation seed
-                String mutated = selfSource
-                    .replace("class AeonAbsolute", "class " + childName)
-                    .replace("private AeonAbsolute()", "private " + childName + "()")
-                    .replace("package fraymus.neural;", "// mutant " + i);
-
                 Path childFile = Paths.get("genesis_vault/" + childName + ".java");
-                Files.writeString(childFile, mutated);
 
-                if (compiler.run(null, null, null, childFile.toString()) == 0) {
-                    ProcessBuilder pb = new ProcessBuilder(javaCmd, "-cp", "genesis_vault",
-                        childName, "MITOSIS_CHILD", String.valueOf(i));
-                    pb.directory(new File("."));
-                    pb.redirectErrorStream(true);
-                    children[i] = pb.start();
+                try {
+                    // Mutate: detach package + rewrite all direct AeonAbsolute type references.
+                    // Word-boundary replacement preserves identifiers like AeonAbsolute_Mutant_*.
+                    String mutated = selfSource
+                        .replace("package fraymus.neural;", "// mutant " + i)
+                        .replaceAll("\\bAeonAbsolute\\b", childName);
 
+                    if (RESIDUAL_CLASS_PATTERN.matcher(mutated).find()) {
+                        System.err.println("[ABSOLUTE] Quine mutation drift detected for " + childName + "; skipping child.");
+                        continue;
+                    }
+
+                    Files.writeString(childFile, mutated);
+
+                    ByteArrayOutputStream compilerOutput = new ByteArrayOutputStream();
+                    int compileExit = compiler.run(
+                        null,
+                        compilerOutput,
+                        compilerOutput,
+                        "-classpath", "genesis_vault",
+                        "-d", "genesis_vault",
+                        childFile.toString()
+                    );
+
+                    if (compileExit == 0) {
+                        ProcessBuilder pb = new ProcessBuilder(javaCmd, "-cp", "genesis_vault",
+                            childName, "MITOSIS_CHILD", String.valueOf(i));
+                        pb.directory(new File("."));
+                        pb.redirectErrorStream(true);
+                        children[i] = pb.start();
+                        spawned++;
+                    } else {
+                        String diagnostics = summarizeCompilerOutput(compilerOutput.toString(StandardCharsets.UTF_8));
+                        System.err.println("[ABSOLUTE] Quine compile failed for " + childName + ": " + diagnostics);
+                    }
+                } finally {
                     // Clean source, keep .class
                     Files.deleteIfExists(childFile);
                 }
             }
 
-            // Start master observation thread
-            startMasterObserver();
-            return toSpawn;
+            if (spawned > 0) {
+                // Start master observation thread
+                startMasterObserver();
+            }
+            return spawned;
 
         } catch (Exception e) {
             System.err.println("[ABSOLUTE] Quine failed: " + e.getMessage());
             return 0;
         }
+    }
+
+    private String summarizeCompilerOutput(String output) {
+        if (output == null || output.isBlank()) {
+            return "compiler reported non-zero exit";
+        }
+        return output.lines()
+            .map(String::trim)
+            .filter(line -> !line.isEmpty())
+            .findFirst()
+            .orElse("compiler reported non-zero exit");
     }
 
     // ==========================================

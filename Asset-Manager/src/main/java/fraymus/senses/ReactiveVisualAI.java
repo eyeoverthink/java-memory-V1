@@ -1,11 +1,17 @@
 package fraymus.senses;
 
+import fraymus.core.ComputeScheduler;
+import fraymus.core.GpuProfile;
 import fraymus.core.OllamaBridge;
+import fraymus.visual.ThoughtAnalyzer;
+import fraymus.visual.ThoughtFrame;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 🎬 REACTIVE VISUAL AI
@@ -29,35 +35,24 @@ public class ReactiveVisualAI {
     private final BlockingQueue<ThoughtFrame> thoughtQueue;
     private final AtomicBoolean thinking;
     private Thread visualizationThread;
+    private final ComputeScheduler compute;
+    private final GpuProfile gpu;
+    private final AtomicInteger pendingVideos;
     
     // Statistics
     private int totalConversations = 0;
     private int totalThoughts = 0;
-    private int totalVideos = 0;
+    private volatile int totalVideos = 0;
     
     // Configuration
     private boolean autoVisualize = true;
     private int thoughtsPerVideo = 3; // Generate video every N thoughts
     private double minEntropyChange = 0.2; // Minimum entropy change to trigger video
+    private int maxVideosPerQuestion = 2;
+    private int maxPendingVideos = 1;
+    private int videosThisQuestion = 0;
     
-    /**
-     * A thought frame - represents one moment of AI cognition
-     */
-    public static class ThoughtFrame {
-        public String thought;
-        public double entropy;
-        public double confidence;
-        public long timestamp;
-        public boolean isConclusion;
-        
-        public ThoughtFrame(String thought, double entropy, double confidence, boolean isConclusion) {
-            this.thought = thought;
-            this.entropy = entropy;
-            this.confidence = confidence;
-            this.timestamp = System.currentTimeMillis();
-            this.isConclusion = isConclusion;
-        }
-    }
+    // ThoughtFrame now imported from fraymus.visual package
     
     public ReactiveVisualAI() {
         this("eyeoverthink/Fraymus");
@@ -67,6 +62,9 @@ public class ReactiveVisualAI {
         this.brain = new OllamaBridge(model);
         this.thoughtQueue = new LinkedBlockingQueue<>();
         this.thinking = new AtomicBoolean(false);
+        this.pendingVideos = new AtomicInteger(0);
+        this.compute = ComputeScheduler.getInstance();
+        this.gpu = GpuProfile.getInstance();
         
         System.out.println("╔═══════════════════════════════════════════════════════════════╗");
         System.out.println("║                                                               ║");
@@ -83,6 +81,7 @@ public class ReactiveVisualAI {
     public String ask(String question) {
         totalConversations++;
         thinking.set(true);
+        videosThisQuestion = 0;
         
         System.out.println("═══════════════════════════════════════════════════════════════");
         System.out.println("🎬 VISUAL THOUGHT PROCESS");
@@ -91,10 +90,7 @@ public class ReactiveVisualAI {
         System.out.println("❓ QUESTION: " + question);
         System.out.println();
         
-        // Start visualization thread if enabled
-        if (autoVisualize && VisualCortex.isAvailable()) {
-            startVisualizationThread();
-        }
+        // Visualization thread no longer needed - video generation is async via ComputeScheduler IO pool
         
         // Build enhanced prompt that encourages step-by-step thinking
         String enhancedPrompt = buildThinkingPrompt(question);
@@ -108,6 +104,9 @@ public class ReactiveVisualAI {
         
         // Stream the response and capture thoughts
         String response = brain.speak(null, enhancedPrompt);
+        if (autoVisualize && VisualCortex.isAvailable()) {
+            brain.releaseForVisuals();
+        }
         
         // Parse response into thought frames
         String[] lines = response.split("\n");
@@ -117,30 +116,22 @@ public class ReactiveVisualAI {
         for (String line : lines) {
             if (line.trim().isEmpty()) continue;
             
-            // Calculate entropy based on line characteristics
-            double entropy = calculateLineEntropy(line);
-            double confidence = calculateConfidence(line);
-            boolean isConclusion = line.toLowerCase().contains("therefore") || 
-                                  line.toLowerCase().contains("conclusion") ||
-                                  line.toLowerCase().contains("answer");
-            
-            ThoughtFrame frame = new ThoughtFrame(line, entropy, confidence, isConclusion);
+            // Use the shared ThoughtAnalyzer for richer entropy/confidence
+            ThoughtFrame frame = ThoughtAnalyzer.analyze(line);
             thoughts.add(frame);
-            thoughtQueue.offer(frame);
             totalThoughts++;
             thoughtCount++;
             
             // Print thought with visual indicator
-            String indicator = getThoughtIndicator(entropy, confidence);
-            System.out.println(indicator + " " + line);
+            System.out.println(frame.indicator + " " + line);
             
             // Generate video if conditions met
-            if (autoVisualize && shouldGenerateVideo(thoughtCount, entropy, lastEntropy)) {
+            if (autoVisualize && shouldGenerateVideo(thoughtCount, frame.entropy, lastEntropy, frame)) {
                 queueVideoGeneration(frame);
             }
             
             fullResponse.append(line).append("\n");
-            lastEntropy = entropy;
+            lastEntropy = frame.entropy;
         }
         
         System.out.println("─────────────────────────────────────────────────────────────");
@@ -158,7 +149,7 @@ public class ReactiveVisualAI {
         System.out.println("═══════════════════════════════════════════════════════════════");
         System.out.println("✅ THOUGHT PROCESS COMPLETE");
         System.out.println("   Total thoughts: " + thoughts.size());
-        System.out.println("   Videos generated: " + totalVideos);
+        System.out.println("   Videos completed: " + totalVideos + "; pending: " + pendingVideos.get());
         System.out.println("═══════════════════════════════════════════════════════════════");
         System.out.println();
         
@@ -170,103 +161,41 @@ public class ReactiveVisualAI {
      */
     private String buildThinkingPrompt(String question) {
         return String.format("""
-            You are a visual AI that thinks step-by-step.
+            Answer accurately and concisely using up to four short sentences.
             
             Question: %s
             
-            Think through this progressively. For each step:
-            1. State what you're considering
-            2. Explain your reasoning
-            3. Draw a conclusion
-            
-            Be concise but thorough. Each line of thought should be clear and visual.
+            Provide a helpful answer and, when useful, a concrete visual description.
+            Respect the requested length. Do not narrate an internal thought process.
+            Distinguish established facts from speculation.
             
             Your response:
             """, question);
     }
     
-    /**
-     * Calculate entropy of a line (chaos vs order in the thought)
-     */
-    private double calculateLineEntropy(String line) {
-        // Simple heuristic: longer lines, more punctuation = higher entropy
-        double lengthFactor = Math.min(1.0, line.length() / 200.0);
-        
-        // Count uncertainty markers
-        int uncertaintyCount = 0;
-        String lower = line.toLowerCase();
-        if (lower.contains("maybe")) uncertaintyCount++;
-        if (lower.contains("perhaps")) uncertaintyCount++;
-        if (lower.contains("might")) uncertaintyCount++;
-        if (lower.contains("could")) uncertaintyCount++;
-        if (lower.contains("?")) uncertaintyCount++;
-        
-        double uncertaintyFactor = Math.min(1.0, uncertaintyCount / 3.0);
-        
-        // Count certainty markers
-        int certaintyCount = 0;
-        if (lower.contains("definitely")) certaintyCount++;
-        if (lower.contains("certainly")) certaintyCount++;
-        if (lower.contains("clearly")) certaintyCount++;
-        if (lower.contains("obviously")) certaintyCount++;
-        
-        double certaintyFactor = Math.min(1.0, certaintyCount / 2.0);
-        
-        // High uncertainty or very long = high entropy
-        // High certainty = low entropy
-        return Math.max(0.1, Math.min(0.9, 
-            (lengthFactor * 0.3 + uncertaintyFactor * 0.5 - certaintyFactor * 0.3 + 0.3)));
-    }
+    // Entropy, confidence, and indicator logic now delegated to ThoughtAnalyzer.
     
     /**
-     * Calculate confidence level of a thought
+     * Decide if we should generate a video for this thought.
+     * Triggers: periodic, entropy shift, conclusion, or crystalline certainty.
      */
-    private double calculateConfidence(String line) {
-        String lower = line.toLowerCase();
-        
-        // Certainty markers increase confidence
-        double confidence = 0.5;
-        if (lower.contains("definitely") || lower.contains("certainly")) confidence += 0.2;
-        if (lower.contains("clearly") || lower.contains("obviously")) confidence += 0.15;
-        if (lower.contains("therefore") || lower.contains("thus")) confidence += 0.1;
-        
-        // Uncertainty markers decrease confidence
-        if (lower.contains("maybe") || lower.contains("perhaps")) confidence -= 0.2;
-        if (lower.contains("might") || lower.contains("could")) confidence -= 0.15;
-        if (lower.contains("?")) confidence -= 0.1;
-        
-        return Math.max(0.1, Math.min(1.0, confidence));
-    }
-    
-    /**
-     * Get visual indicator for thought based on entropy and confidence
-     */
-    private String getThoughtIndicator(double entropy, double confidence) {
-        if (confidence > 0.8) {
-            return "💎"; // High confidence = crystalline
-        } else if (entropy > 0.7) {
-            return "🌀"; // High entropy = chaotic
-        } else if (entropy < 0.3) {
-            return "✨"; // Low entropy = ordered
-        } else {
-            return "💭"; // Normal thought
-        }
-    }
-    
-    /**
-     * Decide if we should generate a video for this thought
-     */
-    private boolean shouldGenerateVideo(int thoughtCount, double entropy, double lastEntropy) {
+    private boolean shouldGenerateVideo(int thoughtCount, double entropy, double lastEntropy, ThoughtFrame frame) {
         // Generate every N thoughts
         if (thoughtCount % thoughtsPerVideo == 0) {
             return true;
         }
-        
         // Generate on significant entropy change
         if (Math.abs(entropy - lastEntropy) > minEntropyChange) {
             return true;
         }
-        
+        // Conclusion always gets a video
+        if (frame.isConclusion) {
+            return true;
+        }
+        // High-confidence crystalline thoughts (special moments)
+        if (frame.entropy < 0.2 && frame.confidence > 0.8) {
+            return true;
+        }
         return false;
     }
     
@@ -274,15 +203,29 @@ public class ReactiveVisualAI {
      * Queue a video generation for a thought
      */
     private void queueVideoGeneration(ThoughtFrame frame) {
-        // This would be picked up by visualization thread
-        // For now, we'll generate inline
-        System.out.println("   🎥 [Generating visual reflection...]");
-        
+        queueVideoGeneration(frame, false);
+    }
+
+    private void queueVideoGeneration(ThoughtFrame frame, boolean force) {
+        if (!autoVisualize || !VisualCortex.isAvailable()) {
+            return;
+        }
+        if (!force && videosThisQuestion >= maxVideosPerQuestion) {
+            return;
+        }
+        if (pendingVideos.get() >= maxPendingVideos) {
+            return;
+        }
+
+        videosThisQuestion++;
+        pendingVideos.incrementAndGet();
+
+        System.out.println("   🎥 [Queued visual reflection...]");
         String concept = extractConcept(frame.thought);
         double consciousness = frame.confidence;
-        
-        // Generate in background (non-blocking)
-        new Thread(() -> {
+
+        // Submit to the shared, hardware-aware IO pool instead of a private executor.
+        Future<?> f = compute.submitIo(() -> {
             try {
                 VisualCortex.dream(
                     concept,
@@ -293,24 +236,27 @@ public class ReactiveVisualAI {
                 totalVideos++;
             } catch (Exception e) {
                 System.out.println("   ⚠️ Video generation failed: " + e.getMessage());
+            } finally {
+                pendingVideos.decrementAndGet();
             }
-        }).start();
+        });
+        // Track the future so shutdown can be clean (optional tracking)
+        activeFutures.add(f);
     }
     
     /**
      * Generate final conclusion video
      */
     private void generateConclusionVideo(String question, ThoughtFrame finalThought) {
-        String concept = "AI conclusion: " + extractConcept(finalThought.thought);
-        
-        VisualCortex.dream(
-            concept,
+        ThoughtFrame conclusion = new ThoughtFrame(
+            "AI conclusion: " + extractConcept(finalThought.thought),
             finalThought.entropy,
-            1.618033988749895,
-            finalThought.confidence
+            finalThought.confidence,
+            System.currentTimeMillis(),
+            true,
+            "\uD83D\uDCA5" // Conclusion indicator
         );
-        
-        totalVideos++;
+        queueVideoGeneration(conclusion, true);
     }
     
     /**
@@ -340,26 +286,21 @@ public class ReactiveVisualAI {
     /**
      * Start background thread for visualization
      */
-    private void startVisualizationThread() {
-        if (visualizationThread != null && visualizationThread.isAlive()) {
-            return;
-        }
-        
-        visualizationThread = new Thread(() -> {
-            while (thinking.get()) {
-                try {
-                    ThoughtFrame frame = thoughtQueue.poll(100, java.util.concurrent.TimeUnit.MILLISECONDS);
-                    if (frame != null) {
-                        // Process thought frame
-                        // (Currently handled inline, but could be async here)
-                    }
-                } catch (InterruptedException e) {
-                    break;
-                }
+    // Track active futures for clean shutdown (replaces private executor tracking)
+    private final List<Future<?>> activeFutures = new ArrayList<>();
+
+    public void awaitVisuals() {
+        for (Future<?> future : activeFutures) {
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (java.util.concurrent.ExecutionException e) {
+                System.out.println("Visual job failed: " + e.getCause());
             }
-        }, "VisualizationThread");
-        
-        visualizationThread.start();
+        }
+        activeFutures.clear();
     }
     
     /**
@@ -439,15 +380,20 @@ public class ReactiveVisualAI {
                Conversations: %d
                Total thoughts: %d
                Videos generated: %d
+               Pending videos: %d
                Auto-visualization: %s
                Thoughts per video: %d
+               Max videos/question: %d
             """,
             totalConversations, totalThoughts, totalVideos,
-            autoVisualize ? "ON" : "OFF", thoughtsPerVideo);
+            pendingVideos.get(),
+            autoVisualize ? "ON" : "OFF", thoughtsPerVideo, maxVideosPerQuestion);
     }
     
     // Configuration setters
     public void setAutoVisualize(boolean enabled) { this.autoVisualize = enabled; }
     public void setThoughtsPerVideo(int n) { this.thoughtsPerVideo = n; }
     public void setMinEntropyChange(double threshold) { this.minEntropyChange = threshold; }
+    public void setMaxVideosPerQuestion(int maxVideos) { this.maxVideosPerQuestion = maxVideos; }
+    public void setMaxPendingVideos(int maxPending) { this.maxPendingVideos = maxPending; }
 }

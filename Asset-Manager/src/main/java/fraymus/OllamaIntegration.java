@@ -4,25 +4,35 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import fraymus.core.FraymusJSON;
+import fraymus.llm.ModelAbstractionLayer;
+import fraymus.llm.LocalModelCatalog;
 
 /**
  * SANDBOX TEST - Ollama API Integration
  * Tests both local and cloud model access
- * API Key: 32dfa14f506446478f3ee8e9c640e234.qMTMC2i0nZ6rpZGx7Mp7N6Be
  */
 public class OllamaIntegration {
     
-    private static final String LOCAL_URL = "http://localhost:11434";
+    private static final String LOCAL_URL = System.getProperty("fraynix.ollamaBaseUrl", "http://127.0.0.1:11434");
     private static final String CLOUD_URL = "https://ollama.com";
-    private static final String API_KEY = "32dfa14f506446478f3ee8e9c640e234.qMTMC2i0nZ6rpZGx7Mp7N6Be";
+    private static final String API_KEY = System.getenv().getOrDefault("OLLAMA_API_KEY", "");
     
     private String baseUrl;
     private boolean useCloud;
-    private int timeout = 30000; // 30 seconds
+    private boolean includeCatalogEndpoints;
+    private int timeout = 120000; // Allow cold local model loads, as the core bridge does.
     
     public OllamaIntegration(boolean useCloud) {
         this.useCloud = useCloud;
         this.baseUrl = useCloud ? CLOUD_URL : LOCAL_URL;
+        this.includeCatalogEndpoints = !useCloud;
+    }
+
+    // Package-private endpoint injection keeps regression tests local and deterministic.
+    OllamaIntegration(boolean useCloud, String baseUrl) {
+        this.useCloud = useCloud;
+        this.baseUrl = baseUrl;
     }
     
     /**
@@ -30,7 +40,7 @@ public class OllamaIntegration {
      */
     public boolean testConnection() {
         try {
-            URL url = new URL(baseUrl + "/api/tags");
+            URL url = toUrl(baseUrl + "/api/tags");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(5000);
@@ -53,10 +63,46 @@ public class OllamaIntegration {
      * List available models
      */
     public List<String> listModels() {
+        return readModels(false);
+    }
+
+    /** Only models backed by local weights; a local daemon can also advertise cloud proxies. */
+    public List<String> listLocalModels() {
+        if (useCloud) return List.of();
+        if (!includeCatalogEndpoints) return readModels(true);
+        Set<String> models = new LinkedHashSet<>();
+        for (String endpoint : LocalModelCatalog.endpoints(baseUrl)) {
+            models.addAll(new OllamaIntegration(false, endpoint).readModels(true));
+        }
+        return List.copyOf(models);
+    }
+
+    private String modelEndpoint(String model) {
+        return !useCloud && includeCatalogEndpoints ? LocalModelCatalog.endpointForModel(model, baseUrl) : baseUrl;
+    }
+
+    /** Resolve through the shared model registry, then require an actually installed candidate. */
+    public String resolveLocalModel(String preferred) {
+        return selectLocalModel(preferred, listLocalModels());
+    }
+
+    static String selectLocalModel(String preferred, List<String> installed) {
+        if (installed.isEmpty()) return "";
+        String resolved = ModelAbstractionLayer.defaultLayer().resolvePreferredModel(preferred, installed);
+        if (installed.contains(resolved)) return resolved;
+        for (String fallback : List.of("eyeoverthink/Fraymus:latest", "eyeoverthink/Fraynix:3b",
+                "fraynix-3b:latest", "llama3.2:latest")) {
+            if (installed.contains(fallback)) return fallback;
+        }
+        return installed.get(0);
+    }
+
+    private List<String> readModels(boolean localOnly) {
         List<String> models = new ArrayList<>();
+        HttpURLConnection conn = null;
         try {
-            URL url = new URL(baseUrl + "/api/tags");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            URL url = toUrl(baseUrl + "/api/tags");
+            conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(10000); // 10 seconds for large model lists
             conn.setReadTimeout(10000);
@@ -71,7 +117,7 @@ public class OllamaIntegration {
                 return models;
             }
             
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
             StringBuilder response = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
@@ -79,42 +125,21 @@ public class OllamaIntegration {
             }
             in.close();
             
-            // Parse JSON manually - improved to handle multiple models
-            String json = response.toString();
-            
-            // Look for "models" array first
-            int modelsArrayStart = json.indexOf("\"models\":");
-            if (modelsArrayStart != -1) {
-                json = json.substring(modelsArrayStart);
-            }
-            
-            // Extract all "name" fields
-            int searchPos = 0;
-            while (true) {
-                int nameStart = json.indexOf("\"name\":", searchPos);
-                if (nameStart == -1) break;
-                
-                // Find the opening quote after "name":
-                int valueStart = json.indexOf("\"", nameStart + 7);
-                if (valueStart == -1) break;
-                
-                // Find the closing quote
-                int valueEnd = json.indexOf("\"", valueStart + 1);
-                if (valueEnd == -1) break;
-                
-                String modelName = json.substring(valueStart + 1, valueEnd);
-                
-                // Only add if not empty and not duplicate
-                if (!modelName.isEmpty() && !models.contains(modelName)) {
-                    models.add(modelName);
-                }
-                
-                searchPos = valueEnd + 1;
+            Object catalog = parseObject(response.toString()).get("models");
+            if (!(catalog instanceof List<?> entries)) return models;
+            for (Object entry : entries) {
+                if (!(entry instanceof Map<?, ?> model)) continue;
+                String name = text(model, "name");
+                if (localOnly && (!text(model, "remote_host").isBlank()
+                        || !text(model, "remote_model").isBlank()
+                        || name.toLowerCase(Locale.ROOT).endsWith("-cloud"))) continue;
+                if (!name.isBlank() && !models.contains(name)) models.add(name);
             }
             
         } catch (Exception e) {
             System.err.println("Error listing models: " + e.getMessage());
-            e.printStackTrace();
+        } finally {
+            if (conn != null) conn.disconnect();
         }
         return models;
     }
@@ -123,13 +148,24 @@ public class OllamaIntegration {
      * Generate a response from Ollama
      */
     public String generate(String model, String prompt, boolean stream) {
+        return generate(model, prompt, stream, Map.of());
+    }
+
+    public String generate(String model, String prompt, boolean stream, Map<String, Object> options) {
+        return generate(model, prompt, stream, options, null);
+    }
+    public String generate(String model, String prompt, boolean stream, Map<String, Object> options, String responseFormat) {
+        return generateWithFormat(model, prompt, stream, options, responseFormat);
+    }
+    public String generateWithFormat(String model, String prompt, boolean stream, Map<String, Object> options, Object responseFormat) {
+        HttpURLConnection conn = null;
         try {
-            URL url = new URL(baseUrl + "/api/generate");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            URL url = toUrl(modelEndpoint(model) + "/api/generate");
+            conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
-            conn.setConnectTimeout(timeout);
+            conn.setConnectTimeout(10000);
             conn.setReadTimeout(timeout);
             
             if (useCloud) {
@@ -137,12 +173,13 @@ public class OllamaIntegration {
             }
             
             // Build JSON request
-            String jsonRequest = String.format(
-                "{\"model\":\"%s\",\"prompt\":\"%s\",\"stream\":%s}",
-                model,
-                escapeJson(prompt),
-                stream
-            );
+            Map<String, Object> request = new LinkedHashMap<>();
+            request.put("model", model);
+            request.put("prompt", prompt);
+            request.put("stream", stream);
+            request.put("options", options);
+            if (responseFormat != null) request.put("format", responseFormat);
+            String jsonRequest = FraymusJSON.stringify(request);
             
             OutputStream os = conn.getOutputStream();
             os.write(jsonRequest.getBytes(StandardCharsets.UTF_8));
@@ -161,7 +198,7 @@ public class OllamaIntegration {
                 return "ERROR " + responseCode + ": " + errResponse.toString();
             }
             
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
             StringBuilder response = new StringBuilder();
             String line;
             
@@ -178,6 +215,7 @@ public class OllamaIntegration {
                 while ((line = in.readLine()) != null) {
                     response.append(line);
                 }
+                in.close();
                 return extractResponse(response.toString());
             }
             
@@ -186,6 +224,8 @@ public class OllamaIntegration {
             
         } catch (Exception e) {
             return "ERROR: " + e.getMessage();
+        } finally {
+            if (conn != null) conn.disconnect();
         }
     }
     
@@ -193,33 +233,40 @@ public class OllamaIntegration {
      * Chat with Ollama (conversation format)
      */
     public String chat(String model, List<Map<String, String>> messages, boolean stream) {
+        return chat(model, messages, stream, Map.of());
+    }
+
+    public String chat(String model, List<Map<String, String>> messages, boolean stream, Map<String, Object> options) {
+        return chat(model, messages, stream, options, null);
+    }
+    public String chat(String model, List<Map<String, String>> messages, boolean stream, Map<String, Object> options, String responseFormat) {
+        return chatWithFormat(model, messages, stream, options, responseFormat);
+    }
+    public String chatWithFormat(String model, List<Map<String, String>> messages, boolean stream, Map<String, Object> options, Object responseFormat) {
+        HttpURLConnection conn = null;
         try {
-            URL url = new URL(baseUrl + "/api/chat");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            URL url = toUrl(modelEndpoint(model) + "/api/chat");
+            conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
-            conn.setConnectTimeout(timeout);
+            conn.setConnectTimeout(10000);
             conn.setReadTimeout(timeout);
             
             if (useCloud) {
                 conn.setRequestProperty("Authorization", "Bearer " + API_KEY);
             }
             
-            // Build JSON request manually
-            StringBuilder jsonRequest = new StringBuilder();
-            jsonRequest.append("{\"model\":\"").append(model).append("\",");
-            jsonRequest.append("\"messages\":[");
-            for (int i = 0; i < messages.size(); i++) {
-                Map<String, String> msg = messages.get(i);
-                jsonRequest.append("{\"role\":\"").append(msg.get("role")).append("\",");
-                jsonRequest.append("\"content\":\"").append(escapeJson(msg.get("content"))).append("\"}");
-                if (i < messages.size() - 1) jsonRequest.append(",");
-            }
-            jsonRequest.append("],\"stream\":").append(stream).append("}");
+            Map<String, Object> request = new LinkedHashMap<>();
+            request.put("model", model);
+            request.put("messages", messages);
+            request.put("stream", stream);
+            request.put("options", options);
+            if (responseFormat != null) request.put("format", responseFormat);
+            String jsonRequest = FraymusJSON.stringify(request);
             
             OutputStream os = conn.getOutputStream();
-            os.write(jsonRequest.toString().getBytes(StandardCharsets.UTF_8));
+            os.write(jsonRequest.getBytes(StandardCharsets.UTF_8));
             os.flush();
             os.close();
             
@@ -235,7 +282,7 @@ public class OllamaIntegration {
                 return "ERROR " + responseCode + ": " + errResponse.toString();
             }
             
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
             StringBuilder response = new StringBuilder();
             String line;
             
@@ -250,6 +297,7 @@ public class OllamaIntegration {
                 while ((line = in.readLine()) != null) {
                     response.append(line);
                 }
+                in.close();
                 return extractChatResponse(response.toString());
             }
             
@@ -258,55 +306,50 @@ public class OllamaIntegration {
             
         } catch (Exception e) {
             return "ERROR: " + e.getMessage();
+        } finally {
+            if (conn != null) conn.disconnect();
         }
     }
     
     /**
-     * Extract response text from JSON (simple parser)
+     * Extract response text using the shared strict JSON parser.
      */
     private String extractResponse(String json) {
-        int start = json.indexOf("\"response\":\"");
-        if (start == -1) return null;
-        start += 12;
-        int end = json.indexOf("\"", start);
-        if (end == -1) return null;
-        return unescapeJson(json.substring(start, end));
+        Map<?, ?> result = parseObject(json);
+        if (result.containsKey("error")) throw new IllegalStateException(text(result, "error"));
+        return text(result, "response");
     }
     
     /**
      * Extract chat response from JSON
      */
     private String extractChatResponse(String json) {
-        int start = json.indexOf("\"content\":\"");
-        if (start == -1) return null;
-        start += 11;
-        int end = json.indexOf("\"", start);
-        if (end == -1) return null;
-        return unescapeJson(json.substring(start, end));
+        Map<?, ?> result = parseObject(json);
+        if (result.containsKey("error")) throw new IllegalStateException(text(result, "error"));
+        Object message = result.get("message");
+        return message instanceof Map<?, ?> object ? text(object, "content") : "";
     }
     
     /**
-     * Escape JSON string
+     * Machine protocol responses must contain one complete JSON object.
      */
-    private String escapeJson(String str) {
-        return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r")
-                  .replace("\t", "\\t");
+    private static Map<?, ?> parseObject(String json) {
+        Object parsed = FraymusJSON.parseStrict(json);
+        if (!(parsed instanceof Map<?, ?> object)) throw new IllegalArgumentException("Expected a JSON object");
+        return object;
     }
     
     /**
-     * Unescape JSON string
+     * Protocol text fields do not coerce objects or arrays into model names.
      */
-    private String unescapeJson(String str) {
-        return str.replace("\\n", "\n")
-                  .replace("\\r", "\r")
-                  .replace("\\t", "\t")
-                  .replace("\\\"", "\"")
-                  .replace("\\\\", "\\");
+    private static String text(Map<?, ?> object, String key) {
+        return object.get(key) instanceof String value ? value : "";
     }
-    
+
+    private static URL toUrl(String value) throws Exception {
+        return URI.create(value).toURL();
+    }
+
     // ============================================================
     // SANDBOX TEST MAIN
     // ============================================================

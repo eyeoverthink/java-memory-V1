@@ -136,8 +136,8 @@ public class FrayCompiler {
             }
             
             // 5. FUSION
-            else if (line.contains("fuse(")) {
-                Pattern pattern = Pattern.compile("fuse\\(([^,]+),\\s*([^)]+)\\)");
+            else if (line.toLowerCase().contains("fuse(")) {
+                Pattern pattern = Pattern.compile("(?i)fuse\\(([^,]+),\\s*([^)]+)\\)");
                 Matcher matcher = pattern.matcher(line);
                 
                 if (matcher.find()) {

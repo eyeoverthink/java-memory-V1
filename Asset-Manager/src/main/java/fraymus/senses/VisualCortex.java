@@ -1,5 +1,6 @@
 package fraymus.senses;
 
+import fraymus.core.GpuProfile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.File;
@@ -7,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 👁️ VISUAL CORTEX - THE DREAMSCAPE BRIDGE
@@ -32,8 +34,11 @@ public class VisualCortex {
     private static final double PHI = 1.618033988749895;
     private static final String PYTHON_SCRIPT = "VideoCortex.py";
     private static final String PYTHON_COMMAND = "py -3.12"; // Use Python 3.12 with GPU support
+    private static final long MAX_DREAM_DURATION_MINUTES = 60;
+    private static final long MIN_VRAM_GB = 6; // Minimum VRAM for GPU mode (6GB)
     private static boolean initialized = false;
     private static boolean available = false;
+    private static GpuProfile gpuProfile;
     
     // Statistics
     private static int totalDreams = 0;
@@ -47,6 +52,9 @@ public class VisualCortex {
         if (initialized) {
             return available;
         }
+        
+        // Initialize GPU profile
+        gpuProfile = GpuProfile.getInstance();
         
         // Check if Python script exists
         File scriptFile = new File(PYTHON_SCRIPT);
@@ -65,7 +73,7 @@ public class VisualCortex {
             
             if (p.exitValue() == 0) {
                 available = true;
-                System.out.println("👁️ VISUAL CORTEX: Available and ready (Python 3.12 + GPU)");
+                System.out.println("👁️ VISUAL CORTEX: Available (Python 3.12)");
             } else {
                 System.out.println("👁️ VISUAL CORTEX: Python 3.12 not found");
                 available = false;
@@ -112,6 +120,18 @@ public class VisualCortex {
         System.out.println("   - Entropy: " + String.format("%.4f", entropy));
         System.out.println("   - Phi: " + String.format("%.6f", phi));
         System.out.println("   - Consciousness: " + String.format("%.4f", consciousness));
+        
+        // GPU VRAM gating check (aligned with current GpuProfile API)
+        double freeVramGb = gpuProfile.freeVramBytes() / (1024.0 * 1024.0 * 1024.0);
+        boolean useGpu = gpuProfile.hasCudaGpu();
+        if (gpuProfile.hasCudaGpu()) {
+            String gpuName = gpuProfile.gpus().isEmpty() ? "Unknown NVIDIA GPU" : gpuProfile.gpus().get(0).name;
+            System.out.println("   - GPU: " + gpuName);
+            System.out.println("   - Free VRAM: " + String.format("%.2f GB", freeVramGb));
+            System.out.println("   - Mode: GPU with model CPU offload");
+        } else {
+            System.out.println("   - GPU: Not detected (CPU mode)");
+        }
         System.out.println();
         
         try {
@@ -120,31 +140,63 @@ public class VisualCortex {
             tempFile.deleteOnExit();
             java.nio.file.Files.write(tempFile.toPath(), jsonState.getBytes());
             
-            // Build command
+            // Build command with GPU VRAM gating
             List<String> command = new ArrayList<>();
             command.add("py");
             command.add("-3.12");
             command.add(PYTHON_SCRIPT);
+            command.add("--mode");
+            command.add(System.getProperty("fraynix.visual.mode", "video"));
+            command.add("--width");
+            command.add(System.getProperty("fraynix.visual.width", "256"));
+            command.add("--height");
+            command.add(System.getProperty("fraynix.visual.height", "256"));
+            command.add("--steps");
+            command.add(System.getProperty("fraynix.visual.steps", "8"));
+            command.add("--frames");
+            command.add(System.getProperty("fraynix.visual.frames", "8"));
             command.add("--state-file");
             command.add(tempFile.getAbsolutePath());
+            
+            // Add GPU mode flag based on VRAM availability
+            if (!useGpu) {
+                command.add("--cpu"); // Force CPU mode if insufficient VRAM
+            }
             
             // Invoke the Python LTX-Video Script
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
+            pb.environment().put("PYTHONUTF8", "1");
+            pb.environment().put("PYTHONUNBUFFERED", "1");
             
             System.out.println("   ⚡ Invoking Dream Engine...");
             System.out.println();
             
             Process p = pb.start();
             
-            // Read output (Live Dreaming Logs)
-            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println("   [DREAM] " + line);
+            Thread outputThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println("   [DREAM] " + line);
+                    }
+                } catch (Exception e) {
+                    System.out.println("   [DREAM] Output stream closed: " + e.getMessage());
+                }
+            }, "DreamOutputReader");
+            outputThread.setDaemon(true);
+            outputThread.start();
+            
+            boolean finished = p.waitFor(MAX_DREAM_DURATION_MINUTES, TimeUnit.MINUTES);
+            if (!finished) {
+                System.out.println();
+                System.out.println("❌ DREAM GENERATION TIMED OUT after " + MAX_DREAM_DURATION_MINUTES + " minutes");
+                p.destroyForcibly();
+                failedDreams++;
+                throw new IllegalStateException("Visual generation timed out");
             }
             
-            int exitCode = p.waitFor();
+            int exitCode = p.exitValue();
             
             if (exitCode == 0) {
                 System.out.println();
@@ -155,13 +207,14 @@ public class VisualCortex {
                 System.out.println();
                 System.out.println("❌ DREAM GENERATION FAILED (exit code: " + exitCode + ")");
                 failedDreams++;
+                throw new IllegalStateException("Visual worker exited with code " + exitCode);
             }
             
         } catch (Exception e) {
             System.out.println();
             System.out.println("❌ VISUAL CORTEX ERROR: " + e.getMessage());
             failedDreams++;
-            e.printStackTrace();
+            throw new IllegalStateException("Visual generation failed", e);
         }
         
         System.out.println();
@@ -211,13 +264,28 @@ public class VisualCortex {
             
             Process p = pb.start();
             
-            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println("   [DREAM] " + line);
+            Thread outputThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println("   [DREAM] " + line);
+                    }
+                } catch (Exception e) {
+                    System.out.println("   [DREAM] Output stream closed: " + e.getMessage());
+                }
+            }, "DreamOutputReader");
+            outputThread.setDaemon(true);
+            outputThread.start();
+            
+            boolean finished = p.waitFor(MAX_DREAM_DURATION_MINUTES, TimeUnit.MINUTES);
+            if (!finished) {
+                System.out.println("❌ DREAM GENERATION TIMED OUT after " + MAX_DREAM_DURATION_MINUTES + " minutes");
+                p.destroyForcibly();
+                failedDreams++;
+                return;
             }
             
-            int exitCode = p.waitFor();
+            int exitCode = p.exitValue();
             
             if (exitCode == 0) {
                 successfulDreams++;

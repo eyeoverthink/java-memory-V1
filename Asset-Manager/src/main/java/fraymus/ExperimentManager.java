@@ -77,7 +77,8 @@ public class ExperimentManager {
     // Ollama integration (lazy init)
     private OllamaIntegration ollama = null;
     private boolean useCloudOllama = false;
-    private String currentModel = "llama3.2:1b";
+    private String currentModel = System.getProperty("fraynix.localModel",
+        System.getenv().getOrDefault("FRAYNIX_LOCAL_MODEL", "eyeoverthink/Fraymus:latest"));
 
     public ExperimentManager(PhiWorld world, InfiniteMemory infiniteMemory,
                               PassiveLearner passiveLearner, PhiNeuralNet neuralNet,
@@ -125,7 +126,7 @@ public class ExperimentManager {
         this.activeEntrainment = new ActiveEntrainment();
         this.fontVault = new FontVault();
         
-        // Initialize Ollama - try local first, fallback to cloud
+        // Initialize local Ollama. Cloud mode requires the explicit operator command.
         initOllama();
     }
 
@@ -2719,27 +2720,26 @@ public class ExperimentManager {
     }
 
     private void initOllama() {
-        // Try local first
-        ollama = new OllamaIntegration(false);
-        if (ollama.testConnection()) {
-            useCloudOllama = false;
-            System.out.println("[Ollama] Connected to LOCAL (localhost:11434)");
-            return;
-        }
-        
-        // Fallback to cloud
-        ollama = new OllamaIntegration(true);
-        if (ollama.testConnection()) {
-            useCloudOllama = true;
-            currentModel = "qwen3-coder-next";
-            System.out.println("[Ollama] Connected to CLOUD");
-            return;
-        }
-        
-        // Neither works - keep local reference but warn
         ollama = new OllamaIntegration(false);
         useCloudOllama = false;
+        if (ollama.testConnection()) {
+            currentModel = ollama.resolveLocalModel(currentModel);
+            System.out.println("[Ollama] Connected to LOCAL (localhost:11434), model: "
+                + (currentModel.isBlank() ? "no local weights installed" : currentModel));
+            return;
+        }
         System.out.println("[Ollama] No connection available. Start 'ollama serve' for local mode.");
+    }
+
+    private boolean ensureOllamaModel() {
+        if (useCloudOllama) return true;
+        List<String> localModels = ollama.listLocalModels();
+        if (!localModels.contains(currentModel)) {
+            currentModel = OllamaIntegration.selectLocalModel(currentModel, localModels);
+        }
+        if (!currentModel.isBlank()) return true;
+        CommandTerminal.printError("No local model weights are available. Check 'ollama models' and the Ollama model store.");
+        return false;
     }
 
     public void runOllama(String args) {
@@ -2756,10 +2756,15 @@ public class ExperimentManager {
                 CommandTerminal.printHighlight("=== OLLAMA STATUS ===");
                 CommandTerminal.print("  Mode: " + (useCloudOllama ? "CLOUD" : "LOCAL"));
                 CommandTerminal.print("  Model: " + currentModel);
+                if (!useCloudOllama) CommandTerminal.print("  Endpoint: "
+                    + fraymus.llm.LocalModelCatalog.endpointForModel(currentModel, "http://127.0.0.1:11434"));
                 
                 boolean connected = ollama.testConnection();
                 if (connected) {
                     CommandTerminal.printSuccess("  Connection: ✓ ACTIVE");
+                    if (!useCloudOllama && !ollama.listLocalModels().contains(currentModel)) {
+                        CommandTerminal.printError("  Selected model is not installed locally. Use 'ollama local' to resolve an installed model.");
+                    }
                 } else {
                     CommandTerminal.printError("  Connection: ✗ OFFLINE");
                     CommandTerminal.print("  Tip: Start Ollama or check your API key");
@@ -2768,13 +2773,25 @@ public class ExperimentManager {
                 
             case "models":
                 CommandTerminal.printHighlight("=== AVAILABLE MODELS ===");
-                List<String> models = ollama.listModels();
+                List<String> models = useCloudOllama ? ollama.listModels() : ollama.listLocalModels();
                 if (models.isEmpty()) {
                     CommandTerminal.printError("No models found. Check connection.");
                 } else {
                     CommandTerminal.printSuccess(String.format("Found %d models:", models.size()));
                     for (String model : models) {
-                        CommandTerminal.print("  - " + model);
+                        CommandTerminal.print("  - " + model + (useCloudOllama ? "" : " ["
+                            + fraymus.llm.LocalModelCatalog.endpointForModel(model, "http://127.0.0.1:11434") + "]"));
+                    }
+                }
+                break;
+
+            case "catalog":
+                CommandTerminal.printHighlight("=== PERSISTED LOCAL MODEL CATALOG ===");
+                CommandTerminal.print("  Source: " + fraymus.llm.LocalModelCatalog.defaultPath());
+                for (fraymus.llm.ModelDescriptor descriptor : fraymus.llm.ModelAbstractionLayer.defaultLayer().registry().all()) {
+                    if (descriptor.id().startsWith("local-ollama/")) {
+                        CommandTerminal.print("  " + descriptor.variant() + " | context=" + descriptor.contextTokens()
+                            + " | " + descriptor.modality() + " | performance=" + descriptor.speedTier());
                     }
                 }
                 break;
@@ -2784,7 +2801,7 @@ public class ExperimentManager {
                     CommandTerminal.printError("Usage: ollama ask <question>");
                     return;
                 }
-                handleOllamaAsk(val);
+                if (ensureOllamaModel()) handleOllamaAsk(val);
                 break;
                 
             case "chat":
@@ -2792,7 +2809,7 @@ public class ExperimentManager {
                     CommandTerminal.printError("Usage: ollama chat <message>");
                     return;
                 }
-                handleOllamaChat(val);
+                if (ensureOllamaModel()) handleOllamaChat(val);
                 break;
                 
             case "cloud":
@@ -2806,9 +2823,13 @@ public class ExperimentManager {
             case "local":
                 useCloudOllama = false;
                 ollama = new OllamaIntegration(false);
-                currentModel = "gpt-oss:120b";
+                currentModel = ollama.resolveLocalModel(currentModel);
                 CommandTerminal.printSuccess("Switched to LOCAL mode");
-                CommandTerminal.print("  Model: " + currentModel);
+                if (currentModel.isBlank()) {
+                    CommandTerminal.printError("No installed local model is available. Check Ollama and its model store.");
+                } else {
+                    CommandTerminal.print("  Model: " + currentModel);
+                }
                 break;
                 
             case "model":
@@ -2816,7 +2837,18 @@ public class ExperimentManager {
                     CommandTerminal.printError("Usage: ollama model <model_name>");
                     return;
                 }
-                currentModel = val.trim();
+                String requested = val.trim();
+                if (!useCloudOllama) {
+                    List<String> localModels = ollama.listLocalModels();
+                    if (!localModels.contains(requested) && localModels.contains(requested + ":latest")) {
+                        requested += ":latest";
+                    }
+                    if (!localModels.contains(requested)) {
+                        CommandTerminal.printError("Model is not installed locally: " + requested + ". Use 'ollama models' to inspect the catalog.");
+                        return;
+                    }
+                }
+                currentModel = requested;
                 CommandTerminal.printSuccess("Model set to: " + currentModel);
                 break;
             
@@ -2825,12 +2857,12 @@ public class ExperimentManager {
                     CommandTerminal.printError("Usage: ollama stream <prompt>");
                     return;
                 }
-                handleOllamaStream(val);
+                if (ensureOllamaModel()) handleOllamaStream(val);
                 break;
                 
             default:
                 CommandTerminal.printError("Unknown ollama command: " + sub);
-                CommandTerminal.print("Try: status | models | ask <q> | chat <q> | stream <q> | cloud | local");
+                CommandTerminal.print("Try: status | models | catalog | model <name> | ask <q> | chat <q> | stream <q> | cloud | local");
                 break;
         }
     }

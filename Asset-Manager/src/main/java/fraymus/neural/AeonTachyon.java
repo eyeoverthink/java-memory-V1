@@ -39,6 +39,10 @@ public class AeonTachyon {
     // 16,384-Dimensional Hyper-space (256 × 64-bit Longs)
     public static final int DIMS = 16384;
     public static final int CHUNKS = DIMS / 64;
+    private static final int MAX_RECENT_CONTEXT =
+        Integer.getInteger("fraymus.tachyon.maxRecentContext", 32);
+    private static final int MAX_FUTURE_CACHE =
+        Integer.getInteger("fraymus.tachyon.maxFutureCache", 512);
 
     // --- SINGLETON ---
     private static AeonTachyon INSTANCE;
@@ -109,7 +113,7 @@ public class AeonTachyon {
 
         bindIntoSingularity(keyVec, valVec);
         recentContext.add(key);
-        if (recentContext.size() > 5) recentContext.poll();
+        while (recentContext.size() > MAX_RECENT_CONTEXT) recentContext.poll();
         bindCount++;
 
         System.out.println(GRN + " [+] BINDING SUCCESSFUL: " + key + " ⊕ " + value + " -> Superimposed into Singularity." + RST);
@@ -335,24 +339,37 @@ public class AeonTachyon {
         while (tachyonRunning) {
             try {
                 if (!recentContext.isEmpty()) {
-                    for (String predictedInput : recentContext) {
+                    String[] contextSnapshot = recentContext.toArray(new String[0]);
+                    for (String predictedInput : contextSnapshot) {
                         if (!tachyonFutureCache.containsKey(predictedInput)) {
                             long[] keyVec = conceptSpace.get(predictedInput);
                             if (keyVec != null) {
                                 long[] extracted = extractFromSingularity(keyVec);
                                 String answer = cleanupAssociativeMemory(extracted);
                                 if (!answer.contains("NOISE") && !answer.contains("VOID")) {
+                                    trimFutureCache();
                                     tachyonFutureCache.put(predictedInput, answer);
                                 }
                             }
                         }
                     }
                 }
-                Thread.sleep(10);
+                Thread.sleep(25);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception ignored) {}
+        }
+    }
+
+    private void trimFutureCache() {
+        if (tachyonFutureCache.size() < MAX_FUTURE_CACHE) return;
+
+        int targetSize = Math.max(MAX_FUTURE_CACHE / 2, 1);
+        Iterator<String> iterator = tachyonFutureCache.keySet().iterator();
+        while (tachyonFutureCache.size() > targetSize && iterator.hasNext()) {
+            iterator.next();
+            iterator.remove();
         }
     }
 

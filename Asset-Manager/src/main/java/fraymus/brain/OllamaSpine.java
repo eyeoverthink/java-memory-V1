@@ -35,7 +35,7 @@ public class OllamaSpine {
      * Use specific model (llama3, mistral, gemma, codellama, etc.)
      */
     public OllamaSpine(String model) {
-        this(model, "http://127.0.0.1:11434");
+        this(model, fraymus.llm.LocalModelCatalog.endpointForModel(model, "http://127.0.0.1:11434"));
     }
 
     /**

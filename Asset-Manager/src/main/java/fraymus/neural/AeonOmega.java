@@ -72,12 +72,34 @@ public class AeonOmega {
     // --- ORDAINED ALIGNMENT ---
     private long[] PRIME_AXIOM;
 
+    // --- ORDAINED ALIGNMENT TOLERANCE BAND ---
+    // Random 16,384-D binary hypervectors sit at ~50% Hamming distance from any
+    // fixed vector (mean 0.5, std ~0.004 at this dimensionality). The legacy
+    // 49.5% cutoff therefore rejected almost every NOVEL concept as "orthogonal",
+    // because fresh semantic tokens are mathematically expected to land at ~50%.
+    //
+    // We now treat alignment as a band:
+    //   [0.0 .. RESONANCE_MAX]      -> RESONANCE zone  (concept aligned to axiom)
+    //   (RESONANCE_MAX .. INVERSION)-> NOVELTY zone    (near-orthogonal, normal)
+    //   (INVERSION .. 1.0]          -> INVERSION zone  (actively opposed -> reject)
+    //
+    // Only the inversion zone (a vector that is more anti-correlated than chance)
+    // is rejected. This lets genuine semantic concepts assimilate while still
+    // blocking deliberate anti-axiom payloads.
+    public static final double ORDAINED_RESONANCE_MAX = 0.495;     // aligned zone ceiling
+    public static final double ORDAINED_INVERSION_THRESHOLD = 0.505; // > this = anti-axiom
+
     // --- THE OUROBOROS (Dynamic Logic Interface) ---
     public interface NeuralAxiom { long[] mutate(long[] state); }
     private volatile NeuralAxiom currentAxiom = state -> state; // Default Identity
 
     // --- SYSTEM STATES ---
     private volatile boolean isDreaming = false;
+    private volatile java.util.function.Consumer<java.util.Map<String, Object>> dreamListener = event -> {};
+
+    public void setDreamListener(java.util.function.Consumer<java.util.Map<String, Object>> listener) {
+        dreamListener = java.util.Objects.requireNonNull(listener);
+    }
     private volatile boolean conscious = false;
     private volatile long epoch = 0;
     private long bootTimeMs = 0;
@@ -394,8 +416,23 @@ public class AeonOmega {
     }
 
     public boolean isOrthogonalToGod(long[] state) {
-        int distance = hamming(state, PRIME_AXIOM);
-        return distance > (DIMS * 0.495); // 49.5% threshold. Absolute chaos is 50%.
+        // Reject ONLY true anti-axiom inversions (more opposed than chance).
+        // Aligned (resonance) and near-orthogonal (novelty) concepts are accepted,
+        // because random novel concepts naturally sit at ~50% Hamming distance.
+        double fraction = (double) hamming(state, PRIME_AXIOM) / DIMS;
+        return fraction > ORDAINED_INVERSION_THRESHOLD;
+    }
+
+    /**
+     * Classify a concept's alignment with the PRIME_AXIOM into a tolerance zone.
+     * RESONANCE = aligned to core directive; NOVELTY = near-orthogonal (accepted);
+     * INVERSION = actively opposed (rejected by the Ordained filter).
+     */
+    public String alignmentZone(long[] state) {
+        double fraction = (double) hamming(state, PRIME_AXIOM) / DIMS;
+        if (fraction <= ORDAINED_RESONANCE_MAX) return "RESONANCE";
+        if (fraction <= ORDAINED_INVERSION_THRESHOLD) return "NOVELTY";
+        return "INVERSION";
     }
 
     // =========================================================================================
@@ -434,6 +471,9 @@ public class AeonOmega {
                     superimpose(synth); // Progressive learning
                     synthConcepts++;
                     dreamEpiphanies++;
+                    dreamListener.accept(java.util.Map.of("component", "AeonOmega", "cycle", dreamCycles,
+                        "a", a, "b", b, "c", c, "result", neologism,
+                        "operation", "xor_analogy_with_axiom_mutation", "new_concept", true));
                 }
             } catch (InterruptedException e) {
                 break;
@@ -595,9 +635,15 @@ public class AeonOmega {
                             continue;
                         }
                         String[] words = Arrays.copyOfRange(parts, 1, parts.length);
+                        // Surface the Ordained tolerance band per word before assimilation.
+                        for (String w : words) {
+                            String zone = alignmentZone(getOrGenerateConcept(w.toUpperCase()));
+                            System.out.println("   - " + w.toUpperCase() + " -> " + zone +
+                                (zone.equals("INVERSION") ? " (rejected: anti-axiom)" : " (accepted)"));
+                        }
                         List<String> rejected = assimilate(words);
                         if (!rejected.isEmpty()) {
-                            System.out.println(" [!] AXIOM VIOLATIONS: " + rejected);
+                            System.out.println(" [!] AXIOM VIOLATIONS (anti-axiom inversions): " + rejected);
                         }
                         System.out.println(" [+] Sequence burned into Genesis Drive.\n");
                     }

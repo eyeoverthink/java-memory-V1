@@ -4,8 +4,11 @@ import fraymus.knowledge.AkashicRecord;
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.util.*;
 import java.util.jar.*;
+import java.util.regex.*;
 
 /**
  * LIBRARY ABSORBER: THE BLACK HOLE PROTOCOL
@@ -85,6 +88,12 @@ public class LibraryAbsorber {
         System.out.println();
 
         try {
+            Path sourcePath = resolveSourcePath(packageName);
+            if (sourcePath != null) {
+                absorbSourceFile(packageName, sourcePath);
+                return;
+            }
+
             // STEP 1: SCAN - Find all classes in package
             System.out.println("   [STEP 1] SCANNING...");
             List<Class<?>> classes = scanPackage(packageName);
@@ -131,35 +140,247 @@ public class LibraryAbsorber {
         }
     }
 
+    private Path resolveSourcePath(String target) {
+        try {
+            Path direct = Paths.get(target);
+            if (Files.isRegularFile(direct)) return direct;
+            Path cwd = Paths.get("").toAbsolutePath().resolve(target);
+            if (Files.isRegularFile(cwd)) return cwd;
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private void absorbSourceFile(String target, Path sourcePath) throws IOException {
+        String content = Files.readString(sourcePath, StandardCharsets.UTF_8);
+        String lowerName = sourcePath.getFileName().toString().toLowerCase(Locale.ROOT);
+
+        System.out.println("   [STEP 1] SCANNING SOURCE FILE...");
+        SourceKnowledge knowledge = lowerName.endsWith(".html") || lowerName.endsWith(".htm")
+            ? extractHtmlKnowledge(target, sourcePath, content)
+            : extractTextSourceKnowledge(target, sourcePath, content);
+        System.out.println("   >> Found " + knowledge.classes.size() + " classes");
+        System.out.println("   >> Found " + knowledge.functions.size() + " functions");
+        System.out.println("   >> Found " + knowledge.panels.size() + " panels");
+        System.out.println("   >> Found " + knowledge.ids.size() + " DOM ids");
+        System.out.println();
+
+        System.out.println("   [STEP 2] EXTRACTING...");
+        System.out.println("   >> Extracted " + knowledge.functions.size() + " methods/functions");
+        System.out.println("   >> Extracted " + knowledge.classes.size() + " classes");
+        System.out.println();
+
+        System.out.println("   [STEP 3] ABSTRACTING...");
+        List<String> knowledgeBlocks = abstractSourceKnowledge(knowledge);
+        System.out.println("   >> Created " + knowledgeBlocks.size() + " knowledge blocks");
+        System.out.println();
+
+        System.out.println("   [STEP 4] STORING...");
+        for (String block : knowledgeBlocks) {
+            akashic.addBlock("SOURCE_KNOWLEDGE", block);
+        }
+        System.out.println("   >> Stored in Akashic Record");
+        System.out.println();
+
+        System.out.println("   [STEP 5] INDEXING...");
+        LibraryKnowledge indexed = new LibraryKnowledge(target);
+        indexed.classCount = knowledge.classes.size();
+        indexed.methodCount = knowledge.functions.size();
+        indexed.classes.addAll(knowledge.classes);
+        indexed.methods.addAll(knowledge.functions);
+        indexed.fields.addAll(knowledge.ids);
+        absorbedLibraries.put(target, indexed);
+        System.out.println("   >> Indexed for SovereignMind access");
+        System.out.println();
+
+        System.out.println("========================================");
+        System.out.println("   ✓ ABSORPTION COMPLETE");
+        System.out.println("   ✓ Source: " + sourcePath);
+        System.out.println("   ✓ Knowledge blocks: " + knowledgeBlocks.size());
+        System.out.println("========================================");
+        System.out.println();
+    }
+
+    private SourceKnowledge extractHtmlKnowledge(String target, Path sourcePath, String content) {
+        SourceKnowledge knowledge = extractTextSourceKnowledge(target, sourcePath, content);
+        addMatches(content, "<h[1-6][^>]*>(.*?)</h[1-6]>", knowledge.panels, true);
+        addMatches(content, "id\\s*=\\s*\"([^\"]+)\"", knowledge.ids, false);
+        addMatches(content, "onclick\\s*=\\s*\"([A-Za-z_$][A-Za-z0-9_$]*)\\s*\\(", knowledge.eventHandlers, false);
+        knowledge.scriptBlocks = countMatches(content, "<script\\b[^>]*>");
+        knowledge.canvasCount = countMatches(content, "<canvas\\b[^>]*>");
+        return knowledge;
+    }
+
+    private SourceKnowledge extractTextSourceKnowledge(String target, Path sourcePath, String content) {
+        SourceKnowledge knowledge = new SourceKnowledge(target, sourcePath.toString(), content.length(), content.lines().count());
+        addMatches(content, "\\bclass\\s+([A-Za-z_$][A-Za-z0-9_$]*)", knowledge.classes, false);
+        addMatches(content, "\\bfunction\\s+([A-Za-z_$][A-Za-z0-9_$]*)\\s*\\(", knowledge.functions, false);
+        addMatches(content, "\\b(?:const|let|var)\\s+([A-Za-z_$][A-Za-z0-9_$]*)\\s*=\\s*(?:async\\s*)?\\([^)]*\\)\\s*=>", knowledge.functions, false);
+        addMatches(content, "\\basync\\s+function\\s+([A-Za-z_$][A-Za-z0-9_$]*)\\s*\\(", knowledge.functions, false);
+        return knowledge;
+    }
+
+    private void addMatches(String content, String regex, Collection<String> output, boolean stripTags) {
+        Matcher matcher = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(content);
+        while (matcher.find()) {
+            String value = matcher.group(1).replaceAll("\\s+", " ").trim();
+            if (stripTags) value = value.replaceAll("<[^>]+>", "").trim();
+            if (!value.isEmpty()) output.add(value);
+        }
+    }
+
+    private int countMatches(String content, String regex) {
+        Matcher matcher = Pattern.compile(regex, Pattern.CASE_INSENSITIVE).matcher(content);
+        int count = 0;
+        while (matcher.find()) count++;
+        return count;
+    }
+
+    private List<String> abstractSourceKnowledge(SourceKnowledge knowledge) {
+        List<String> blocks = new ArrayList<>();
+        blocks.add("SOURCE: " + knowledge.target +
+            " | Path: " + knowledge.path +
+            " | Bytes: " + knowledge.bytes +
+            " | Lines: " + knowledge.lines +
+            " | Classes: " + knowledge.classes.size() +
+            " | Functions: " + knowledge.functions.size() +
+            " | Panels: " + knowledge.panels.size() +
+            " | DOM_IDS: " + knowledge.ids.size() +
+            " | Handlers: " + knowledge.eventHandlers.size() +
+            " | Scripts: " + knowledge.scriptBlocks +
+            " | Canvas: " + knowledge.canvasCount);
+
+        for (String panel : knowledge.panels) blocks.add("PANEL: " + panel);
+        for (String className : knowledge.classes) blocks.add("CLASS: " + className);
+        for (String function : knowledge.functions) blocks.add("FUNCTION: " + function);
+        for (String handler : knowledge.eventHandlers) blocks.add("EVENT_HANDLER: " + handler);
+        for (String id : knowledge.ids) blocks.add("DOM_ID: " + id);
+        return blocks;
+    }
+
     /**
-     * SCAN - Find all classes in a package
+     * SCAN - Find all classes in a package via real ClassLoader scanning.
+     * Scans both JARs on the classpath and filesystem class directories.
+     * Falls back to well-known classes for core JDK packages.
      */
     private List<Class<?>> scanPackage(String packageName) {
         List<Class<?>> classes = new ArrayList<>();
-        
-        // For demonstration, we'll scan a few known classes
-        // In production, would use ClassLoader to scan entire package
-        
-        if (packageName.equals("java.util")) {
-            try {
-                classes.add(Class.forName("java.util.ArrayList"));
-                classes.add(Class.forName("java.util.HashMap"));
-                classes.add(Class.forName("java.util.HashSet"));
-                classes.add(Class.forName("java.util.LinkedList"));
-            } catch (ClassNotFoundException e) {
-                // Ignore
+        String path = packageName.replace('.', '/');
+
+        try {
+            // Try ClassLoader resource scanning (works for JARs + classpath dirs)
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            Enumeration<URL> resources = cl.getResources(path);
+
+            while (resources.hasMoreElements()) {
+                URL resource = resources.nextElement();
+                String protocol = resource.getProtocol();
+
+                if ("file".equals(protocol)) {
+                    // Filesystem directory (e.g. project build output)
+                    File dir = new File(resource.toURI());
+                    if (dir.isDirectory()) {
+                        for (File file : dir.listFiles()) {
+                            if (file.getName().endsWith(".class") && !file.getName().contains("$")) {
+                                String className = packageName + "." +
+                                    file.getName().replace(".class", "");
+                                try {
+                                    classes.add(Class.forName(className));
+                                } catch (Exception | NoClassDefFoundError e) { /* skip */ }
+                            }
+                        }
+                    }
+                } else if ("jar".equals(protocol)) {
+                    // JAR file on classpath
+                    JarURLConnection jarConn = (JarURLConnection) resource.openConnection();
+                    JarFile jar = jarConn.getJarFile();
+                    Enumeration<JarEntry> entries = jar.entries();
+                    while (entries.hasMoreElements()) {
+                        JarEntry entry = entries.nextElement();
+                        String name = entry.getName();
+                        if (name.startsWith(path + "/") && name.endsWith(".class")
+                                && !name.contains("$") && name.indexOf('/', path.length() + 1) == -1) {
+                            String className = name.replace('/', '.').replace(".class", "");
+                            try {
+                                classes.add(Class.forName(className));
+                            } catch (Exception | NoClassDefFoundError e) { /* skip */ }
+                        }
+                    }
+                }
             }
-        } else if (packageName.equals("java.lang")) {
-            try {
-                classes.add(Class.forName("java.lang.String"));
-                classes.add(Class.forName("java.lang.Math"));
-                classes.add(Class.forName("java.lang.System"));
-            } catch (ClassNotFoundException e) {
-                // Ignore
+        } catch (Exception e) {
+            // Fallback silently
+        }
+
+        // If ClassLoader scanning found nothing (e.g. JDK modules in Java 9+),
+        // fall back to well-known classes for core packages
+        if (classes.isEmpty()) {
+            String[][] fallbacks = getWellKnownClasses(packageName);
+            for (String[] pair : fallbacks) {
+                try { classes.add(Class.forName(pair[0])); }
+                catch (Exception e) { /* skip */ }
             }
         }
-        
+
         return classes;
+    }
+
+    /**
+     * Well-known classes for core JDK packages (Java 9+ module system
+     * hides them from ClassLoader.getResources).
+     */
+    private String[][] getWellKnownClasses(String pkg) {
+        return switch (pkg) {
+            case "java.util" -> new String[][]{
+                {"java.util.ArrayList"}, {"java.util.LinkedList"}, {"java.util.Vector"},
+                {"java.util.HashMap"}, {"java.util.TreeMap"}, {"java.util.LinkedHashMap"},
+                {"java.util.HashSet"}, {"java.util.TreeSet"}, {"java.util.LinkedHashSet"},
+                {"java.util.PriorityQueue"}, {"java.util.ArrayDeque"}, {"java.util.Stack"},
+                {"java.util.Collections"}, {"java.util.Arrays"}, {"java.util.Objects"},
+                {"java.util.Optional"}, {"java.util.StringJoiner"}, {"java.util.Random"},
+                {"java.util.Properties"}, {"java.util.BitSet"}, {"java.util.EnumMap"},
+                {"java.util.EnumSet"}, {"java.util.WeakHashMap"}, {"java.util.IdentityHashMap"},
+            };
+            case "java.util.concurrent" -> new String[][]{
+                {"java.util.concurrent.ConcurrentHashMap"}, {"java.util.concurrent.CopyOnWriteArrayList"},
+                {"java.util.concurrent.LinkedBlockingQueue"}, {"java.util.concurrent.ArrayBlockingQueue"},
+                {"java.util.concurrent.ThreadPoolExecutor"}, {"java.util.concurrent.ScheduledThreadPoolExecutor"},
+                {"java.util.concurrent.CountDownLatch"}, {"java.util.concurrent.CyclicBarrier"},
+                {"java.util.concurrent.Semaphore"}, {"java.util.concurrent.Phaser"},
+                {"java.util.concurrent.CompletableFuture"}, {"java.util.concurrent.ForkJoinPool"},
+                {"java.util.concurrent.Executors"}, {"java.util.concurrent.TimeUnit"},
+            };
+            case "java.lang" -> new String[][]{
+                {"java.lang.String"}, {"java.lang.Math"}, {"java.lang.System"},
+                {"java.lang.Integer"}, {"java.lang.Long"}, {"java.lang.Double"},
+                {"java.lang.Float"}, {"java.lang.Boolean"}, {"java.lang.Character"},
+                {"java.lang.StringBuilder"}, {"java.lang.StringBuffer"},
+                {"java.lang.Thread"}, {"java.lang.Runtime"}, {"java.lang.Process"},
+                {"java.lang.ProcessBuilder"}, {"java.lang.Class"},
+            };
+            case "java.io" -> new String[][]{
+                {"java.io.File"}, {"java.io.FileInputStream"}, {"java.io.FileOutputStream"},
+                {"java.io.BufferedReader"}, {"java.io.BufferedWriter"}, {"java.io.PrintWriter"},
+                {"java.io.ByteArrayOutputStream"}, {"java.io.ByteArrayInputStream"},
+                {"java.io.StringReader"}, {"java.io.StringWriter"},
+                {"java.io.ObjectOutputStream"}, {"java.io.ObjectInputStream"},
+                {"java.io.RandomAccessFile"}, {"java.io.StreamTokenizer"},
+            };
+            case "java.nio" -> new String[][]{
+                {"java.nio.ByteBuffer"}, {"java.nio.CharBuffer"},
+                {"java.nio.IntBuffer"}, {"java.nio.LongBuffer"},
+                {"java.nio.FloatBuffer"}, {"java.nio.DoubleBuffer"},
+            };
+            case "java.net" -> new String[][]{
+                {"java.net.URL"}, {"java.net.URI"}, {"java.net.Socket"},
+                {"java.net.ServerSocket"}, {"java.net.InetAddress"},
+                {"java.net.HttpURLConnection"}, {"java.net.DatagramSocket"},
+            };
+            case "java.math" -> new String[][]{
+                {"java.math.BigInteger"}, {"java.math.BigDecimal"}, {"java.math.MathContext"},
+            };
+            default -> new String[0][];
+        };
     }
 
     /**
@@ -217,10 +438,8 @@ public class LibraryAbsorber {
             blocks.add("CLASS: " + className);
         }
         
-        // Create method blocks (sample first 10)
-        int count = 0;
+        // Create method blocks (ALL methods — full absorption)
         for (String method : knowledge.methods) {
-            if (count++ >= 10) break;
             blocks.add("METHOD: " + method);
         }
         
@@ -289,6 +508,27 @@ public class LibraryAbsorber {
         
         public LibraryKnowledge(String packageName) {
             this.packageName = packageName;
+        }
+    }
+
+    private static class SourceKnowledge {
+        final String target;
+        final String path;
+        final int bytes;
+        final long lines;
+        int scriptBlocks = 0;
+        int canvasCount = 0;
+        Set<String> classes = new LinkedHashSet<>();
+        Set<String> functions = new LinkedHashSet<>();
+        Set<String> panels = new LinkedHashSet<>();
+        Set<String> ids = new LinkedHashSet<>();
+        Set<String> eventHandlers = new LinkedHashSet<>();
+
+        SourceKnowledge(String target, String path, int bytes, long lines) {
+            this.target = target;
+            this.path = path;
+            this.bytes = bytes;
+            this.lines = lines;
         }
     }
 

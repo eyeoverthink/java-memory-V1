@@ -31,10 +31,90 @@ import java.util.List;
  */
 public class PhysicsConsole {
     
+    // --- SINGLETON ---
+    private static PhysicsConsole INSTANCE;
+    
     private static List<HyperRigidBody> bodies = new ArrayList<>();
     private static boolean gravityEnabled = false;
     private static boolean running = true;
+    private static boolean simRunning = false;
     private static long startTime;
+
+    public static synchronized PhysicsConsole getInstance() {
+        if (INSTANCE == null) INSTANCE = new PhysicsConsole();
+        return INSTANCE;
+    }
+
+    /**
+     * Start the physics simulation as a background daemon thread.
+     * Does not block — returns immediately. Bodies can be added via addBody().
+     */
+    public void startDaemon() {
+        if (simRunning) return;
+        startTime = System.currentTimeMillis();
+        gravityEnabled = true;
+
+        Thread simulationThread = new Thread(() -> {
+            while (running) {
+                synchronized (bodies) {
+                    for (HyperRigidBody b : bodies) {
+                        b.update(0.016);
+                    }
+                    if (gravityEnabled && bodies.size() > 1) {
+                        for (int i = 0; i < bodies.size(); i++) {
+                            for (int j = i + 1; j < bodies.size(); j++) {
+                                HyperRigidBody b1 = bodies.get(i);
+                                HyperRigidBody b2 = bodies.get(j);
+                                b1.applyGravity(b2);
+                                b2.applyGravity(b1);
+                                if (b1.isCollidingWith(b2)) {
+                                    b1.resolveCollision(b2);
+                                }
+                            }
+                        }
+                    }
+                    for (HyperRigidBody b : bodies) {
+                        b.geometry.update(System.currentTimeMillis());
+                    }
+                }
+                try { Thread.sleep(16); } catch (InterruptedException e) { break; }
+            }
+        }, "PhysicsDaemon");
+        simulationThread.setDaemon(true);
+        simulationThread.start();
+        simRunning = true;
+    }
+
+    /**
+     * Add a body to the simulation (thread-safe).
+     */
+    public HyperRigidBody addBody(String concept, int meshVertices) {
+        if (!simRunning) startDaemon();
+        HyperRigidBody body = new HyperRigidBody(concept, new Mesh(meshVertices));
+        synchronized (bodies) {
+            bodies.add(body);
+        }
+        return body;
+    }
+
+    /**
+     * Add a body with a pre-calculated HDC mass override (thread-safe).
+     * The mass is injected before construction printout via the overloaded constructor.
+     */
+    public HyperRigidBody addBody(String concept, int meshVertices, double hdcMass) {
+        if (!simRunning) startDaemon();
+        HyperRigidBody body = new HyperRigidBody(concept, new Mesh(meshVertices), hdcMass);
+        synchronized (bodies) {
+            bodies.add(body);
+        }
+        return body;
+    }
+
+    public List<HyperRigidBody> getBodies() { return bodies; }
+    public boolean isSimRunning() { return simRunning; }
+    public int getBodyCount() { return bodies.size(); }
+    public boolean isGravityEnabled() { return gravityEnabled; }
+    public void setGravityEnabled(boolean g) { gravityEnabled = g; }
     
     public static void main(String[] args) throws InterruptedException {
         System.out.println("╔═══════════════════════════════════════════════════════════════╗");

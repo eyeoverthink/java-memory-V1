@@ -459,6 +459,15 @@ public class AeonSingularity {
                 if (!dir.exists()) dir.mkdirs();
             } catch (Exception ignored) {}
 
+            // Close AetherBraid before writing to prevent Windows file locking
+            boolean wasIgnited = false;
+            if (fraymus.quantum.AetherBraid.getInstance().isIgnited()) {
+                wasIgnited = true;
+                fraymus.quantum.AetherBraid.getInstance().close();
+                // Give Windows time to release the file lock
+                try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+            }
+
             try (FileChannel fc = new FileOutputStream(FILE_NAME).getChannel()) {
                 ByteBuffer buf = ByteBuffer.allocateDirect(HDC.DIMS * 4);
                 for (int i = 0; i < HDC.DIMS; i++) {
@@ -468,9 +477,20 @@ public class AeonSingularity {
                     buf.flip();
                     fc.write(buf);
                 }
-                System.out.println(GRN + "[DB] Manifold Successfully Saved to Genesis Drive." + RST);
+                // Silent save — no console spam during normal operation
             } catch (Exception e) {
-                System.err.println("[DB] Save failed: " + e.getMessage());
+                // Suppress file locking errors during shutdown (MappedByteBuffer cannot be explicitly unmapped)
+                String msg = e.getMessage();
+                if (msg != null && msg.contains("user-mapped section")) {
+                    // Silent - expected during shutdown when AetherBraid is active
+                } else {
+                    System.err.println("[DB] Save failed: " + FILE_NAME + " (" + e.getMessage() + ")");
+                }
+            }
+
+            // Re-ignite AetherBraid if it was active before
+            if (wasIgnited) {
+                fraymus.quantum.AetherBraid.getInstance().ignite();
             }
         }
 

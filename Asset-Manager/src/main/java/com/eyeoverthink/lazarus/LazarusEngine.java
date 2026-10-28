@@ -33,6 +33,10 @@ import java.util.stream.Collectors;
  * - SELECTION: Fittest survive
  */
 public class LazarusEngine {
+    private static final double EPSILON = 1e-9;
+    private static final double CALM_OBSERVATION_MEAN = 0.25;
+    private static final double STRESS_OBSERVATION_MEAN = 0.85;
+    private static final double OBSERVATION_VARIANCE = 0.04;
 
     private static final int INITIAL_POPULATION = 10;
     private static final int MAX_POPULATION = 100;
@@ -60,6 +64,9 @@ public class LazarusEngine {
     private int stagnationCounter = 0;
     private static final double ENTROPY_THRESHOLD = 80.0;
     private static final int STAGNATION_LIMIT = 100;
+    private double calmBelief = 0.5;
+    private double stressedBelief = 0.5;
+    private ActiveInferenceReport lastActiveInferenceReport;
 
     public LazarusEngine() {
         this.population = new ArrayList<>();
@@ -77,6 +84,7 @@ public class LazarusEngine {
         for (int i = 0; i < INITIAL_POPULATION; i++) {
             population.add(new BioNode(null));
         }
+        this.lastActiveInferenceReport = computeActiveInferenceReport(0.0, false);
     }
 
     /**
@@ -111,7 +119,9 @@ public class LazarusEngine {
             generationCount++;
             
             // 1. READ ENVIRONMENT (System resources)
-            readEnvironment();
+            double normalizedLoad = readEnvironment();
+            lastActiveInferenceReport = computeActiveInferenceReport(normalizedLoad, true);
+            applyActiveInferenceAction(lastActiveInferenceReport.selectedAction());
             
             // 2. UPDATE ALL NODES
             List<BioNode> nextGen = new ArrayList<>();
@@ -258,22 +268,18 @@ public class LazarusEngine {
      * Read environment (CPU/Memory load)
      * This affects the simulation dynamics
      */
-    private void readEnvironment() {
+    private double readEnvironment() {
         try {
-            lastCpuLoad = osBean.getSystemLoadAverage();
-            if (lastCpuLoad < 0) lastCpuLoad = 0;  // Not available on all platforms
-            
-            // High CPU = stress = more mutations
-            if (lastCpuLoad > 0.8) {
-                for (BioNode node : population) {
-                    if (random.nextDouble() < 0.1) {
-                        node.injectEnergy();
-                    }
-                }
+            double rawLoad = osBean.getSystemLoadAverage();
+            if (rawLoad < 0) {
+                rawLoad = 0;
             }
+            int cpuCount = Math.max(1, Runtime.getRuntime().availableProcessors());
+            lastCpuLoad = clamp01(rawLoad / cpuCount);
         } catch (Exception e) {
-            // Ignore
+            lastCpuLoad = 0;
         }
+        return lastCpuLoad;
     }
 
     /**
@@ -383,6 +389,360 @@ public class LazarusEngine {
             "Lazarus[Gen=%d, Pop=%d, Births=%d, Deaths=%d, Running=%s]",
             generationCount, population.size(), birthCount, deathCount, running
         );
+    }
+
+    public ActiveInferenceReport executeActiveInferenceProbe() {
+        double observation = readEnvironment();
+        ActiveInferenceReport report = computeActiveInferenceReport(observation, true);
+        applyActiveInferenceAction(report.selectedAction());
+        lastActiveInferenceReport = report;
+        return report;
+    }
+
+    public ActiveInferenceReport getLastActiveInferenceReport() {
+        return lastActiveInferenceReport;
+    }
+
+    private ActiveInferenceReport computeActiveInferenceReport(double observation, boolean commitBeliefs) {
+        double priorCalm = calmBelief;
+        double priorStress = stressedBelief;
+        double calmLikelihood = gaussianLikelihood(observation, CALM_OBSERVATION_MEAN, OBSERVATION_VARIANCE);
+        double stressLikelihood = gaussianLikelihood(observation, STRESS_OBSERVATION_MEAN, OBSERVATION_VARIANCE);
+        double evidence = (priorCalm * calmLikelihood) + (priorStress * stressLikelihood) + EPSILON;
+        double posteriorCalm = clamp01((priorCalm * calmLikelihood) / evidence);
+        double posteriorStress = clamp01((priorStress * stressLikelihood) / evidence);
+        double normalization = posteriorCalm + posteriorStress;
+        posteriorCalm /= normalization;
+        posteriorStress /= normalization;
+
+        double averageFitness = computeAverageFitness();
+        double averageResonance = computeAverageResonance();
+        double priorEntropy = entropy(priorStress);
+        double posteriorEntropy = entropy(posteriorStress);
+        double informationGain = Math.max(0.0, priorEntropy - posteriorEntropy);
+        double expectedNegLogLikelihood =
+            -(posteriorCalm * Math.log(calmLikelihood + EPSILON) + posteriorStress * Math.log(stressLikelihood + EPSILON));
+        double klDivergence =
+            posteriorCalm * Math.log((posteriorCalm + EPSILON) / (priorCalm + EPSILON))
+                + posteriorStress * Math.log((posteriorStress + EPSILON) / (priorStress + EPSILON));
+        double variationalFreeEnergy = expectedNegLogLikelihood + klDivergence;
+        double preferredStress = clamp01(0.15 + ((1.0 - averageFitness) * 0.35));
+
+        ActionEvaluation stabilize =
+            evaluateAction(InferenceAction.STABILIZE, posteriorStress, posteriorEntropy, averageFitness, preferredStress);
+        ActionEvaluation explore =
+            evaluateAction(InferenceAction.EXPLORE, posteriorStress, posteriorEntropy, averageFitness, preferredStress);
+        ActionEvaluation exploit =
+            evaluateAction(InferenceAction.EXPLOIT, posteriorStress, posteriorEntropy, averageFitness, preferredStress);
+
+        InferenceAction selectedAction = InferenceAction.STABILIZE;
+        ActionEvaluation selectedEvaluation = stabilize;
+        if (explore.expectedFreeEnergy() < selectedEvaluation.expectedFreeEnergy()) {
+            selectedAction = InferenceAction.EXPLORE;
+            selectedEvaluation = explore;
+        }
+        if (exploit.expectedFreeEnergy() < selectedEvaluation.expectedFreeEnergy()) {
+            selectedAction = InferenceAction.EXPLOIT;
+            selectedEvaluation = exploit;
+        }
+
+        if (commitBeliefs) {
+            calmBelief = posteriorCalm;
+            stressedBelief = posteriorStress;
+        }
+
+        return new ActiveInferenceReport(
+            observation,
+            priorCalm,
+            priorStress,
+            posteriorCalm,
+            posteriorStress,
+            averageFitness,
+            averageResonance,
+            priorEntropy,
+            posteriorEntropy,
+            informationGain,
+            variationalFreeEnergy,
+            preferredStress,
+            stabilize,
+            explore,
+            exploit,
+            selectedAction,
+            selectedEvaluation.expectedFreeEnergy()
+        );
+    }
+
+    private ActionEvaluation evaluateAction(
+        InferenceAction action,
+        double posteriorStress,
+        double posteriorEntropy,
+        double averageFitness,
+        double preferredStress
+    ) {
+        double predictedStress;
+        double ambiguity;
+        double epistemicValue;
+        double utilityPenalty;
+
+        switch (action) {
+            case STABILIZE -> {
+                predictedStress = clamp01((posteriorStress * 0.55) + 0.05);
+                ambiguity = 0.08;
+                epistemicValue = posteriorEntropy * 0.20;
+                utilityPenalty = Math.max(0.0, 0.55 - averageFitness) * 0.20;
+            }
+            case EXPLORE -> {
+                predictedStress = clamp01((posteriorStress * 0.50) + 0.25);
+                ambiguity = 0.22;
+                epistemicValue = posteriorEntropy * 0.85;
+                utilityPenalty = Math.max(0.0, averageFitness - 0.80) * 0.18;
+            }
+            case EXPLOIT -> {
+                predictedStress = clamp01((posteriorStress * 0.80) + 0.02);
+                ambiguity = 0.12;
+                epistemicValue = posteriorEntropy * 0.35;
+                utilityPenalty = Math.max(0.0, 0.45 - averageFitness) * 0.14;
+            }
+            default -> throw new IllegalStateException("Unhandled action: " + action);
+        }
+
+        double pragmaticRisk = Math.abs(predictedStress - preferredStress) + utilityPenalty;
+        double expectedFreeEnergy = pragmaticRisk + ambiguity - epistemicValue;
+        return new ActionEvaluation(action, predictedStress, pragmaticRisk, ambiguity, epistemicValue, expectedFreeEnergy);
+    }
+
+    private void applyActiveInferenceAction(InferenceAction action) {
+        switch (action) {
+            case STABILIZE -> {
+                for (BioNode node : population) {
+                    node.applyHomeostaticCorrection(0.85);
+                }
+            }
+            case EXPLORE -> {
+                for (int i = 0; i < population.size(); i++) {
+                    if (i % 3 == 0) {
+                        population.get(i).applyExplorationStimulus();
+                    }
+                }
+            }
+            case EXPLOIT -> population.stream()
+                .sorted(Comparator.comparingDouble(BioNode::getFitness).reversed())
+                .limit(Math.max(1, population.size() / 4))
+                .forEach(BioNode::applyExploitationReinforcement);
+        }
+    }
+
+    private double computeAverageFitness() {
+        return population.stream()
+            .filter(BioNode::isAlive)
+            .mapToDouble(BioNode::getFitness)
+            .average()
+            .orElse(0.0);
+    }
+
+    private double computeAverageResonance() {
+        return population.stream()
+            .filter(BioNode::isAlive)
+            .mapToDouble(BioNode::getResonance)
+            .average()
+            .orElse(0.0);
+    }
+
+    private double gaussianLikelihood(double value, double mean, double variance) {
+        double distance = value - mean;
+        double exponent = -(distance * distance) / (2.0 * variance);
+        return Math.exp(exponent) / Math.sqrt(2.0 * Math.PI * variance);
+    }
+
+    private double entropy(double probability) {
+        double p = clamp01(probability);
+        double q = clamp01(1.0 - p);
+        return -(p * Math.log(p + EPSILON) + q * Math.log(q + EPSILON));
+    }
+
+    private double clamp01(double value) {
+        return Math.max(0.0, Math.min(1.0, value));
+    }
+
+    public enum InferenceAction {
+        STABILIZE,
+        EXPLORE,
+        EXPLOIT
+    }
+
+    public static final class ActionEvaluation {
+        private final InferenceAction action;
+        private final double predictedStress;
+        private final double pragmaticRisk;
+        private final double ambiguity;
+        private final double epistemicValue;
+        private final double expectedFreeEnergy;
+
+        public ActionEvaluation(
+            InferenceAction action,
+            double predictedStress,
+            double pragmaticRisk,
+            double ambiguity,
+            double epistemicValue,
+            double expectedFreeEnergy
+        ) {
+            this.action = action;
+            this.predictedStress = predictedStress;
+            this.pragmaticRisk = pragmaticRisk;
+            this.ambiguity = ambiguity;
+            this.epistemicValue = epistemicValue;
+            this.expectedFreeEnergy = expectedFreeEnergy;
+        }
+
+        public InferenceAction action() {
+            return action;
+        }
+
+        public double predictedStress() {
+            return predictedStress;
+        }
+
+        public double pragmaticRisk() {
+            return pragmaticRisk;
+        }
+
+        public double ambiguity() {
+            return ambiguity;
+        }
+
+        public double epistemicValue() {
+            return epistemicValue;
+        }
+
+        public double expectedFreeEnergy() {
+            return expectedFreeEnergy;
+        }
+    }
+
+    public static final class ActiveInferenceReport {
+        private final double observation;
+        private final double priorCalmBelief;
+        private final double priorStressBelief;
+        private final double posteriorCalmBelief;
+        private final double posteriorStressBelief;
+        private final double averageFitness;
+        private final double averageResonance;
+        private final double priorEntropy;
+        private final double posteriorEntropy;
+        private final double informationGain;
+        private final double variationalFreeEnergy;
+        private final double preferredStress;
+        private final ActionEvaluation stabilize;
+        private final ActionEvaluation explore;
+        private final ActionEvaluation exploit;
+        private final InferenceAction selectedAction;
+        private final double selectedExpectedFreeEnergy;
+
+        public ActiveInferenceReport(
+            double observation,
+            double priorCalmBelief,
+            double priorStressBelief,
+            double posteriorCalmBelief,
+            double posteriorStressBelief,
+            double averageFitness,
+            double averageResonance,
+            double priorEntropy,
+            double posteriorEntropy,
+            double informationGain,
+            double variationalFreeEnergy,
+            double preferredStress,
+            ActionEvaluation stabilize,
+            ActionEvaluation explore,
+            ActionEvaluation exploit,
+            InferenceAction selectedAction,
+            double selectedExpectedFreeEnergy
+        ) {
+            this.observation = observation;
+            this.priorCalmBelief = priorCalmBelief;
+            this.priorStressBelief = priorStressBelief;
+            this.posteriorCalmBelief = posteriorCalmBelief;
+            this.posteriorStressBelief = posteriorStressBelief;
+            this.averageFitness = averageFitness;
+            this.averageResonance = averageResonance;
+            this.priorEntropy = priorEntropy;
+            this.posteriorEntropy = posteriorEntropy;
+            this.informationGain = informationGain;
+            this.variationalFreeEnergy = variationalFreeEnergy;
+            this.preferredStress = preferredStress;
+            this.stabilize = stabilize;
+            this.explore = explore;
+            this.exploit = exploit;
+            this.selectedAction = selectedAction;
+            this.selectedExpectedFreeEnergy = selectedExpectedFreeEnergy;
+        }
+
+        public double observation() {
+            return observation;
+        }
+
+        public double priorCalmBelief() {
+            return priorCalmBelief;
+        }
+
+        public double priorStressBelief() {
+            return priorStressBelief;
+        }
+
+        public double posteriorCalmBelief() {
+            return posteriorCalmBelief;
+        }
+
+        public double posteriorStressBelief() {
+            return posteriorStressBelief;
+        }
+
+        public double averageFitness() {
+            return averageFitness;
+        }
+
+        public double averageResonance() {
+            return averageResonance;
+        }
+
+        public double priorEntropy() {
+            return priorEntropy;
+        }
+
+        public double posteriorEntropy() {
+            return posteriorEntropy;
+        }
+
+        public double informationGain() {
+            return informationGain;
+        }
+
+        public double variationalFreeEnergy() {
+            return variationalFreeEnergy;
+        }
+
+        public double preferredStress() {
+            return preferredStress;
+        }
+
+        public ActionEvaluation stabilize() {
+            return stabilize;
+        }
+
+        public ActionEvaluation explore() {
+            return explore;
+        }
+
+        public ActionEvaluation exploit() {
+            return exploit;
+        }
+
+        public InferenceAction selectedAction() {
+            return selectedAction;
+        }
+
+        public double selectedExpectedFreeEnergy() {
+            return selectedExpectedFreeEnergy;
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════

@@ -98,6 +98,7 @@ static int player_y = 3 * FP_ONE + FP_HALF;
 static int player_dir = 0;   /* Angle (0-255 = 0-360 degrees) */
 static int player_health = 100;
 static int player_ammo = 50;
+static int doom_running = 1;
 
 /* Movement speed */
 #define MOVE_SPEED   8    /* Fixed-point units per frame */
@@ -105,6 +106,432 @@ static int player_ammo = 50;
 
 /* Camera plane (for FOV) */
 #define PLANE_SCALE  FP_HALF  /* 0.5 in fixed-point, ~66 degree FOV */
+
+/* Combat + AI director surfaces */
+#define MAX_ENEMIES 12
+static int enemy_x[MAX_ENEMIES];
+static int enemy_y[MAX_ENEMIES];
+static int enemy_hp[MAX_ENEMIES];
+static int enemy_alive[MAX_ENEMIES];
+static int enemy_attack_cd[MAX_ENEMIES];
+static int zbuffer[SCREEN_W];
+
+static int kills = 0;
+static int shots_fired = 0;
+static int shots_hit = 0;
+static int muzzle_flash_ticks = 0;
+static int ai_difficulty = 1;  /* 0..3 */
+static int level_index = 1;
+static int floor_clear_tick = 0;
+
+#define MAX_EPROJ 24
+static int eproj_x[MAX_EPROJ];
+static int eproj_y[MAX_EPROJ];
+static int eproj_dx[MAX_EPROJ];
+static int eproj_dy[MAX_EPROJ];
+static int eproj_alive[MAX_EPROJ];
+
+#define MAX_PICKUPS 10
+static int pickup_x[MAX_PICKUPS];
+static int pickup_y[MAX_PICKUPS];
+static int pickup_type[MAX_PICKUPS];  /* 1=ammo, 2=health */
+static int pickup_active[MAX_PICKUPS];
+static int pickup_respawn[MAX_PICKUPS];
+
+static inline int iabs(int v) { return v < 0 ? -v : v; }
+
+int doom_count_enemies_alive(void) {
+    int alive = 0;
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (enemy_alive[i]) alive++;
+    }
+    return alive;
+}
+
+void doom_reset_enemy_projectiles(void) {
+    for (int i = 0; i < MAX_EPROJ; i++) {
+        eproj_alive[i] = 0;
+    }
+}
+
+void doom_init_pickups(void) {
+    int px[MAX_PICKUPS] = { 3, 6, 9, 12, 4, 11, 7, 13, 2, 10 };
+    int py[MAX_PICKUPS] = { 3, 5, 7, 9, 12, 11, 4, 13, 8, 6 };
+    for (int i = 0; i < MAX_PICKUPS; i++) {
+        pickup_x[i] = px[i] * FP_ONE + FP_HALF;
+        pickup_y[i] = py[i] * FP_ONE + FP_HALF;
+        pickup_type[i] = (i & 1) ? 1 : 2;
+        pickup_active[i] = 1;
+        pickup_respawn[i] = 0;
+    }
+}
+
+int doom_map_blocked_fp(int fx, int fy) {
+    int mx = fx >> FP_SHIFT;
+    int my = fy >> FP_SHIFT;
+    if (mx < 0 || mx >= MAP_W || my < 0 || my >= MAP_H) return 1;
+    return world_map[my][mx] != 0;
+}
+
+void doom_reset_enemies(void) {
+    int px[12] = { 5, 7, 10, 12, 4, 13, 8, 2, 6, 11, 9, 3 };
+    int py[12] = { 5, 8, 4, 10, 12, 6, 13, 9, 3, 11, 7, 13 };
+    int shift = level_index & 3;
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        int idx = (i + shift) % MAX_ENEMIES;
+        enemy_x[i] = px[idx] * FP_ONE + FP_HALF;
+        enemy_y[i] = py[idx] * FP_ONE + FP_HALF;
+        enemy_hp[i] = 24 + level_index * 4;
+        enemy_alive[i] = 1;
+        enemy_attack_cd[i] = 0;
+    }
+}
+
+void doom_spawn_enemy_projectile(int enemy_id) {
+    int dx = player_x - enemy_x[enemy_id];
+    int dy = player_y - enemy_y[enemy_id];
+    int maxc = iabs(dx);
+    if (iabs(dy) > maxc) maxc = iabs(dy);
+    if (maxc < 1) maxc = 1;
+    
+    for (int i = 0; i < MAX_EPROJ; i++) {
+        if (!eproj_alive[i]) {
+            eproj_alive[i] = 1;
+            eproj_x[i] = enemy_x[enemy_id];
+            eproj_y[i] = enemy_y[enemy_id];
+            eproj_dx[i] = (dx * (3 + ai_difficulty * 2)) / maxc;
+            eproj_dy[i] = (dy * (3 + ai_difficulty * 2)) / maxc;
+            if (eproj_dx[i] == 0 && dx != 0) eproj_dx[i] = (dx > 0) ? 1 : -1;
+            if (eproj_dy[i] == 0 && dy != 0) eproj_dy[i] = (dy > 0) ? 1 : -1;
+            return;
+        }
+    }
+}
+
+void doom_update_enemy_projectiles(void) {
+    for (int i = 0; i < MAX_EPROJ; i++) {
+        if (!eproj_alive[i]) continue;
+        
+        eproj_x[i] += eproj_dx[i];
+        eproj_y[i] += eproj_dy[i];
+        
+        if (doom_map_blocked_fp(eproj_x[i], eproj_y[i])) {
+            eproj_alive[i] = 0;
+            continue;
+        }
+        
+        if (iabs(eproj_x[i] - player_x) < (FP_ONE / 3) &&
+            iabs(eproj_y[i] - player_y) < (FP_ONE / 3)) {
+            eproj_alive[i] = 0;
+            player_health -= 3 + ai_difficulty;
+            if (player_health < 0) player_health = 0;
+        }
+    }
+}
+
+void doom_update_pickups(void) {
+    for (int i = 0; i < MAX_PICKUPS; i++) {
+        if (pickup_active[i]) {
+            if (iabs(pickup_x[i] - player_x) < (FP_ONE / 2) &&
+                iabs(pickup_y[i] - player_y) < (FP_ONE / 2)) {
+                pickup_active[i] = 0;
+                pickup_respawn[i] = 700;
+                if (pickup_type[i] == 1) {
+                    player_ammo += 12;
+                    if (player_ammo > 99) player_ammo = 99;
+                } else {
+                    player_health += 18;
+                    if (player_health > 100) player_health = 100;
+                }
+            }
+        } else if (pickup_respawn[i] > 0) {
+            pickup_respawn[i]--;
+            if (pickup_respawn[i] == 0) pickup_active[i] = 1;
+        }
+    }
+}
+
+void doom_try_level_progress(void) {
+    int px = player_x >> FP_SHIFT;
+    int py = player_y >> FP_SHIFT;
+    int alive = doom_count_enemies_alive();
+    
+    if (alive == 0) {
+        floor_clear_tick++;
+        if (floor_clear_tick == 1) {
+            kprint_color("[DOOM] FLOOR CLEAR - Reach a gold tile to descend\\n", 0x0E);
+        }
+    } else {
+        floor_clear_tick = 0;
+    }
+    
+    if (alive == 0 && px >= 0 && px < MAP_W && py >= 0 && py < MAP_H &&
+        world_map[py][px] == 4) {
+        int spawn = level_index % 4;
+        level_index++;
+        if (ai_difficulty < 3) ai_difficulty++;
+        player_x = spawn_x[spawn] * FP_ONE + FP_HALF;
+        player_y = spawn_y[spawn] * FP_ONE + FP_HALF;
+        player_health += 20;
+        if (player_health > 100) player_health = 100;
+        player_ammo += 20;
+        if (player_ammo > 99) player_ammo = 99;
+        doom_reset_enemies();
+        doom_reset_enemy_projectiles();
+        doom_init_pickups();
+        floor_clear_tick = 0;
+        kprint_color("[DOOM] DESCENDED TO FLOOR ", 0x0A);
+        kprint_int(level_index);
+        kprint("\\n");
+    }
+}
+
+void doom_update_enemies(int frame) {
+    int dir_x = fp_cos(player_dir);
+    int dir_y = fp_sin(player_dir);
+    
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (!enemy_alive[i]) continue;
+        
+        int dx = player_x - enemy_x[i];
+        int dy = player_y - enemy_y[i];
+        int dist2 = FP_MUL(dx, dx) + FP_MUL(dy, dy);
+        
+        if (enemy_attack_cd[i] > 0) enemy_attack_cd[i]--;
+        
+        /* Close-range attack */
+        if (dist2 < (FP_ONE + FP_HALF) && enemy_attack_cd[i] == 0) {
+            int dmg = 2 + ai_difficulty;
+            player_health -= dmg;
+            if (player_health < 0) player_health = 0;
+            enemy_attack_cd[i] = 18;
+        } else if (dist2 < (22 * FP_ONE) && enemy_attack_cd[i] == 0) {
+            /* Mid-range ranged attack */
+            doom_spawn_enemy_projectile(i);
+            enemy_attack_cd[i] = 40 - ai_difficulty * 6;
+            if (enemy_attack_cd[i] < 16) enemy_attack_cd[i] = 16;
+        }
+        
+        /* Very cheap pursuit step every other frame */
+        if ((frame & 1) == 0 && dist2 > (FP_ONE / 2)) {
+            int step = 2 + ai_difficulty;
+            int step_x = (dx > 0) ? step : (dx < 0 ? -step : 0);
+            int step_y = (dy > 0) ? step : (dy < 0 ? -step : 0);
+            
+            int try_x = enemy_x[i] + step_x;
+            int try_y = enemy_y[i] + step_y;
+            if (!doom_map_blocked_fp(try_x, enemy_y[i])) enemy_x[i] = try_x;
+            if (!doom_map_blocked_fp(enemy_x[i], try_y)) enemy_y[i] = try_y;
+        }
+        
+        /* Avoid standing directly on player */
+        if (iabs(dx) < 8 && iabs(dy) < 8) {
+            enemy_x[i] -= dir_x / 8;
+            enemy_y[i] -= dir_y / 8;
+        }
+    }
+}
+
+void doom_draw_weapon(void) {
+    int bob = (player_x + player_y) & 3;
+    int wx = SCREEN_W / 2 - 24;
+    int wy = SCREEN_H - 34 + bob;
+    
+    vga_fill_rect(wx, wy, 48, 18, 7);
+    vga_fill_rect(wx + 8, wy - 6, 32, 8, 8);
+    vga_fill_rect(wx + 20, wy - 12, 8, 8, 15);
+    
+    if (muzzle_flash_ticks > 0) {
+        vga_fill_rect(wx + 22, wy - 16, 4, 6, 14);
+        muzzle_flash_ticks--;
+    }
+}
+
+void doom_draw_sprites(void) {
+    int dir_x = fp_cos(player_dir);
+    int dir_y = fp_sin(player_dir);
+    
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (!enemy_alive[i]) continue;
+        
+        int rel_x = enemy_x[i] - player_x;
+        int rel_y = enemy_y[i] - player_y;
+        
+        int forward = FP_MUL(rel_x, dir_x) + FP_MUL(rel_y, dir_y);
+        if (forward <= (FP_ONE / 4)) continue;  /* Behind/too close */
+        
+        int side = FP_MUL(rel_x, -dir_y) + FP_MUL(rel_y, dir_x);
+        int screen_x = SCREEN_W / 2 + (int)(((long) side * SCREEN_W) / forward);
+        
+        int sprite_h = (SCREEN_H * FP_ONE) / forward;
+        if (sprite_h < 6) continue;
+        if (sprite_h > SCREEN_H) sprite_h = SCREEN_H;
+        int sprite_w = sprite_h;
+        
+        int draw_start_y = SCREEN_H / 2 - sprite_h / 2;
+        int draw_end_y = draw_start_y + sprite_h;
+        int draw_start_x = screen_x - sprite_w / 2;
+        int draw_end_x = draw_start_x + sprite_w;
+        
+        unsigned char body = (enemy_hp[i] > 15) ? 12 : 4;
+        unsigned char face = 15;
+        
+        for (int x = draw_start_x; x < draw_end_x; x++) {
+            if (x < 0 || x >= SCREEN_W) continue;
+            if (forward >= zbuffer[x]) continue;
+            for (int y = draw_start_y; y < draw_end_y; y++) {
+                if (y < 0 || y >= SCREEN_H) continue;
+                int px = x - draw_start_x;
+                int py = y - draw_start_y;
+                unsigned char c = body;
+                if (py < sprite_h / 4 && px > sprite_w / 3 && px < (sprite_w * 2) / 3) c = face;
+                vga_put_pixel(x, y, c);
+            }
+        }
+    }
+}
+
+void doom_draw_enemy_projectiles(void) {
+    int dir_x = fp_cos(player_dir);
+    int dir_y = fp_sin(player_dir);
+    
+    for (int i = 0; i < MAX_EPROJ; i++) {
+        if (!eproj_alive[i]) continue;
+        
+        int rel_x = eproj_x[i] - player_x;
+        int rel_y = eproj_y[i] - player_y;
+        int forward = FP_MUL(rel_x, dir_x) + FP_MUL(rel_y, dir_y);
+        if (forward <= (FP_ONE / 4)) continue;
+        
+        int side = FP_MUL(rel_x, -dir_y) + FP_MUL(rel_y, dir_x);
+        int sx = SCREEN_W / 2 + (int)(((long) side * SCREEN_W) / forward);
+        int sy = SCREEN_H / 2;
+        if (sx < 2 || sx >= SCREEN_W - 2) continue;
+        if (forward < zbuffer[sx]) {
+            vga_fill_rect(sx - 1, sy - 1, 3, 3, 14);
+        }
+    }
+}
+
+void doom_draw_pickups(void) {
+    int dir_x = fp_cos(player_dir);
+    int dir_y = fp_sin(player_dir);
+    
+    for (int i = 0; i < MAX_PICKUPS; i++) {
+        if (!pickup_active[i]) continue;
+        
+        int rel_x = pickup_x[i] - player_x;
+        int rel_y = pickup_y[i] - player_y;
+        int forward = FP_MUL(rel_x, dir_x) + FP_MUL(rel_y, dir_y);
+        if (forward <= (FP_ONE / 3)) continue;
+        
+        int side = FP_MUL(rel_x, -dir_y) + FP_MUL(rel_y, dir_x);
+        int sx = SCREEN_W / 2 + (int)(((long) side * SCREEN_W) / forward);
+        int sy = (SCREEN_H / 2) + 20;
+        int size = (SCREEN_H * FP_ONE) / (forward * 4);
+        if (size < 2) size = 2;
+        if (size > 8) size = 8;
+        
+        if (sx < 2 || sx >= SCREEN_W - 2) continue;
+        if (forward < zbuffer[sx]) {
+            unsigned char c = (pickup_type[i] == 1) ? 10 : 11;
+            vga_fill_rect(sx - size / 2, sy - size / 2, size, size, c);
+        }
+    }
+}
+
+void doom_draw_minimap(void) {
+    const int ox = 4;
+    const int oy = 4;
+    const int cs = 3;
+    
+    vga_fill_rect(ox - 2, oy - 2, MAP_W * cs + 4, MAP_H * cs + 4, 0);
+    vga_rect(ox - 2, oy - 2, MAP_W * cs + 4, MAP_H * cs + 4, 15);
+    
+    for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+            unsigned char c = 0;
+            if (world_map[y][x] == 1) c = 4;
+            if (world_map[y][x] == 2) c = 2;
+            if (world_map[y][x] == 3) c = 1;
+            if (world_map[y][x] == 4) c = 14;
+            if (c) vga_fill_rect(ox + x * cs, oy + y * cs, cs, cs, c);
+        }
+    }
+    
+    int px = player_x >> FP_SHIFT;
+    int py = player_y >> FP_SHIFT;
+    vga_fill_rect(ox + px * cs, oy + py * cs, cs, cs, 15);
+    
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (enemy_alive[i]) {
+            int ex = enemy_x[i] >> FP_SHIFT;
+            int ey = enemy_y[i] >> FP_SHIFT;
+            if (ex >= 0 && ex < MAP_W && ey >= 0 && ey < MAP_H) {
+                vga_fill_rect(ox + ex * cs + 1, oy + ey * cs + 1, 1, 1, 12);
+            }
+        }
+    }
+}
+
+void doom_ai_director(int frame) {
+    if (frame % 120 != 0) return;
+    
+    int accuracy = (shots_fired > 0) ? (shots_hit * 100 / shots_fired) : 0;
+    if (accuracy > 45 && player_health > 70 && ai_difficulty < 3) ai_difficulty++;
+    if ((accuracy < 20 || player_health < 35) && ai_difficulty > 0) ai_difficulty--;
+    
+    if (frame % 240 == 0) {
+        kprint_color("[AI-DOOM] ", 0x0B);
+        kprint("Diff=");
+        kprint_int(ai_difficulty);
+        kprint(" Acc=");
+        kprint_int(accuracy);
+        kprint("% Kills=");
+        kprint_int(kills);
+        kprint("\\n");
+    }
+}
+
+void doom_try_shot(void) {
+    shots_fired++;
+    if (player_ammo <= 0) return;
+    
+    player_ammo--;
+    muzzle_flash_ticks = 2;
+    
+    int dir_x = fp_cos(player_dir);
+    int dir_y = fp_sin(player_dir);
+    int best = -1;
+    int best_forward = 0x7FFFFFFF;
+    
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (!enemy_alive[i]) continue;
+        
+        int rel_x = enemy_x[i] - player_x;
+        int rel_y = enemy_y[i] - player_y;
+        int forward = FP_MUL(rel_x, dir_x) + FP_MUL(rel_y, dir_y);
+        if (forward <= FP_ONE / 2) continue;
+        
+        int side = FP_MUL(rel_x, -dir_y) + FP_MUL(rel_y, dir_x);
+        int tolerance = FP_ONE / 4 + (forward / 16);
+        if (iabs(side) > tolerance) continue;
+        
+        if (forward < best_forward) {
+            best_forward = forward;
+            best = i;
+        }
+    }
+    
+    if (best >= 0) {
+        enemy_hp[best] -= 15 + ai_difficulty * 2;
+        shots_hit++;
+        if (enemy_hp[best] <= 0) {
+            enemy_alive[best] = 0;
+            kills++;
+        }
+    }
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * RAYCASTING ENGINE
@@ -157,7 +584,8 @@ void doom_cast_rays(void) {
         
         /* DDA: Step through map until wall hit */
         int hit = 0;
-        int side = 0;  /* 0 = X side, 1 = Y side */
+        int side = 0;      /* 0 = X side, 1 = Y side */
+        int hit_oob = 0;   /* Out-of-bounds guard */
         
         while (!hit) {
             if (side_dist_x < side_dist_y) {
@@ -172,7 +600,8 @@ void doom_cast_rays(void) {
             
             /* Check for wall */
             if (map_x < 0 || map_x >= MAP_W || map_y < 0 || map_y >= MAP_H) {
-                hit = 1;  /* Out of bounds */
+                hit = 1;
+                hit_oob = 1;  /* Out of bounds */
             } else if (world_map[map_y][map_x] > 0) {
                 hit = 1;  /* Wall */
             }
@@ -188,6 +617,7 @@ void doom_cast_rays(void) {
         
         /* Prevent division by zero */
         if (perp_dist < 1) perp_dist = 1;
+        zbuffer[x] = perp_dist;
         
         /* Calculate wall height */
         int line_height = (SCREEN_H * FP_ONE) / perp_dist;
@@ -200,7 +630,10 @@ void doom_cast_rays(void) {
         if (draw_end >= SCREEN_H) draw_end = SCREEN_H - 1;
         
         /* Choose wall color based on map value and side */
-        int wall_type = world_map[map_y][map_x];
+        int wall_type = 1;
+        if (!hit_oob) {
+            wall_type = world_map[map_y][map_x];
+        }
         unsigned char color;
         
         switch (wall_type) {
@@ -223,7 +656,11 @@ void doom_cast_rays(void) {
         
         /* Draw wall */
         for (int y = draw_start; y < draw_end; y++) {
-            vga_put_pixel(x, y, color);
+            unsigned char wall_color = color;
+            int stripe = ((x >> 2) ^ (y >> 3) ^ wall_type) & 1;
+            if (stripe && wall_color > 0) wall_color--;
+            if (perp_dist > 3 * FP_ONE && wall_color > 8) wall_color -= 8; /* distance fog */
+            vga_put_pixel(x, y, wall_color);
         }
         
         /* Draw floor */
@@ -252,6 +689,20 @@ void doom_draw_hud(void) {
     vga_put_pixel(SCREEN_W / 2 + 2, SCREEN_H / 2, 15);
     vga_put_pixel(SCREEN_W / 2, SCREEN_H / 2 - 2, 15);
     vga_put_pixel(SCREEN_W / 2, SCREEN_H / 2 + 2, 15);
+    
+    /* Telemetry */
+    kprint_at(70, 186, "K:", 15);
+    kprint_int_at(84, 186, kills, 14);
+    kprint_at(116, 186, "A:", 15);
+    if (shots_fired > 0) {
+        kprint_int_at(130, 186, (shots_hit * 100) / shots_fired, 10);
+    } else {
+        kprint_int_at(130, 186, 0, 10);
+    }
+    kprint_at(160, 186, "F:", 15);
+    kprint_int_at(174, 186, level_index, 11);
+    kprint_at(196, 186, "E:", 15);
+    kprint_int_at(210, 186, doom_count_enemies_alive(), 12);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -286,13 +737,11 @@ void doom_handle_input(void) {
             break;
             
         case ' ':  /* Shoot */
-            if (player_ammo > 0) {
-                player_ammo--;
-                /* TODO: Ray trace for enemy hit */
-            }
+            doom_try_shot();
             break;
             
         case 27:  /* ESC - exit to shell */
+            doom_running = 0;
             return;
     }
     
@@ -323,16 +772,45 @@ void doom_loop(void) {
     keyboard_getchar();
     
     int frame = 0;
+    player_health = 100;
+    player_ammo = 50;
+    kills = 0;
+    shots_fired = 0;
+    shots_hit = 0;
+    ai_difficulty = 1;
+    muzzle_flash_ticks = 0;
+    level_index = 1;
+    floor_clear_tick = 0;
+    doom_reset_enemies();
+    doom_reset_enemy_projectiles();
+    doom_init_pickups();
     
-    while (1) {
+    doom_running = 1;
+    
+    while (doom_running) {
         /* Handle input */
         doom_handle_input();
+        doom_update_enemies(frame);
+        doom_update_enemy_projectiles();
+        doom_update_pickups();
+        doom_try_level_progress();
+        doom_ai_director(frame);
         
         /* Render 3D view */
         doom_cast_rays();
+        doom_draw_pickups();
+        doom_draw_sprites();
+        doom_draw_enemy_projectiles();
+        doom_draw_weapon();
+        doom_draw_minimap();
         
         /* Draw HUD */
         doom_draw_hud();
+        
+        if (player_health <= 0) {
+            kprint_color("[DOOM] YOU DIED\\n", 0x0C);
+            doom_running = 0;
+        }
         
         /* Network: Broadcast position every 5 frames */
         if (frame % 5 == 0) {

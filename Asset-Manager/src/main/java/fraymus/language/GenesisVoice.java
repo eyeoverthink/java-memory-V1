@@ -15,20 +15,23 @@ import java.util.Scanner;
 public class GenesisVoice {
     
     public static void main(String[] args) {
+        runSession(new Scanner(System.in));
+    }
+
+    public static void runSession(Scanner ear) {
         System.out.println("╔═══════════════════════════════════════════════════════════╗");
         System.out.println("║   GENESIS VOICE: LANGUAGE ENGINE                          ║");
         System.out.println("╚═══════════════════════════════════════════════════════════╝");
         System.out.println();
 
         Broca voice = new Broca();
-        Scanner ear = new Scanner(System.in);
 
         // 1. INITIAL FEEDING (The "Instinct")
         System.out.println("╔═══════════════════════════════════════════════════════════╗");
         System.out.println("║   PHASE 1: INSTINCT FORMATION                             ║");
         System.out.println("╚═══════════════════════════════════════════════════════════╝");
-        
-        createInstinctFile(); 
+
+        createInstinctFile();
         voice.absorbLanguage("instinct.txt");
         System.out.println();
 
@@ -40,18 +43,21 @@ public class GenesisVoice {
         System.out.println(">>> [SYSTEM] Type 'exit' to end conversation.");
         System.out.println(">>> [SYSTEM] Type 'stats' to see language statistics.");
         System.out.println();
-        
+
         int conversationTurns = 0;
-        
+
         while (true) {
             System.out.print("YOU: ");
+            if (!ear.hasNextLine()) {
+                break;
+            }
             String input = ear.nextLine();
 
             // Handle commands
             if (input.equalsIgnoreCase("exit")) {
                 break;
             }
-            
+
             if (input.equalsIgnoreCase("stats")) {
                 System.out.println();
                 voice.printStats();
@@ -59,7 +65,7 @@ public class GenesisVoice {
                 System.out.println();
                 continue;
             }
-            
+
             if (input.trim().isEmpty()) {
                 continue;
             }
@@ -79,24 +85,22 @@ public class GenesisVoice {
             // It uses your last word as the "Seed" for its thought
             String[] words = input.split("\\s+");
             String seed = words[words.length - 1]; // Pivot off your last concept
-            
+
             // Clean seed (remove punctuation)
             seed = seed.replaceAll("[^a-zA-Z0-9]", "");
-            
+
             // If seed is unknown, pick a random starting word
             if (!voice.knows(seed)) {
                 System.out.println(">>> [BROCA] Unknown seed word, selecting random start...");
                 // Use a common word from vocabulary
                 seed = "I"; // Default fallback
             }
-            
+
             String response = voice.recite(seed, 15); // Speak 15 words
             System.out.println("AI:  " + response);
             System.out.println();
         }
-        
-        ear.close();
-        
+
         // Final statistics
         System.out.println();
         System.out.println("╔═══════════════════════════════════════════════════════════╗");
@@ -104,7 +108,7 @@ public class GenesisVoice {
         System.out.println("╚═══════════════════════════════════════════════════════════╝");
         System.out.println("  Total Turns: " + conversationTurns);
         System.out.println();
-        
+
         voice.printStats();
         System.out.println();
         Hippocampus.printStats();

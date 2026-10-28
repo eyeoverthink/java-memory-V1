@@ -326,6 +326,10 @@ public class NEXUS_Organism {
             amygdala.stopGuard();
         }
         
+        if (dna != null) {
+            dna.stop();
+        }
+        
         if (lifeSupport != null) {
             lifeSupport.shutdownNow();
         }

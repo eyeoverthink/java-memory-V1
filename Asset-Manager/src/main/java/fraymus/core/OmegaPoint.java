@@ -389,22 +389,238 @@ public class OmegaPoint {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // 4. THE RETROCAUSAL LOOP (Omega Point Retrocausality)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * RETROCAUSAL RECURSION
+     * 
+     * The Omega Point enables backward-in-time information flow:
+     * - Retro Command: Send commands backward in time
+     * - XOR Inversion: Bit-flip timeline exploration
+     * - Shadow Simulations: Parallel timeline execution
+     * 
+     * This is the "Recursive Loop" component of the Physics-Driven Executive Loop.
+     */
+    public static class TheRetrocausalLoop {
+        
+        private final List<Timeline> shadowTimelines;
+        private final List<String> retroCommands;
+        private final Random random;
+        private final TheShield shield;
+        
+        // Statistics
+        private int retroCommandsIssued;
+        private int shadowSimulationsRun;
+        private int xorInversionsPerformed;
+
+        public TheRetrocausalLoop() throws Exception {
+            this.shadowTimelines = new ArrayList<>();
+            this.retroCommands = new ArrayList<>();
+            this.random = new Random();
+            this.shield = new TheShield();
+        }
+
+        /**
+         * RETRO COMMAND - Send a command backward in time
+         * 
+         * Encrypts the command and stores it with a retro timestamp.
+         * The command can be "executed" at an earlier point in the timeline.
+         */
+        public String issueRetroCommand(String command, long targetTimestamp) throws Exception {
+            retroCommandsIssued++;
+            
+            String retroData = String.format(
+                "[RETRO] T-%d: %s",
+                System.currentTimeMillis() - targetTimestamp,
+                command
+            );
+            
+            String encrypted = shield.encrypt(retroData);
+            retroCommands.add(encrypted);
+            
+            return String.format(
+                "[RETRO COMMAND ISSUED]\n" +
+                "  Command: %s\n" +
+                "  Target: T-%d (%dms ago)\n" +
+                "  Status: Encrypted and queued for retro-execution",
+                command,
+                System.currentTimeMillis() - targetTimestamp,
+                System.currentTimeMillis() - targetTimestamp
+            );
+        }
+
+        /**
+         * XOR INVERSION - Bit-flip timeline exploration
+         * 
+         * Inverts bits in data to explore alternative timeline branches.
+         * Each inversion creates a new "shadow timeline" possibility.
+         */
+        public String xorInversion(String data, double flipProbability) {
+            xorInversionsPerformed++;
+            
+            byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
+            int flips = 0;
+            
+            for (int i = 0; i < bytes.length; i++) {
+                if (random.nextDouble() < flipProbability) {
+                    bytes[i] = (byte) (bytes[i] ^ 0xFF); // Flip all bits
+                    flips++;
+                }
+            }
+            
+            String invertedData = new String(bytes, StandardCharsets.UTF_8);
+            
+            // Create shadow timeline
+            Timeline shadow = new Timeline(invertedData, System.currentTimeMillis(), flips);
+            shadowTimelines.add(shadow);
+            
+            return String.format(
+                "[XOR INVERSION]\n" +
+                "  Original length: %d bytes\n" +
+                "  Flipped bits: %d (%.1f%%)\n" +
+                "  Shadow timeline created: %d\n" +
+                "  Inverted data: %s",
+                data.length(),
+                flips,
+                (flips * 100.0 / (data.length() * 8)),
+                shadowTimelines.size(),
+                invertedData.length() > 50 ? invertedData.substring(0, 50) + "..." : invertedData
+            );
+        }
+
+        /**
+         * SHADOW SIMULATION - Execute parallel timeline simulations
+         * 
+         * Runs simulations across all shadow timelines to find optimal outcomes.
+         */
+        public String runShadowSimulations(Function<String, Double> fitnessFunction) {
+            shadowSimulationsRun++;
+            
+            StringBuilder sb = new StringBuilder();
+            sb.append("[SHADOW SIMULATIONS]\n");
+            sb.append(String.format("  Simulating %d shadow timelines...\n", shadowTimelines.size()));
+            
+            if (shadowTimelines.isEmpty()) {
+                sb.append("  No shadow timelines to simulate.\n");
+                return sb.toString();
+            }
+            
+            double bestFitness = Double.NEGATIVE_INFINITY;
+            Timeline bestTimeline = null;
+            
+            for (Timeline timeline : shadowTimelines) {
+                double fitness = fitnessFunction.apply(timeline.data);
+                timeline.fitness = fitness;
+                
+                if (fitness > bestFitness) {
+                    bestFitness = fitness;
+                    bestTimeline = timeline;
+                }
+                
+                sb.append(String.format(
+                    "  Timeline %d: fitness=%.4f (flips=%d)\n",
+                    shadowTimelines.indexOf(timeline) + 1,
+                    fitness,
+                    timeline.bitFlips
+                ));
+            }
+            
+            sb.append(String.format("\n  Best timeline: #%d (fitness=%.4f)\n",
+                shadowTimelines.indexOf(bestTimeline) + 1, bestFitness));
+            
+            return sb.toString();
+        }
+
+        /**
+         * COLLAPSE TIMELINES - Merge shadow timelines into main timeline
+         * 
+         * Selects the best timeline and collapses all shadows into it.
+         */
+        public String collapseTimelines() {
+            if (shadowTimelines.isEmpty()) {
+                return "[COLLAPSE] No shadow timelines to collapse.";
+            }
+            
+            Timeline best = shadowTimelines.stream()
+                .max((a, b) -> Double.compare(a.fitness, b.fitness))
+                .orElse(null);
+            
+            shadowTimelines.clear();
+            
+            return String.format(
+                "[TIMELINE COLLAPSE]\n" +
+                "  Selected best timeline with %.4f fitness\n" +
+                "  Data: %s\n" +
+                "  All %d shadow timelines collapsed into main timeline",
+                best.fitness,
+                best.data.length() > 50 ? best.data.substring(0, 50) + "..." : best.data,
+                shadowTimelines.size()
+            );
+        }
+
+        // Statistics
+        public int getRetroCommandsIssued() { return retroCommandsIssued; }
+        public int getShadowSimulationsRun() { return shadowSimulationsRun; }
+        public int getXorInversionsPerformed() { return xorInversionsPerformed; }
+        public int getShadowTimelineCount() { return shadowTimelines.size(); }
+
+        /**
+         * STATUS - Report retrocausal loop state.
+         */
+        public String status() {
+            return String.format(
+                "🌀 RETROCAUSAL LOOP STATUS\n" +
+                "   Retro commands issued: %d\n" +
+                "   Shadow timelines: %d\n" +
+                "   XOR inversions: %d\n" +
+                "   Shadow simulations: %d\n" +
+                "   φ-Retrograde: %.6f",
+                retroCommandsIssued,
+                shadowTimelines.size(),
+                xorInversionsPerformed,
+                shadowSimulationsRun,
+                PHI * (1.0 - (shadowTimelines.size() % 3) / 3.0)
+            );
+        }
+
+        /**
+         * Timeline - Represents a shadow timeline branch.
+         */
+        public static class Timeline {
+            public final String data;
+            public final long timestamp;
+            public final int bitFlips;
+            public double fitness;
+
+            public Timeline(String data, long timestamp, int bitFlips) {
+                this.data = data;
+                this.timestamp = timestamp;
+                this.bitFlips = bitFlips;
+                this.fitness = 0.0;
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // THE CONVERGENCE
     // ═══════════════════════════════════════════════════════════════════════
     
     /**
      * THE OMEGA PROTOCOL
-     * Combines all three forces into a single operation.
+     * Combines all four forces into a single operation.
      */
     public static class OmegaProtocol {
         private final TheShield shield;
         private final TheBrain brain;
         private TheMemory memory;
+        private TheRetrocausalLoop retrocausal;
         private final List<String> history;
         
         public OmegaProtocol() throws Exception {
             this.shield = new TheShield();
             this.brain = new TheBrain();
+            this.retrocausal = new TheRetrocausalLoop();
             this.history = new ArrayList<>();
         }
         
@@ -440,7 +656,35 @@ public class OmegaPoint {
             var proof = memory.getProof(index);
             return memory.verify(encryptedData, index, proof);
         }
-        
+
+        /**
+         * RETRO COMMAND - Issue a backward-in-time command.
+         */
+        public String retroCommand(String command, long targetTimestamp) throws Exception {
+            return retrocausal.issueRetroCommand(command, targetTimestamp);
+        }
+
+        /**
+         * XOR INVERSION - Create shadow timeline.
+         */
+        public String xorInversion(String data, double flipProbability) {
+            return retrocausal.xorInversion(data, flipProbability);
+        }
+
+        /**
+         * SHADOW SIMULATION - Run parallel timeline simulations.
+         */
+        public String shadowSimulation(Function<String, Double> fitnessFunction) {
+            return retrocausal.runShadowSimulations(fitnessFunction);
+        }
+
+        /**
+         * COLLAPSE - Merge shadow timelines.
+         */
+        public String collapse() {
+            return retrocausal.collapseTimelines();
+        }
+
         /**
          * STATUS - Report current state.
          */
@@ -450,11 +694,14 @@ public class OmegaPoint {
                 "   Shield: AES-256-GCM (Active)\n" +
                 "   Brain: %d iterations, %.2f%% acceptance\n" +
                 "   Memory: %d entries, root=%s...\n" +
+                "   Retrocausal: %d commands, %d shadows\n" +
                 "   φ-Coherence: %.6f",
                 brain.getIterations(),
                 brain.getAcceptanceRate() * 100,
                 history.size(),
                 memory != null ? memory.getRoot().substring(0, 8) : "unsealed",
+                retrocausal.getRetroCommandsIssued(),
+                retrocausal.getShadowTimelineCount(),
                 brain.getBestEnergy() * PHI
             );
         }

@@ -215,8 +215,13 @@ public class TriMe {
         // Record which experts were used
         String[] experts = expertRouter.getSelectedExperts(input);
         sessionBridge.recordInsight("Routed to: " + experts[0] + ", " + experts[1]);
+        sessionBridge.recordInsight("MHC plan: " + expertRouter.getHyperStatus());
         
         return activated;
+    }
+
+    public String getRoutingStatus() {
+        return expertRouter.getHyperStatus();
     }
     
     /**

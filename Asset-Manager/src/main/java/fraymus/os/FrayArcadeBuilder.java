@@ -90,13 +90,75 @@ static int game_state = GAME_MENU;
 static int global_score = 0;
 static int global_highscore = 0;
 static int game_tick = 0;
+static int arcade_running = 1;
 
 /* AI Analyst */
 static int deaths_this_session = 0;
 static int left_moves = 0;
 static int right_moves = 0;
+static int game_starts[7];
+static int game_deaths[7];
+static int game_wins[7];
+static int game_score_gain[7];
+static int last_score_snapshot = 0;
+static int last_ai_report_tick = 0;
+
+int game_index(const char* game) {
+    if (!game) return 0;
+    if (game[0] == 'P') return GAME_PONG;
+    if (game[0] == 'S' && game[1] == 'N') return GAME_SNAKE;
+    if (game[0] == 'I') return GAME_INVADERS;
+    if (game[0] == 'B') return GAME_BREAKOUT;
+    if (game[0] == 'T') return GAME_TETRIS;
+    if (game[0] == 'A') return GAME_ASTEROIDS;
+    return GAME_MENU;
+}
+
+const char* game_name_by_id(int id) {
+    switch (id) {
+        case GAME_PONG: return "PONG";
+        case GAME_SNAKE: return "SNAKE";
+        case GAME_INVADERS: return "INVADERS";
+        case GAME_BREAKOUT: return "BREAKOUT";
+        case GAME_TETRIS: return "TETRIS";
+        case GAME_ASTEROIDS: return "ASTEROIDS";
+        default: return "MENU";
+    }
+}
+
+void ai_emit_report(void) {
+    int weakest = GAME_PONG;
+    int strongest = GAME_PONG;
+    int weak_score = -999999;
+    int strong_score = -999999;
+    
+    for (int i = GAME_PONG; i <= GAME_ASTEROIDS; i++) {
+        int confidence = game_score_gain[i] - (game_deaths[i] * 35) + (game_wins[i] * 20);
+        if (confidence > strong_score) {
+            strong_score = confidence;
+            strongest = i;
+        }
+        if (game_deaths[i] > weak_score) {
+            weak_score = game_deaths[i];
+            weakest = i;
+        }
+    }
+    
+    kprint_color("[AI-COACH] ", 0x0B);
+    kprint("Strongest=");
+    kprint(game_name_by_id(strongest));
+    kprint(" Focus=");
+    kprint(game_name_by_id(weakest));
+    kprint(" L/R=");
+    kprint_int(left_moves);
+    kprint("/");
+    kprint_int(right_moves);
+    kprint("\\n");
+}
 
 void log_game_event(const char* game, const char* event, int value) {
+    int gid = game_index(game);
+    
     kprint_color("[AI] ", 0x0B);
     kprint(game);
     kprint(" -> ");
@@ -106,18 +168,36 @@ void log_game_event(const char* game, const char* event, int value) {
     kprint("\\n");
     
     /* AI Analysis */
+    if (event[0] == 'S') {
+        game_starts[gid]++;
+    }
     if (event[0] == 'D' && event[1] == 'E' && event[2] == 'A') {
         deaths_this_session++;
+        game_deaths[gid]++;
         if (deaths_this_session >= 3) {
             kprint_color("[AI] TIP: ", 0x0E);
             kprint("Take a breath. Reaction time degrades with frustration.\\n");
         }
+    }
+    if (event[0] == 'W') {
+        game_wins[gid]++;
+    }
+    
+    if (value > 0) {
+        game_score_gain[gid] += value;
     }
     
     /* Bias Detection */
     if (left_moves > right_moves * 2) {
         kprint_color("[AI] PATTERN: ", 0x0E);
         kprint("You favor the left. Try balancing your positioning.\\n");
+    }
+    
+    if (game_deaths[gid] >= 3 && game_score_gain[gid] < 100) {
+        kprint_color("[AI] TARGET: ", 0x0E);
+        kprint("Run controlled reps in ");
+        kprint(game_name_by_id(gid));
+        kprint(" for survival before speed.\\n");
     }
 }
 
@@ -145,6 +225,9 @@ void draw_arcade_menu(void) {
     y += 20;
     kprint_at(90, y, "HIGH SCORE: ", 11);
     kprint_int_at(170, y, global_highscore, 11);
+    
+    y += 12;
+    kprint_at(90, y, "AI COACH ACTIVE", 10);
 }
 
 void arcade_handle_input(char key) {
@@ -155,6 +238,14 @@ void arcade_handle_input(char key) {
         if (key == '4') { game_state = GAME_BREAKOUT; breakout_init(); }
         if (key == '5') { game_state = GAME_TETRIS; tetris_init(); }
         if (key == '6') { game_state = GAME_ASTEROIDS; asteroids_init(); }
+        if (key == 'q' || key == 'Q') {
+            if (global_score > global_highscore) {
+                global_highscore = global_score;
+            }
+            global_score = 0;
+            arcade_running = 0;
+            return;
+        }
     } else {
         /* Track directional bias */
         if (key == 'a' || key == 'A') left_moves++;
@@ -188,11 +279,33 @@ void start_arcade(void) {
     kprint_color("\\n  FRAY ARCADE INITIALIZED\\n", 0x0A);
     kprint("  Press 1-6 to select game, Q to quit\\n\\n");
     
-    while (1) {
+    arcade_running = 1;
+    deaths_this_session = 0;
+    left_moves = right_moves = 0;
+    last_score_snapshot = 0;
+    last_ai_report_tick = 0;
+    for (int i = 0; i < 7; i++) {
+        game_starts[i] = 0;
+        game_deaths[i] = 0;
+        game_wins[i] = 0;
+        game_score_gain[i] = 0;
+    }
+    
+    while (arcade_running) {
         game_tick++;
         
         char key = get_char_non_blocking();
         if (key) arcade_handle_input(key);
+        
+        if (global_score > last_score_snapshot && game_state >= GAME_PONG && game_state <= GAME_ASTEROIDS) {
+            game_score_gain[game_state] += (global_score - last_score_snapshot);
+        }
+        last_score_snapshot = global_score;
+        
+        if (game_tick - last_ai_report_tick >= 600) {
+            ai_emit_report();
+            last_ai_report_tick = game_tick;
+        }
         
         switch (game_state) {
             case GAME_MENU:
@@ -203,7 +316,7 @@ void start_arcade(void) {
                 pong_draw();
                 break;
             case GAME_SNAKE:
-                if (game_tick % 5 == 0) snake_update();
+                snake_update();
                 snake_draw();
                 break;
             case GAME_INVADERS:
@@ -215,7 +328,7 @@ void start_arcade(void) {
                 breakout_draw();
                 break;
             case GAME_TETRIS:
-                if (game_tick % 10 == 0) tetris_update();
+                tetris_update();
                 tetris_draw();
                 break;
             case GAME_ASTEROIDS:
@@ -247,6 +360,8 @@ static int p1_y = 85, p2_y = 85;
 static int ball_x = 160, ball_y = 100;
 static int ball_dx = 2, ball_dy = 1;
 static int p1_score = 0, p2_score = 0;
+static int pong_rally = 0;
+static int pong_level = 1;
 
 #define PADDLE_H 30
 #define PADDLE_W 8
@@ -257,46 +372,86 @@ void pong_init(void) {
     ball_x = 160; ball_y = 100;
     ball_dx = 2; ball_dy = 1;
     p1_score = p2_score = 0;
+    pong_rally = 0;
+    pong_level = 1;
     log_game_event("PONG", "START", 0);
 }
 
 void pong_update(void) {
+    int ai_speed = 2 + pong_level / 2;
+    if (ai_speed > 5) ai_speed = 5;
+    
     /* Move ball */
     ball_x += ball_dx;
     ball_y += ball_dy;
     
     /* Wall bounce */
-    if (ball_y <= 10 || ball_y >= 185) ball_dy = -ball_dy;
+    if (ball_y <= 10 || ball_y >= 185) {
+        ball_dy = -ball_dy;
+        if (ball_dy > 0) ball_dy++;
+        if (ball_dy < 0) ball_dy--;
+    }
     
     /* Paddle collision P1 */
     if (ball_x <= 20 && ball_y >= p1_y && ball_y <= p1_y + PADDLE_H) {
         ball_dx = -ball_dx;
-        ball_dx += (ball_dx > 0) ? 1 : -1; /* Speed up */
+        int offset = ball_y - (p1_y + PADDLE_H / 2);
+        ball_dy += offset / 4;
+        pong_rally++;
+        if ((pong_rally % 4) == 0) ball_dx += (ball_dx > 0) ? 1 : -1;
         global_score += 10;
     }
     
     /* Paddle collision P2 (AI) */
     if (ball_x >= 295 && ball_y >= p2_y && ball_y <= p2_y + PADDLE_H) {
         ball_dx = -ball_dx;
+        int offset = ball_y - (p2_y + PADDLE_H / 2);
+        ball_dy += offset / 5;
+        pong_rally++;
     }
+    
+    if (ball_dx > 7) ball_dx = 7;
+    if (ball_dx < -7) ball_dx = -7;
+    if (ball_dy > 5) ball_dy = 5;
+    if (ball_dy < -5) ball_dy = -5;
     
     /* Score */
     if (ball_x < 0) {
         p2_score++;
         ball_x = 160; ball_y = 100;
-        ball_dx = 2;
+        ball_dx = 2 + pong_level / 2;
+        ball_dy = (rand() % 5) - 2;
+        if (ball_dy == 0) ball_dy = 1;
+        pong_rally = 0;
         log_game_event("PONG", "DEATH", p1_score);
     }
     if (ball_x > 320) {
         p1_score++;
         ball_x = 160; ball_y = 100;
-        ball_dx = -2;
+        ball_dx = -(2 + pong_level / 2);
+        ball_dy = (rand() % 5) - 2;
+        if (ball_dy == 0) ball_dy = -1;
+        pong_rally = 0;
         global_score += 50;
+        if ((p1_score % 3) == 0 && pong_level < 6) pong_level++;
+    }
+    
+    if (p1_score >= 11 || p2_score >= 11) {
+        if (p1_score > p2_score) {
+            log_game_event("PONG", "WIN", p1_score);
+            global_score += 200;
+        } else {
+            log_game_event("PONG", "DEATH", p1_score);
+        }
+        pong_init();
+        return;
     }
     
     /* Simple AI for P2 */
-    if (p2_y + PADDLE_H/2 < ball_y) p2_y += 2;
-    if (p2_y + PADDLE_H/2 > ball_y) p2_y -= 2;
+    if (p2_y + PADDLE_H/2 < ball_y) p2_y += ai_speed;
+    if (p2_y + PADDLE_H/2 > ball_y) p2_y -= ai_speed;
+    if (p2_y < 10) p2_y = 10;
+    if (p2_y > 160) p2_y = 160;
 }
 
 void pong_draw(void) {
@@ -317,6 +472,8 @@ void pong_draw(void) {
     /* Scores */
     kprint_int_at(140, 2, p1_score, 15);
     kprint_int_at(175, 2, p2_score, 15);
+    kprint_at(235, 2, "L:", 15);
+    kprint_int_at(247, 2, pong_level, 10);
 }
 
 void pong_input(char key) {
@@ -347,6 +504,9 @@ static int snake_len = 5;
 static int snake_dir = 0; /* 0=R, 1=D, 2=L, 3=U */
 static int food_x, food_y;
 static int snake_alive = 1;
+static int snake_speed_div = 6;
+static int snake_respawn_tick = 0;
+static int snake_food_chain = 0;
 
 void snake_spawn_food(void) {
     food_x = 20 + (rand() % 35) * GRID_SIZE;
@@ -357,6 +517,9 @@ void snake_init(void) {
     snake_len = 5;
     snake_dir = 0;
     snake_alive = 1;
+    snake_speed_div = 6;
+    snake_respawn_tick = 0;
+    snake_food_chain = 0;
     for (int i = 0; i < snake_len; i++) {
         snake_x[i] = 160 - i * GRID_SIZE;
         snake_y[i] = 100;
@@ -366,7 +529,14 @@ void snake_init(void) {
 }
 
 void snake_update(void) {
-    if (!snake_alive) return;
+    if (!snake_alive) {
+        if (snake_respawn_tick > 0 && game_tick >= snake_respawn_tick) {
+            snake_init();
+        }
+        return;
+    }
+    
+    if ((game_tick % snake_speed_div) != 0) return;
     
     /* Move body */
     for (int i = snake_len - 1; i > 0; i--) {
@@ -384,14 +554,18 @@ void snake_update(void) {
     if (snake_x[0] < 10 || snake_x[0] > 305 || 
         snake_y[0] < 10 || snake_y[0] > 185) {
         snake_alive = 0;
+        snake_respawn_tick = game_tick + 70;
         log_game_event("SNAKE", "DEATH", global_score);
+        return;
     }
     
     /* Self collision */
     for (int i = 1; i < snake_len; i++) {
         if (snake_x[0] == snake_x[i] && snake_y[0] == snake_y[i]) {
             snake_alive = 0;
+            snake_respawn_tick = game_tick + 70;
             log_game_event("SNAKE", "DEATH", global_score);
+            return;
         }
     }
     
@@ -399,6 +573,11 @@ void snake_update(void) {
     if (snake_x[0] == food_x && snake_y[0] == food_y) {
         snake_len++;
         global_score += 10;
+        snake_food_chain++;
+        if (snake_food_chain >= 2 && snake_speed_div > 2) {
+            snake_speed_div--;
+            snake_food_chain = 0;
+        }
         snake_spawn_food();
     }
 }
@@ -421,6 +600,8 @@ void snake_draw(void) {
     /* Score */
     kprint_at(10, 192, "SCORE: ", 15);
     kprint_int_at(60, 192, global_score, 14);
+    kprint_at(140, 192, "SPD:", 15);
+    kprint_int_at(170, 192, 8 - snake_speed_div, 10);
     
     if (!snake_alive) {
         kprint_at(120, 100, "GAME OVER", 4);
@@ -452,6 +633,7 @@ void snake_input(char key) {
 #define ALIEN_ROWS 4
 #define ALIEN_COLS 8
 #define MAX_BULLETS 10
+#define MAX_ENEMY_BULLETS 8
 
 static int ship_x = 160;
 static int aliens[ALIEN_ROWS][ALIEN_COLS];
@@ -459,12 +641,18 @@ static int alien_x = 40, alien_y = 20;
 static int alien_dir = 1;
 static int bullets_x[MAX_BULLETS], bullets_y[MAX_BULLETS];
 static int bullet_count = 0;
+static int eb_x[MAX_ENEMY_BULLETS], eb_y[MAX_ENEMY_BULLETS], eb_alive[MAX_ENEMY_BULLETS];
+static int invader_lives = 3;
+static int invader_fire_tick = 0;
 
 void invaders_init(void) {
     ship_x = 160;
     alien_x = 40; alien_y = 20;
     alien_dir = 1;
     bullet_count = 0;
+    invader_lives = 3;
+    invader_fire_tick = 0;
+    for (int i = 0; i < MAX_ENEMY_BULLETS; i++) eb_alive[i] = 0;
     for (int r = 0; r < ALIEN_ROWS; r++)
         for (int c = 0; c < ALIEN_COLS; c++)
             aliens[r][c] = 1;
@@ -483,11 +671,54 @@ void invaders_update(void) {
         }
     }
     
+    /* Move enemy bullets */
+    for (int i = 0; i < MAX_ENEMY_BULLETS; i++) {
+        if (!eb_alive[i]) continue;
+        eb_y[i] += 3;
+        if (eb_y[i] > 200) eb_alive[i] = 0;
+        if (eb_alive[i] && eb_x[i] >= ship_x - 8 && eb_x[i] <= ship_x + 8 &&
+            eb_y[i] >= 175 && eb_y[i] <= 188) {
+            eb_alive[i] = 0;
+            invader_lives--;
+            if (invader_lives <= 0) {
+                log_game_event("INVADERS", "DEATH", global_score);
+                invaders_init();
+                return;
+            }
+        }
+    }
+    
     /* Move aliens */
     alien_x += alien_dir * 2;
     if (alien_x > 200 || alien_x < 20) {
         alien_dir = -alien_dir;
         alien_y += 8;
+    }
+    
+    /* Enemy fire */
+    invader_fire_tick++;
+    if (invader_fire_tick >= 18) {
+        invader_fire_tick = 0;
+        int living[ALIEN_ROWS * ALIEN_COLS];
+        int lc = 0;
+        for (int r = 0; r < ALIEN_ROWS; r++) {
+            for (int c = 0; c < ALIEN_COLS; c++) {
+                if (aliens[r][c]) living[lc++] = r * ALIEN_COLS + c;
+            }
+        }
+        if (lc > 0) {
+            int pick = living[rand() % lc];
+            int pr = pick / ALIEN_COLS;
+            int pc = pick % ALIEN_COLS;
+            for (int i = 0; i < MAX_ENEMY_BULLETS; i++) {
+                if (!eb_alive[i]) {
+                    eb_alive[i] = 1;
+                    eb_x[i] = alien_x + pc * 20 + 6;
+                    eb_y[i] = alien_y + pr * 15 + 10;
+                    break;
+                }
+            }
+        }
     }
     
     /* Collision detection */
@@ -542,9 +773,16 @@ void invaders_draw(void) {
         vga_fill_rect(bullets_x[i], bullets_y[i], 2, 6, 14);
     }
     
+    /* Enemy bullets */
+    for (int i = 0; i < MAX_ENEMY_BULLETS; i++) {
+        if (eb_alive[i]) vga_fill_rect(eb_x[i], eb_y[i], 2, 5, 4);
+    }
+    
     /* Score */
     kprint_at(10, 2, "SCORE: ", 15);
     kprint_int_at(60, 2, global_score, 14);
+    kprint_at(250, 2, "LIVES:", 15);
+    kprint_int_at(292, 2, invader_lives, 10);
 }
 
 void invaders_input(char key) {
@@ -580,12 +818,14 @@ static int bo_ball_x = 160, bo_ball_y = 150;
 static int bo_dx = 2, bo_dy = -2;
 static int bricks[BRICK_ROWS][BRICK_COLS];
 static int bricks_left = BRICK_ROWS * BRICK_COLS;
+static int breakout_lives = 3;
 
 void breakout_init(void) {
     paddle_x = 140;
     bo_ball_x = 160; bo_ball_y = 150;
     bo_dx = 2; bo_dy = -2;
     bricks_left = BRICK_ROWS * BRICK_COLS;
+    breakout_lives = 3;
     for (int r = 0; r < BRICK_ROWS; r++)
         for (int c = 0; c < BRICK_COLS; c++)
             bricks[r][c] = 1;
@@ -610,9 +850,16 @@ void breakout_update(void) {
     
     /* Miss */
     if (bo_ball_y > 195) {
-        log_game_event("BREAKOUT", "DEATH", global_score);
+        breakout_lives--;
         bo_ball_x = 160; bo_ball_y = 150;
         bo_dy = -2;
+        bo_dx = (rand() % 5) - 2;
+        if (bo_dx == 0) bo_dx = 1;
+        if (breakout_lives <= 0) {
+            log_game_event("BREAKOUT", "DEATH", global_score);
+            breakout_init();
+            return;
+        }
     }
     
     /* Brick collision */
@@ -662,6 +909,8 @@ void breakout_draw(void) {
     /* Score */
     kprint_at(10, 192, "SCORE: ", 15);
     kprint_int_at(60, 192, global_score, 14);
+    kprint_at(220, 192, "LIVES:", 15);
+    kprint_int_at(262, 192, breakout_lives, 10);
 }
 
 void breakout_input(char key) {
@@ -692,17 +941,57 @@ static int board[BOARD_H][BOARD_W];
 static int piece_x, piece_y, piece_type, piece_rot;
 static int tetris_level = 1;
 static int lines_cleared = 0;
+static int tetris_drop_tick = 0;
 
-/* Tetromino shapes (4 rotations each) */
-static const int PIECES[7][4][4] = {
-    {{0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0}}, /* I */
-    {{1,1,0,0}, {1,1,0,0}, {0,0,0,0}, {0,0,0,0}}, /* O */
-    {{0,1,0,0}, {1,1,1,0}, {0,0,0,0}, {0,0,0,0}}, /* T */
-    {{1,0,0,0}, {1,1,1,0}, {0,0,0,0}, {0,0,0,0}}, /* J */
-    {{0,0,1,0}, {1,1,1,0}, {0,0,0,0}, {0,0,0,0}}, /* L */
-    {{0,1,1,0}, {1,1,0,0}, {0,0,0,0}, {0,0,0,0}}, /* S */
-    {{1,1,0,0}, {0,1,1,0}, {0,0,0,0}, {0,0,0,0}}  /* Z */
+/* Tetromino shapes (explicit rotations) */
+static const int PIECES[7][4][4][4] = {
+    {   /* I */
+        {{0,0,0,0},{1,1,1,1},{0,0,0,0},{0,0,0,0}},
+        {{0,0,1,0},{0,0,1,0},{0,0,1,0},{0,0,1,0}},
+        {{0,0,0,0},{1,1,1,1},{0,0,0,0},{0,0,0,0}},
+        {{0,0,1,0},{0,0,1,0},{0,0,1,0},{0,0,1,0}}
+    },
+    {   /* O */
+        {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
+        {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
+        {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
+        {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}}
+    },
+    {   /* T */
+        {{0,1,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}},
+        {{0,1,0,0},{0,1,1,0},{0,1,0,0},{0,0,0,0}},
+        {{0,0,0,0},{1,1,1,0},{0,1,0,0},{0,0,0,0}},
+        {{0,1,0,0},{1,1,0,0},{0,1,0,0},{0,0,0,0}}
+    },
+    {   /* J */
+        {{1,0,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}},
+        {{0,1,1,0},{0,1,0,0},{0,1,0,0},{0,0,0,0}},
+        {{0,0,0,0},{1,1,1,0},{0,0,1,0},{0,0,0,0}},
+        {{0,1,0,0},{0,1,0,0},{1,1,0,0},{0,0,0,0}}
+    },
+    {   /* L */
+        {{0,0,1,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}},
+        {{0,1,0,0},{0,1,0,0},{0,1,1,0},{0,0,0,0}},
+        {{0,0,0,0},{1,1,1,0},{1,0,0,0},{0,0,0,0}},
+        {{1,1,0,0},{0,1,0,0},{0,1,0,0},{0,0,0,0}}
+    },
+    {   /* S */
+        {{0,1,1,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}},
+        {{0,1,0,0},{0,1,1,0},{0,0,1,0},{0,0,0,0}},
+        {{0,1,1,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}},
+        {{0,1,0,0},{0,1,1,0},{0,0,1,0},{0,0,0,0}}
+    },
+    {   /* Z */
+        {{1,1,0,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
+        {{0,0,1,0},{0,1,1,0},{0,1,0,0},{0,0,0,0}},
+        {{1,1,0,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
+        {{0,0,1,0},{0,1,1,0},{0,1,0,0},{0,0,0,0}}
+    }
 };
+
+int tetris_piece_cell(int type, int rot, int x, int y) {
+    return PIECES[type][rot & 3][y][x];
+}
 
 void tetris_spawn_piece(void) {
     piece_x = 3;
@@ -717,6 +1006,7 @@ void tetris_init(void) {
             board[y][x] = 0;
     tetris_level = 1;
     lines_cleared = 0;
+    tetris_drop_tick = 0;
     tetris_spawn_piece();
     log_game_event("TETRIS", "START", 0);
 }
@@ -724,7 +1014,7 @@ void tetris_init(void) {
 int tetris_check_collision(int px, int py) {
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
-            if (PIECES[piece_type][y][x]) {
+            if (tetris_piece_cell(piece_type, piece_rot, x, y)) {
                 int nx = px + x;
                 int ny = py + y;
                 if (nx < 0 || nx >= BOARD_W || ny >= BOARD_H) return 1;
@@ -736,9 +1026,10 @@ int tetris_check_collision(int px, int py) {
 }
 
 void tetris_lock_piece(void) {
+    int lines_this_lock = 0;
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
-            if (PIECES[piece_type][y][x]) {
+            if (tetris_piece_cell(piece_type, piece_rot, x, y)) {
                 int ny = piece_y + y;
                 int nx = piece_x + x;
                 if (ny >= 0 && ny < BOARD_H && nx >= 0 && nx < BOARD_W) {
@@ -761,9 +1052,15 @@ void tetris_lock_piece(void) {
                 }
             }
             lines_cleared++;
-            global_score += 100;
+            lines_this_lock++;
             y++; /* Recheck this row */
         }
+    }
+    
+    if (lines_this_lock > 0) {
+        global_score += lines_this_lock * lines_this_lock * 50 * tetris_level;
+        tetris_level = 1 + lines_cleared / 8;
+        if (tetris_level > 10) tetris_level = 10;
     }
     
     tetris_spawn_piece();
@@ -775,6 +1072,13 @@ void tetris_lock_piece(void) {
 }
 
 void tetris_update(void) {
+    int drop_interval = 12 - tetris_level;
+    if (drop_interval < 2) drop_interval = 2;
+    
+    tetris_drop_tick++;
+    if (tetris_drop_tick < drop_interval) return;
+    tetris_drop_tick = 0;
+    
     if (!tetris_check_collision(piece_x, piece_y + 1)) {
         piece_y++;
     } else {
@@ -803,7 +1107,7 @@ void tetris_draw(void) {
     /* Current piece */
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
-            if (PIECES[piece_type][y][x]) {
+            if (tetris_piece_cell(piece_type, piece_rot, x, y)) {
                 int px = ox + (piece_x + x) * CELL_SIZE;
                 int py = oy + (piece_y + y) * CELL_SIZE;
                 vga_fill_rect(px, py, CELL_SIZE - 1, CELL_SIZE - 1, 9 + piece_type);
@@ -816,15 +1120,31 @@ void tetris_draw(void) {
     kprint_int_at(10, 60, global_score, 14);
     kprint_at(10, 80, "LINES:", 15);
     kprint_int_at(10, 90, lines_cleared, 14);
+    kprint_at(10, 110, "LEVEL:", 15);
+    kprint_int_at(10, 120, tetris_level, 10);
 }
 
 void tetris_input(char key) {
     if ((key == 'a' || key == 'A') && !tetris_check_collision(piece_x - 1, piece_y)) piece_x--;
     if ((key == 'd' || key == 'D') && !tetris_check_collision(piece_x + 1, piece_y)) piece_x++;
-    if ((key == 's' || key == 'S') && !tetris_check_collision(piece_x, piece_y + 1)) piece_y++;
-    if (key == 'w' || key == 'W') { /* Rotate - simplified */ }
+    if ((key == 's' || key == 'S') && !tetris_check_collision(piece_x, piece_y + 1)) {
+        piece_y++;
+        global_score += 1;
+    }
+    if (key == 'w' || key == 'W') {
+        int prev_rot = piece_rot;
+        piece_rot = (piece_rot + 1) & 3;
+        if (tetris_check_collision(piece_x, piece_y)) {
+            piece_rot = prev_rot;
+        }
+    }
     if (key == ' ') { /* Hard drop */
-        while (!tetris_check_collision(piece_x, piece_y + 1)) piece_y++;
+        int drop = 0;
+        while (!tetris_check_collision(piece_x, piece_y + 1)) {
+            piece_y++;
+            drop++;
+        }
+        global_score += drop * 2;
         tetris_lock_piece();
     }
 }
@@ -858,6 +1178,21 @@ static int ast_size[MAX_ASTEROIDS]; /* 0=dead, 1=small, 2=med, 3=large */
 static int shot_x[MAX_SHOTS], shot_y[MAX_SHOTS];
 static int shot_dx[MAX_SHOTS], shot_dy[MAX_SHOTS];
 static int shot_life[MAX_SHOTS];
+
+static const int DIR_X[24] = {
+    4,4,3,2,1,0,-1,-2,-3,-4,-4,-4,
+    -4,-4,-3,-2,-1,0,1,2,3,4,4,4
+};
+static const int DIR_Y[24] = {
+    0,1,2,3,4,4,4,3,2,1,0,-1,
+    -2,-3,-4,-4,-4,-3,-2,-1,0,1,2,3
+};
+
+int asteroids_heading_index(void) {
+    int angle = ship_angle % 360;
+    if (angle < 0) angle += 360;
+    return angle / 15;
+}
 
 void asteroids_spawn(int idx, int size) {
     ast_x[idx] = rand() % 320;
@@ -991,18 +1326,23 @@ void asteroids_draw(void) {
 void asteroids_input(char key) {
     if (key == 'a' || key == 'A') ship_angle -= 15;
     if (key == 'd' || key == 'D') ship_angle += 15;
+    if (ship_angle >= 360) ship_angle -= 360;
+    if (ship_angle < 0) ship_angle += 360;
     if (key == 'w' || key == 'W') {
-        /* Thrust (simplified - just move forward) */
-        ship_vx += 1;
+        /* Thrust in facing direction */
+        int dir = asteroids_heading_index();
+        ship_vx += DIR_X[dir] / 2;
+        ship_vy += DIR_Y[dir] / 2;
     }
     if (key == ' ') {
         /* Fire */
+        int dir = asteroids_heading_index();
         for (int i = 0; i < MAX_SHOTS; i++) {
             if (shot_life[i] == 0) {
                 shot_x[i] = ship_ax;
                 shot_y[i] = ship_ay;
-                shot_dx[i] = 4;
-                shot_dy[i] = 0;
+                shot_dx[i] = DIR_X[dir];
+                shot_dy[i] = DIR_Y[dir];
                 shot_life[i] = 50;
                 break;
             }

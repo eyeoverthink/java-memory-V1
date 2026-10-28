@@ -84,6 +84,10 @@ public class HyperRigidBody {
      * @param mesh The deformable geometry
      */
     public HyperRigidBody(String concept, Mesh mesh) {
+        this(concept, mesh, -1);
+    }
+
+    public HyperRigidBody(String concept, Mesh mesh, double massOverride) {
         this.id = UUID.randomUUID().toString().substring(0, 8);
         this.concept = concept;
         this.geometry = mesh;
@@ -93,8 +97,8 @@ public class HyperRigidBody {
         // Seed the 17D vector based on concept (deterministic hashing)
         seedHyperState(concept);
         
-        // Calculate mass based on information complexity
-        this.dataMass = calculateEntropy(concept);
+        // Calculate mass: use HDC override if provided, else Shannon entropy
+        this.dataMass = (massOverride > 0) ? massOverride : calculateEntropy(concept);
         this.massHistory.add(this.dataMass);
         
         // Calculate semantic charge (positive vs negative concept)
@@ -103,7 +107,7 @@ public class HyperRigidBody {
         System.out.println("⚛️ HDRB SPAWNED");
         System.out.println("   ID: " + id);
         System.out.println("   Concept: " + concept);
-        System.out.println("   Data Mass: " + String.format("%.4f", dataMass));
+        System.out.println("   Data Mass: " + String.format("%.4f", dataMass) + (massOverride > 0 ? " (HDC-enhanced)" : ""));
         System.out.println("   Semantic Charge: " + String.format("%.2f", semanticCharge));
         System.out.println("   Dimensions: 17");
     }

@@ -150,9 +150,12 @@ public class NervousSystem {
                     System.out.println("   Payload size: " + body.length() + " bytes");
                     
                     // 2. PARSE JSON (Using Sovereign Parser)
-                    Map<String, Object> json = (Map<String, Object>) FraymusJSON.parse(body);
-                    String sourceCode = (String) json.get("source");
-                    
+                    Object parsed = FraymusJSON.parse(body);
+                    if (!(parsed instanceof Map<?, ?> json)) {
+                        throw new IllegalArgumentException("Invalid JSON body");
+                    }
+                    String sourceCode = json.get("source") instanceof String s ? s : null;
+
                     if (sourceCode == null || sourceCode.isEmpty()) {
                         throw new IllegalArgumentException("No source code provided");
                     }

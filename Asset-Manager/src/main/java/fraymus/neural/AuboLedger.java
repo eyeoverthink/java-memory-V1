@@ -51,16 +51,58 @@ public class AuboLedger {
 
     private SwarmDaemon swarm;
     private long bootTimeMs = 0;
+    private static final long ACTIVE_PEER_WINDOW_MS = 15 * 60 * 1000L;
+    private static final long HEARTBEAT_INTERVAL_MS = 2000L;
+    private final ConcurrentHashMap<Integer, PeerState> peerStates = new ConcurrentHashMap<>();
 
     // --- STATISTICS ---
     private int mintCount = 0;
     private int killCount = 0;
     private int syncCount = 0;
 
+    private static final class PeerState {
+        final String peerId;
+        final int port;
+        volatile int latestHeight;
+        volatile String latestHash;
+        volatile long lastSeenMs;
+
+        PeerState(String peerId, int port, int latestHeight, String latestHash, long lastSeenMs) {
+            this.peerId = peerId;
+            this.port = port;
+            this.latestHeight = latestHeight;
+            this.latestHash = latestHash;
+            this.lastSeenMs = lastSeenMs;
+        }
+    }
+
+    public static final class PeerTelemetry {
+        private final String peerId;
+        private final int port;
+        private final int latestHeight;
+        private final String hashPrefix;
+        private final long lastSeenMs;
+
+        public PeerTelemetry(String peerId, int port, int latestHeight, String hashPrefix, long lastSeenMs) {
+            this.peerId = peerId;
+            this.port = port;
+            this.latestHeight = latestHeight;
+            this.hashPrefix = hashPrefix;
+            this.lastSeenMs = lastSeenMs;
+        }
+
+        public String getPeerId() { return peerId; }
+        public int getPort() { return port; }
+        public int getLatestHeight() { return latestHeight; }
+        public String getHashPrefix() { return hashPrefix; }
+        public long getLastSeenMs() { return lastSeenMs; }
+    }
+
     private AuboLedger() {
         long t0 = System.currentTimeMillis();
         swarm = new SwarmDaemon(this);
         swarm.start();
+        observePeer("local@" + swarm.getPort(), swarm.getPort(), blockHeight, lastBlockHash, System.currentTimeMillis());
         bootTimeMs = System.currentTimeMillis() - t0;
     }
 
@@ -91,6 +133,7 @@ public class AuboLedger {
 
         ledger.put(node.nodeHash, node);
         lastBlockHash = node.nodeHash;
+        observePeer("local@" + swarm.getPort(), swarm.getPort(), node.height, node.nodeHash, System.currentTimeMillis());
         swarm.broadcastMint(node);
         mintCount++;
 
@@ -234,6 +277,7 @@ public class AuboLedger {
         for (TrackableNode n : ledger.values()) {
             if (n.isDestroyed) dead++; else alive++;
         }
+        int activePeers = getActivePeerTelemetry().size();
         return String.format(
             "════════════════════════════════════════════\n" +
             "  ∞ A.E.O.N. AUBO LEDGER STATUS\n" +
@@ -245,6 +289,7 @@ public class AuboLedger {
             "  Total Minted:     %,d\n" +
             "  Total Killed:     %,d\n" +
             "  Swarm Syncs:      %,d\n" +
+            "  Active Peers:     %,d (heartbeat)\n" +
             "  Swarm Port:       UDP %d (range 42000-42020)\n" +
             "  Consensus:        Proof of Resonance (difficulty: 000)\n" +
             "  Last Block Hash:  %s...\n" +
@@ -256,6 +301,7 @@ public class AuboLedger {
             mintCount,
             killCount,
             syncCount,
+            activePeers,
             swarm.getPort(),
             lastBlockHash.substring(0, Math.min(32, lastBlockHash.length())),
             bootTimeMs
@@ -270,6 +316,38 @@ public class AuboLedger {
     public int getActiveNodes() { int c = 0; for (TrackableNode n : ledger.values()) if (!n.isDestroyed) c++; return c; }
     public int getSwarmPort() { return swarm.getPort(); }
     public long getBootTimeMs() { return bootTimeMs; }
+
+    /**
+     * Return live peer telemetry from observed swarm activity.
+     * Active peers are those seen inside ACTIVE_PEER_WINDOW_MS.
+     */
+    public List<PeerTelemetry> getActivePeerTelemetry() {
+        long now = System.currentTimeMillis();
+        List<PeerTelemetry> peers = new ArrayList<>();
+
+        int localPort = swarm != null ? swarm.getPort() : 0;
+        if (localPort > 0) {
+            observePeer("local@" + localPort, localPort, blockHeight, lastBlockHash, now);
+        }
+
+        for (PeerState state : peerStates.values()) {
+            if (state == null) {
+                continue;
+            }
+            if ((now - state.lastSeenMs) > ACTIVE_PEER_WINDOW_MS) {
+                continue;
+            }
+            peers.add(new PeerTelemetry(
+                state.peerId,
+                state.port,
+                state.latestHeight,
+                abbreviateHash(state.latestHash),
+                state.lastSeenMs
+            ));
+        }
+        peers.sort(Comparator.comparingInt(PeerTelemetry::getPort));
+        return peers;
+    }
 
     // --- INTERNAL ---
     TrackableNode findNode(String shortId) {
@@ -288,6 +366,33 @@ public class AuboLedger {
             blockHeight = height;
             lastBlockHash = hash;
         }
+    }
+
+    private void observePeer(String peerId, int port, int latestHeight, String latestHash, long seenMs) {
+        if (port <= 0) {
+            return;
+        }
+        String canonicalId = (peerId == null || peerId.isBlank()) ? ("peer@" + port) : peerId;
+        peerStates.compute(port, (k, existing) -> {
+            if (existing == null) {
+                return new PeerState(canonicalId, port, latestHeight, latestHash, seenMs);
+            }
+            if (latestHeight > existing.latestHeight) {
+                existing.latestHeight = latestHeight;
+            }
+            if (latestHash != null && !latestHash.isBlank()) {
+                existing.latestHash = latestHash;
+            }
+            existing.lastSeenMs = Math.max(existing.lastSeenMs, seenMs);
+            return existing;
+        });
+    }
+
+    private static String abbreviateHash(String hash) {
+        if (hash == null || hash.isBlank()) {
+            return "none";
+        }
+        return hash.substring(0, Math.min(16, hash.length()));
     }
 
     // =========================================================================================
@@ -440,6 +545,7 @@ public class AuboLedger {
         private DatagramSocket socket;
         private volatile boolean running = true;
         private final AuboLedger parent;
+        private long lastHeartbeatMs = 0L;
 
         public SwarmDaemon(AuboLedger parent) {
             super("AUBO-SWARM");
@@ -469,6 +575,12 @@ public class AuboLedger {
             if (socket == null) return;
             byte[] buf = new byte[8192];
             while (running) {
+                long now = System.currentTimeMillis();
+                if ((now - lastHeartbeatMs) >= HEARTBEAT_INTERVAL_MS) {
+                    broadcastHeartbeat();
+                    parent.observePeer("local@" + this.port, this.port, parent.getBlockHeight(), parent.lastBlockHash, now);
+                    lastHeartbeatMs = now;
+                }
                 try {
                     DatagramPacket packet = new DatagramPacket(buf, buf.length);
                     socket.receive(packet);
@@ -493,6 +605,7 @@ public class AuboLedger {
                             );
 
                             parent.getLedger().put(oHash, incomingNode);
+                            parent.observePeer("peer@" + incomingNode.minerPort, incomingNode.minerPort, incomingNode.height, oHash, System.currentTimeMillis());
                             parent.updateChainTip(incomingNode.height, oHash);
                             parent.onSwarmSync();
                             System.out.println(MAG + "\n[SWARM] Synced new AUBO Node from Peer " + p[4] + " -> " + oHash.substring(0, 16) + "..." + RST);
@@ -500,6 +613,7 @@ public class AuboLedger {
                         }
                     } else if (p[0].equals("KILL")) {
                         String targetHash = p[1];
+                        parent.observePeer("peer@" + packet.getPort(), packet.getPort(), parent.getBlockHeight(), parent.lastBlockHash, System.currentTimeMillis());
                         TrackableNode node = parent.findNode(targetHash);
                         if (node != null && !node.isDestroyed) {
                             System.out.println(RED + "\n[SWARM] APOPTOSIS Command Received. Annihilating Node " + targetHash.substring(0, 16) + "..." + RST);
@@ -507,6 +621,11 @@ public class AuboLedger {
                             parent.onSwarmSync();
                             System.out.print(CYN + "AUBO> " + RST);
                         }
+                    } else if (p[0].equals("HEARTBEAT")) {
+                        int peerPort = p.length > 1 ? parseIntSafe(p[1], packet.getPort()) : packet.getPort();
+                        int peerHeight = p.length > 2 ? parseIntSafe(p[2], parent.getBlockHeight()) : parent.getBlockHeight();
+                        String peerHash = p.length > 3 ? p[3] : parent.lastBlockHash;
+                        parent.observePeer("peer@" + peerPort, peerPort, peerHeight, peerHash, System.currentTimeMillis());
                     }
                 } catch (SocketTimeoutException ignored) {
                 } catch (Exception e) {
@@ -533,6 +652,22 @@ public class AuboLedger {
         }
 
         public void broadcastKill(String hash) { sendUDP("KILL|" + hash); }
+
+        public void broadcastHeartbeat() {
+            String msg = "HEARTBEAT|" + this.port + "|" + parent.getBlockHeight() + "|" + parent.lastBlockHash + "|" + System.currentTimeMillis();
+            sendUDP(msg);
+        }
+
+        private static int parseIntSafe(String value, int fallback) {
+            if (value == null || value.isBlank()) {
+                return fallback;
+            }
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
 
         private void sendUDP(String msg) {
             if (socket == null) return;

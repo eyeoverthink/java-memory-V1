@@ -182,6 +182,26 @@ public class BioNode {
         dna.resonance *= 1.2;  // Boost resonance
     }
 
+    public void applyHomeostaticCorrection(double targetResonance) {
+        if (!alive) return;
+        dna.resonance += 0.25 * (targetResonance - dna.resonance);
+        dna.resonance = Math.max(0.1, dna.resonance);
+        dna.evolutionRate = Math.max(0.01, dna.evolutionRate * 0.98);
+    }
+
+    public void applyExplorationStimulus() {
+        if (!alive) return;
+        brain.mutate();
+        dna.evolutionRate = Math.min(0.25, dna.evolutionRate + 0.01);
+        dna.resonance = Math.max(0.1, dna.resonance * 0.97);
+    }
+
+    public void applyExploitationReinforcement() {
+        if (!alive) return;
+        dna.resonance = Math.max(0.1, dna.resonance * 1.05);
+        dna.evolutionRate = Math.max(0.01, dna.evolutionRate * 0.96);
+    }
+
     public boolean isAlive() {
         return alive;
     }

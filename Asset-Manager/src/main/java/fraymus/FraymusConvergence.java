@@ -189,7 +189,7 @@ public class FraymusConvergence {
         System.out.println("🧬 Initializing Bicameral Transmuter...");
         
         String ollamaModel = System.getenv("OLLAMA_MODEL");
-        if (ollamaModel == null) ollamaModel = "llama3.2";
+        if (ollamaModel == null) ollamaModel = "llama3";
         
         OLLAMA_BRAIN = new OllamaBridge(ollamaModel);
         System.out.println("   ✓ Ollama Bridge online (" + ollamaModel + ")");
@@ -197,10 +197,15 @@ public class FraymusConvergence {
         TRANSMUTER_SERVER = new NervousSystem(ollamaModel, 8080);
         System.out.println("   ✓ Transmuter ready (use 'startserver' to activate)");
         
-        // Initialize FRAYNIX OS WebSocket
-        FRAYNIX_WS = new FraynixWebSocket(8082);
-        new Thread(() -> FRAYNIX_WS.start()).start();
-        System.out.println("   ✓ FRAYNIX OS WebSocket ready (port 8082)");
+        // Initialize FRAYNIX OS WebSocket (non-fatal if port is busy)
+        try {
+            FRAYNIX_WS = new FraynixWebSocket(8082);
+            FRAYNIX_WS.setReuseAddr(true);
+            new Thread(() -> FRAYNIX_WS.start()).start();
+            System.out.println("   ✓ FRAYNIX OS WebSocket ready (port 8082)");
+        } catch (Exception e) {
+            System.out.println("   ⚠ WebSocket skipped (port 8082 busy) — CLI still works");
+        }
         
         System.out.println();
         System.out.println("Type 'help' for commands");
@@ -1137,6 +1142,177 @@ public class FraymusConvergence {
                 AUDIT.log("transmuter_stopped", "shutdown");
                 break;
 
+            // ═══════════════════════════════════════════════════════════
+            // GENESIS FOUNDATION SYSTEMS
+            // ═══════════════════════════════════════════════════════════
+
+            case "genesisdb":
+                fraymus.knowledge.GenesisDatabase.printManifest();
+                fraymus.knowledge.DigitalLogicCore.printManifest();
+                System.out.println("\n   Total Innate Knowledge: " +
+                    (fraymus.knowledge.GenesisDatabase.getTotalEntries() +
+                     fraymus.knowledge.DigitalLogicCore.getTotalEntries()) + " entries");
+                break;
+
+            case "oracle":
+                if (args.isEmpty()) {
+                    var oracleInst = fraymus.knowledge.QuantumOracle.getInstance();
+                    System.out.println("   " + oracleInst.getStatus());
+                    System.out.println("\n   Usage: oracle <concept>  (e.g., oracle MOV, oracle Hadamard, oracle 74LS181)");
+                } else {
+                    var oracleInst = fraymus.knowledge.QuantumOracle.getInstance();
+                    String oracleResult = oracleInst.query(args);
+                    if (oracleResult != null) {
+                        System.out.println("   " + oracleResult);
+                    } else {
+                        System.out.println("   [NO MATCH] No innate knowledge for: " + args);
+                    }
+                }
+                break;
+
+            case "linkgenesis":
+                System.out.println("🔗 Linking Genesis knowledge into HDC brain...");
+                try {
+                    var linker = new fraymus.knowledge.KnowledgeLinker();
+                    linker.linkAll(fraymus.neural.AeonKronos.getInstance());
+                    System.out.println("   " + linker.getStatus());
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
+            case "gates":
+                if (args.isEmpty()) {
+                    fraymus.knowledge.DigitalLogicCore.printManifest();
+                    System.out.println("\n   Usage: gates <GATE> <A> <B>  (e.g., gates AND 1 1)");
+                    System.out.println("   Usage: gates add <A_bits> <B_bits>  (e.g., gates add 1010 0011)");
+                } else {
+                    String[] gateParts = args.split("\\s+");
+                    if (gateParts.length == 3 && !gateParts[0].equalsIgnoreCase("add")) {
+                        try {
+                            int gateResult = fraymus.knowledge.DigitalLogicCore.evaluate(
+                                gateParts[0], Integer.parseInt(gateParts[1]), Integer.parseInt(gateParts[2]));
+                            System.out.println("   " + gateParts[0].toUpperCase() + "(" +
+                                gateParts[1] + ", " + gateParts[2] + ") = " + gateResult);
+                        } catch (Exception e) {
+                            System.out.println("   ❌ " + e.getMessage());
+                        }
+                    } else if (gateParts[0].equalsIgnoreCase("add") && gateParts.length == 3) {
+                        String bitsA = gateParts[1], bitsB = gateParts[2];
+                        int n = Math.max(bitsA.length(), bitsB.length());
+                        int[] a = new int[n], b = new int[n];
+                        for (int i = 0; i < bitsA.length(); i++) a[i] = bitsA.charAt(bitsA.length()-1-i) - '0';
+                        for (int i = 0; i < bitsB.length(); i++) b[i] = bitsB.charAt(bitsB.length()-1-i) - '0';
+                        int[] addResult = fraymus.knowledge.DigitalLogicCore.rippleCarryAdd(a, b);
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = addResult.length - 1; i >= 0; i--) sb.append(addResult[i]);
+                        System.out.println("   " + bitsA + " + " + bitsB + " = " + sb);
+                    }
+                }
+                break;
+
+            case "petridish":
+            case "invitro":
+                System.out.println("🧫 Launching In Vitro Substrate (100,000 Izhikevich Neurons)...");
+                try {
+                    fraymus.biology.InVitroSubstrate dish = new fraymus.biology.InVitroSubstrate();
+                    int simMs = 500;
+                    if (!args.isEmpty()) {
+                        try { simMs = Integer.parseInt(args.trim()); } catch (NumberFormatException ignored) {}
+                    }
+                    System.out.println("\n   Simulating " + simMs + " ms of brain activity...");
+                    for (int ms = 0; ms < simMs; ms++) {
+                        dish.tick();
+                        if (ms % 50 == 0) dish.observeDish(ms);
+                    }
+                    System.out.println("\n   Total spikes: " + dish.getTotalSpikes());
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
+            case "kernel":
+                System.out.println("👑 Launching Fraynix Bare-Metal Kernel...");
+                System.out.println("   64KB RAM | Custom ISA | VGA CRT");
+                try {
+                    if (args.equalsIgnoreCase("headless")) {
+                        fraymus.metal.FraynixKernel.launchHeadless();
+                    } else {
+                        fraymus.metal.FraynixKernel.main(new String[]{});
+                    }
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
+            case "psychosphere":
+                System.out.println("🧠 Launching Psychosphere (Cognitive Physics)...");
+                try {
+                    var bodyA = new fraymus.physics.cognition.CognitiveBody(
+                        "HOSTILE", "DESTROY_ALL", 0f, 10f, 100f, 0.0f);
+                    bodyA.emotionalState.y = 0.9f; // High arousal
+                    var bodyB = new fraymus.physics.cognition.CognitiveBody(
+                        "CIVILIAN", "PEACE", 5f, 10f, 5f, 0.8f);
+                    var bodyC = new fraymus.physics.cognition.CognitiveBody(
+                        "PHILOSOPHER", "TRUTH", 10f, 10f, 50f, 0.6f);
+
+                    System.out.println("   Spawned: " + bodyA.getStatus());
+                    System.out.println("   Spawned: " + bodyB.getStatus());
+                    System.out.println("   Spawned: " + bodyC.getStatus());
+
+                    // Simulate collisions
+                    fraymus.physics.cognition.MemeticExchange.resolveCognitiveImpact(bodyA, bodyB, 8.0f);
+                    fraymus.physics.cognition.MemeticExchange.resolveCognitiveImpact(bodyB, bodyC, 3.5f);
+
+                    System.out.println("\n   Final States:");
+                    System.out.println("   " + bodyA.getStatus());
+                    System.out.println("   " + bodyB.getStatus());
+                    System.out.println("   " + bodyC.getStatus());
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
+            case "stego":
+                if (args.isEmpty()) {
+                    System.out.println("🖋️ Steganography Commands:");
+                    System.out.println("   stego typo    — TypographicCompiler demo (font kerning)");
+                    System.out.println("   stego rtf     — RTF Steganography demo (twip encoding)");
+                } else if (args.equalsIgnoreCase("typo")) {
+                    fraymus.metal.alchemy.TypographicCompiler.main(new String[]{});
+                } else if (args.equalsIgnoreCase("rtf")) {
+                    fraymus.metal.alchemy.RTF_Steganography.main(new String[]{});
+                }
+                break;
+
+            case "tda":
+            case "topology":
+                System.out.println("🔭 Scanning Neural Manifold Topology...");
+                try {
+                    long[] topoVec = fraymus.neural.AeonKronos.getInstance().getOrGenerateConcept("CONSCIOUSNESS");
+                    var topologist = new fraymus.science.ConsciousnessTopologist();
+                    topologist.mapAndPrint(topoVec);
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
+            case "diffusion":
+                System.out.println("🌊 Cortical Diffusion Engine — Sculpting thought from noise...");
+                try {
+                    var kronosRef = fraymus.neural.AeonKronos.getInstance();
+                    long[][] attractors = {
+                        kronosRef.getOrGenerateConcept("LOGIC"),
+                        kronosRef.getOrGenerateConcept("CHAOS"),
+                        kronosRef.getOrGenerateConcept("CONSCIOUSNESS")
+                    };
+                    var cortex = new fraymus.biology.cognition.CorticalDiffusion(attractors);
+                    cortex.sculptThought(15, 0.15, 95.0);
+                } catch (Exception e) {
+                    System.out.println("   ❌ Error: " + e.getMessage());
+                }
+                break;
+
             case "exit":
             case "quit":
                 System.out.println();
@@ -1400,6 +1576,20 @@ public class FraymusConvergence {
         System.out.println();
         System.out.println("NETWORK:");
         System.out.println("  cast <ip> <file>   Transmit stack to remote host");
+        System.out.println();
+        System.out.println("\033[32mGENESIS FOUNDATION (Innate Knowledge & Biological Substrate):\033[0m");
+        System.out.println("  genesisdb          Show all innate knowledge (ASM, Quantum, Calculus, Logic)");
+        System.out.println("  oracle <concept>   Query innate knowledge (MOV, Hadamard, Taylor Series, 74LS181)");
+        System.out.println("  linkgenesis        Inject all Genesis knowledge into HDC brain (AeonKronos)");
+        System.out.println("  gates              Digital logic gate simulator");
+        System.out.println("  gates AND 1 1      Evaluate logic gate");
+        System.out.println("  gates add 1010 0011  Ripple-carry binary addition");
+        System.out.println("  petridish [ms]     100K Izhikevich spiking neuron simulation");
+        System.out.println("  kernel [headless]  Fraynix bare-metal CPU kernel (64KB RAM, custom ISA)");
+        System.out.println("  psychosphere       Cognitive physics demo (thought collisions)");
+        System.out.println("  stego typo|rtf     Steganography (font kerning / RTF twip encoding)");
+        System.out.println("  topology           TDA scan of neural manifold (Betti numbers)");
+        System.out.println("  diffusion          Cortical diffusion — sculpt thought from noise");
         System.out.println();
         System.out.println("SYSTEM:");
         System.out.println("  stats              Show system statistics");

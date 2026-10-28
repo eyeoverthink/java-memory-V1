@@ -34,7 +34,7 @@ public class FraymusCoder {
 
     // Ollama Configuration
     private static final String OLLAMA_URL = "http://localhost:11434/api/generate";
-    private static final String DEFAULT_MODEL = "codellama";  // Or "deepseek-coder", "starcoder"
+    private static final String DEFAULT_MODEL = "llama3";  // Or "codellama", "deepseek-coder"
     private static final int TIMEOUT_MS = 120000;  // 2 minutes for code generation
     
     // Self-correction limits
@@ -292,11 +292,25 @@ public class FraymusCoder {
         }
         
         String response = json.substring(start, end);
-        // Unescape
+        // Unescape JSON sequences
         response = response.replace("\\n", "\n")
                           .replace("\\t", "\t")
-                          .replace("\\\"", "\"")
-                          .replace("\\\\", "\\");
+                          .replace("\\\"", "\"");
+        // Unescape Unicode sequences (backslash + u + XXXX)
+        StringBuilder sb = new StringBuilder();
+        char uChar = 'u';
+        for (int i = 0; i < response.length(); i++) {
+            if (i + 5 < response.length() && response.charAt(i) == '\\' && response.charAt(i+1) == uChar) {
+                String hex = response.substring(i+2, i+6);
+                try {
+                    sb.append((char) Integer.parseInt(hex, 16));
+                    i += 5;
+                    continue;
+                } catch (NumberFormatException ignored) {}
+            }
+            sb.append(response.charAt(i));
+        }
+        response = sb.toString().replace("\\\\", "\\");
         return response;
     }
     

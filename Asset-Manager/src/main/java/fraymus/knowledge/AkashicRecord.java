@@ -38,49 +38,66 @@ public class AkashicRecord {
     private static final String STORAGE_DIR = ".akashic/";
     private static final String CHAIN_FILE = ".akashic/chain.dat";
     private static final String BLOCKS_FILE = ".akashic/blocks.dat";
+    private static final String PENDING_BLOCKS_FILE = ".akashic/blocks-pending.dat";
     private static final String STATS_FILE = ".akashic/stats.dat";
     private static final String INDEX_FILE = ".akashic/index.dat";
+    private static final long BLOCKS_FILE_SOFT_LIMIT_BYTES =
+        Long.getLong("fraymus.akashic.blocksFileSoftLimitBytes", Long.MAX_VALUE);
+    private static volatile boolean blocksFullyLoaded = true;
+    private static volatile boolean pendingFullyLoaded = true;
+    private static volatile boolean chainFullyLoaded = true;
+    private static final Object INIT_LOCK = new Object();
+    private static final KnowledgeRecordArchive RECORD_ARCHIVE = new KnowledgeRecordArchive(Paths.get(".akashic/record-archive"));
+    private static volatile boolean initialized = false;
+    private static volatile boolean shutdownHookRegistered = false;
     
     // In-memory storage
-    private Map<String, List<KnowledgeBlock>> categories;
-    private Map<String, KnowledgeBlock> blockIndex;
-    private List<String> chainHashes;
+    private static Map<String, List<KnowledgeBlock>> categories;
+    private static Map<String, KnowledgeBlock> blockIndex;
+    private static List<String> chainHashes;
     
     // Statistics
-    private long blocksAdded = 0;
-    private long queriesProcessed = 0;
-    private long chainLength = 0;
+    private static long blocksAdded = 0;
+    private static long queriesProcessed = 0;
+    private static long chainLength = 0;
 
     public AkashicRecord() {
-        this.categories = new ConcurrentHashMap<>();
-        this.blockIndex = new ConcurrentHashMap<>();
-        this.chainHashes = Collections.synchronizedList(new ArrayList<>());
-        
-        // Ensure storage directory exists
-        try {
-            Files.createDirectories(Paths.get(STORAGE_DIR));
-        } catch (Exception e) {
-            // Ignore
+        synchronized (INIT_LOCK) {
+            if (!initialized) {
+                categories = new ConcurrentHashMap<>();
+                blockIndex = new ConcurrentHashMap<>();
+                chainHashes = Collections.synchronizedList(new ArrayList<>());
+
+                try {
+                    Files.createDirectories(Paths.get(STORAGE_DIR));
+                } catch (Exception e) {
+                    // Ignore
+                }
+
+                loadAll();
+                initialized = true;
+            }
+
+            if (!shutdownHookRegistered) {
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    saveAll();
+                    System.out.println("   \uD83D\uDCDA AkashicRecord persisted (" + blockIndex.size() + " blocks)");
+                }, "AkashicRecord-Shutdown"));
+                shutdownHookRegistered = true;
+            }
         }
-        
-        // Load all persisted data
-        loadAll();
-        
-        // Register shutdown hook to persist on exit
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            saveAll();
-            System.out.println("   \uD83D\uDCDA AkashicRecord persisted (" + blockIndex.size() + " blocks)");
-        }, "AkashicRecord-Shutdown"));
     }
 
     /**
      * ADD BLOCK - Add a knowledge block to the record
      */
     public String addBlock(String category, String content) {
-        blocksAdded++;
-        
-        // Create the block
+        synchronized (INIT_LOCK) {
         KnowledgeBlock block = new KnowledgeBlock(category, content);
+        try { RECORD_ARCHIVE.save(block); }
+        catch (IOException failure) { throw new UncheckedIOException("Knowledge record was not durably archived", failure); }
+        if (blockIndex.containsKey(block.hash)) return block.hash;
+        blocksAdded++;
         
         // Add to category
         categories.computeIfAbsent(category, k -> Collections.synchronizedList(new ArrayList<>()))
@@ -99,6 +116,7 @@ public class AkashicRecord {
         }
         
         return block.hash;
+        }
     }
 
     /**
@@ -160,34 +178,55 @@ public class AkashicRecord {
     /**
      * SAVE ALL - Persist everything to disk
      */
-    public synchronized void saveAll() {
-        saveChain();
-        saveBlocks();
-        saveIndex();
-        saveStats();
+    public void saveAll() {
+        synchronized (INIT_LOCK) {
+            if (!saveBlocks()) return;
+            saveChain();
+            if (blocksFullyLoaded) saveIndex();
+            saveStats();
+        }
     }
 
     /**
      * SAVE CHAIN TO DISK
      */
     private void saveChain() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(
-                new FileOutputStream(CHAIN_FILE))) {
-            oos.writeObject(new ArrayList<>(chainHashes));
-        } catch (Exception e) {
-            // Ignore
-        }
+        if (chainFullyLoaded) saveObject(CHAIN_FILE, new ArrayList<>(chainHashes));
     }
 
     /**
      * SAVE BLOCKS TO DISK
      */
-    private void saveBlocks() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(
-                new FileOutputStream(BLOCKS_FILE))) {
-            oos.writeObject(new ArrayList<>(blockIndex.values()));
-        } catch (Exception e) {
-            // Ignore
+    private boolean saveBlocks() {
+        if (!pendingFullyLoaded) {
+            System.err.println("[AKASHIC] Checkpoint retained: pending overlay could not be read; repair it before saving");
+            return false;
+        }
+        String target = blocksFullyLoaded ? BLOCKS_FILE : PENDING_BLOCKS_FILE;
+        boolean saved = saveObject(target, new ArrayList<>(blockIndex.values()));
+        if (saved && blocksFullyLoaded) {
+            try { Files.deleteIfExists(Paths.get(PENDING_BLOCKS_FILE)); }
+            catch (IOException error) { System.err.println("[AKASHIC] Retained pending snapshot: " + error.getMessage()); }
+        }
+        return saved;
+    }
+
+    /** Never truncate the previous checkpoint before a complete replacement exists. */
+    private boolean saveObject(String filename, Object value) {
+        Path target = Paths.get(filename).toAbsolutePath();
+        Path temporary = target.resolveSibling(target.getFileName() + "." + UUID.randomUUID() + ".tmp");
+        try {
+            try (ObjectOutputStream output = new ObjectOutputStream(Files.newOutputStream(temporary, StandardOpenOption.CREATE_NEW))) {
+                output.writeObject(value);
+            }
+            try { Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
+            catch (AtomicMoveNotSupportedException ignored) { Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING); }
+            return true;
+        } catch (Exception | OutOfMemoryError error) {
+            System.err.println("[AKASHIC] Checkpoint replacement failed; previous file retained: " + error.getMessage());
+            return false;
+        } finally {
+            try { Files.deleteIfExists(temporary); } catch (IOException ignored) {}
         }
     }
 
@@ -228,10 +267,21 @@ public class AkashicRecord {
      * LOAD ALL - Restore everything from disk
      */
     private void loadAll() {
-        loadChain();
-        loadBlocks();
-        loadIndex();
-        loadStats();
+        try {
+            loadChain();
+            loadBlocks();
+            if (blocksFullyLoaded && chainFullyLoaded) try { restoreArchivedRecords(); }
+            catch(UncheckedIOException failure) { blocksFullyLoaded=false; System.err.println("[AKASHIC] Record recovery incomplete; original archive retained: "+failure.getMessage()); }
+            loadIndex();
+            loadStats();
+            chainLength=chainHashes.size();
+        } catch (OutOfMemoryError oom) {
+            System.out.println("   [AKASHIC] Load aborted due to heap pressure: " + oom.getMessage());
+            blocksFullyLoaded = false;
+            categories = new ConcurrentHashMap<>();
+            blockIndex = new ConcurrentHashMap<>();
+            // Keep an already loaded chain; never replace unread historical state.
+        }
     }
 
     /**
@@ -239,13 +289,16 @@ public class AkashicRecord {
      */
     @SuppressWarnings("unchecked")
     private void loadChain() {
+        chainFullyLoaded = true;
         try (ObjectInputStream ois = new ObjectInputStream(
                 new FileInputStream(CHAIN_FILE))) {
             chainHashes = Collections.synchronizedList((List<String>) ois.readObject());
             chainLength = chainHashes.size();
-        } catch (Exception e) {
-            // Start fresh
+        } catch (FileNotFoundException e) {
             chainHashes = Collections.synchronizedList(new ArrayList<>());
+        } catch (Exception | OutOfMemoryError e) {
+            chainFullyLoaded = false;
+            System.err.println("[AKASHIC] Unread chain retained: " + e.getMessage());
         }
     }
 
@@ -254,14 +307,26 @@ public class AkashicRecord {
      */
     @SuppressWarnings("unchecked")
     private void loadBlocks() {
-        try (ObjectInputStream ois = new ObjectInputStream(
-                new FileInputStream(BLOCKS_FILE))) {
-            List<KnowledgeBlock> blocks = (List<KnowledgeBlock>) ois.readObject();
-            for (KnowledgeBlock block : blocks) {
-                blockIndex.put(block.hash, block);
-            }
-        } catch (Exception e) {
-            // No blocks file yet — start fresh
+        File blocksFile = new File(BLOCKS_FILE);
+        blocksFullyLoaded = true;
+        if (blocksFile.exists()) {
+            if (blocksFile.length() > BLOCKS_FILE_SOFT_LIMIT_BYTES) {
+                blocksFullyLoaded = false;
+                System.out.println("   [AKASHIC] Base snapshot deferred by configured limit; new records use blocks-pending.dat");
+            } else blocksFullyLoaded = loadBlockFile(blocksFile);
+        }
+        File pending = new File(PENDING_BLOCKS_FILE);
+        pendingFullyLoaded = !pending.exists() || loadBlockFile(pending);
+        if (!pendingFullyLoaded) blocksFullyLoaded = false;
+    }
+
+    @SuppressWarnings("unchecked") private boolean loadBlockFile(File file) {
+        try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(file))) {
+            for (KnowledgeBlock block : (List<KnowledgeBlock>) input.readObject()) blockIndex.put(block.hash, block);
+            return true;
+        } catch (Exception | OutOfMemoryError error) {
+            System.err.println("[AKASHIC] Snapshot retained without replacement after load failure: " + file + " : " + error.getMessage());
+            return false;
         }
     }
 
@@ -270,23 +335,76 @@ public class AkashicRecord {
      */
     @SuppressWarnings("unchecked")
     private void loadIndex() {
-        try (ObjectInputStream ois = new ObjectInputStream(
-                new FileInputStream(INDEX_FILE))) {
-            HashMap<String, List<String>> indexMap = (HashMap<String, List<String>>) ois.readObject();
-            for (Map.Entry<String, List<String>> entry : indexMap.entrySet()) {
-                List<KnowledgeBlock> blocks = Collections.synchronizedList(new ArrayList<>());
-                for (String hash : entry.getValue()) {
-                    KnowledgeBlock block = blockIndex.get(hash);
-                    if (block != null) {
-                        blocks.add(block);
-                    }
+        // Categories are derivable from records, including any pending overlay.
+        categories.clear();
+        for (KnowledgeBlock block : blockIndex.values())
+            categories.computeIfAbsent(block.category, ignored -> Collections.synchronizedList(new ArrayList<>())).add(block);
+    }
+
+    public boolean hasDeferredBlocks() { return !blocksFullyLoaded; }
+
+    /** Rehydrate committed per-record files after a lost aggregate checkpoint. */
+    public int restoreArchivedRecords() {
+        synchronized (INIT_LOCK) {
+            int restored = 0;
+            try {
+                for (Path path : RECORD_ARCHIVE.records()) {
+                    String hash = String.valueOf(KnowledgeRecordArchive.read(path).get("hash"));
+                    if (blockIndex.containsKey(hash)) continue;
+                    KnowledgeBlock block = RECORD_ARCHIVE.load(path); blockIndex.put(hash, block); restored++;
+                    if (!chainHashes.contains(hash)) chainHashes.add(hash);
                 }
-                if (!blocks.isEmpty()) {
-                    categories.put(entry.getKey(), blocks);
+                loadIndex(); chainLength = chainHashes.size();
+            } catch (IOException failure) { throw new UncheckedIOException("Record archive recovery failed; aggregate files retained", failure); }
+            return restored;
+        }
+    }
+
+    public Map<String,Object> integrityReport() {
+        synchronized (INIT_LOCK) {
+            var missing = new LinkedHashSet<String>(); var invalid = new LinkedHashSet<String>();
+            for (String hash : chainHashes) if (!blockIndex.containsKey(hash)) missing.add(hash);
+            for (var block : blockIndex.values()) if (!computeHash(block.category + block.content + block.timestamp).equals(block.hash)) invalid.add(block.hash);
+            var historical = new LinkedHashSet<String>();
+            Path history = Paths.get(".akashic/history");
+            if (Files.isDirectory(history)) try (var files = Files.list(history)) {
+                for (Path file : files.filter(p -> p.getFileName().toString().startsWith("reconciliation-") && p.toString().endsWith(".json")).toList()) {
+                    Object values = KnowledgeRecordArchive.read(file).get("unresolved_hashes");
+                    if (values instanceof List<?> hashes) for (Object hash : hashes) historical.add(String.valueOf(hash));
                 }
-            }
-        } catch (Exception e) {
-            // No index file yet — start fresh
+            } catch (IOException error) { throw new UncheckedIOException(error); }
+            historical.addAll(missing); historical.removeAll(blockIndex.keySet());
+            return Map.of("active_chain_valid", missing.isEmpty() && invalid.isEmpty() && !hasDeferredBlocks() && chainFullyLoaded,
+                "available_records", blockIndex.size(), "active_chain_entries", chainHashes.size(), "missing_active_hashes", new ArrayList<>(missing),
+                "invalid_record_hashes", new ArrayList<>(invalid), "historical_unresolved_hashes", new ArrayList<>(historical),
+                "historical_complete", historical.isEmpty(), "deferred_blocks", hasDeferredBlocks());
+        }
+    }
+
+    /** Preserve the original chain and explicit gaps, then start a valid available-record chain. */
+    @SuppressWarnings("unchecked") public Map<String,Object> reconcileChain() throws IOException {
+        synchronized (INIT_LOCK) {
+            if (hasDeferredBlocks() || !chainFullyLoaded) throw new IOException("Load the complete aggregate checkpoint before reconciling its history");
+            int recovered = restoreArchivedRecords(); var before = integrityReport();
+            if (!((List<?>) before.get("invalid_record_hashes")).isEmpty()) throw new IOException("Corrupt available records require verified recovery before chain reconciliation");
+            for (var block : blockIndex.values()) RECORD_ARCHIVE.save(block);
+            Path history = Files.createDirectories(Paths.get(".akashic/history"));
+            byte[] original = Files.exists(Paths.get(CHAIN_FILE)) ? Files.readAllBytes(Paths.get(CHAIN_FILE)) : new byte[0];
+            String digest = KnowledgeRecordArchive.sha(original);
+            Path preserved = history.resolve("chain-" + digest + ".dat");
+            if (!Files.exists(preserved)) Files.write(preserved, original, StandardOpenOption.CREATE_NEW);
+            Map<String,Object> receipt = new LinkedHashMap<>(); receipt.put("format", "fraynix.chain-reconciliation.v1");
+            receipt.put("original_chain_sha256", digest); receipt.put("original_chain", preserved.toAbsolutePath().toString());
+            receipt.put("unresolved_hashes", before.get("missing_active_hashes")); receipt.put("before", before);
+            receipt.put("records_recovered_from_archive", recovered); receipt.put("missing_content_reconstructed", false);
+            KnowledgeRecordArchive.atomic(history.resolve("reconciliation-" + digest + ".json"), fraymus.core.FraymusJSON.stringify(receipt));
+            var active = new ArrayList<String>();
+            for (String hash : chainHashes) if (blockIndex.containsKey(hash)) active.add(hash);
+            blockIndex.values().stream().sorted(Comparator.comparingLong(b -> b.timestamp)).map(b -> b.hash).filter(h -> !active.contains(h)).forEach(active::add);
+            chainHashes = Collections.synchronizedList(active); chainLength = active.size();
+            if(!saveBlocks() || !saveObject(CHAIN_FILE,new ArrayList<>(chainHashes)))throw new IOException("Reconciled chain could not be committed; preserved history and record files remain available");
+            saveIndex();saveStats();receipt.put("disk_commit_confirmed",true);
+            receipt.put("after", integrityReport()); return receipt;
         }
     }
 
@@ -323,16 +441,22 @@ public class AkashicRecord {
      * PURGE - Clear all knowledge and disk files
      */
     public void purge() {
+        try { RECORD_ARCHIVE.purge(); KnowledgeRecordArchive.deleteTree(Paths.get(".akashic/history")); }
+        catch(IOException failure) { throw new UncheckedIOException("Could not purge archived knowledge",failure); }
         categories.clear();
         blockIndex.clear();
         chainHashes.clear();
         blocksAdded = 0;
         queriesProcessed = 0;
         chainLength = 0;
+        blocksFullyLoaded = true;
+        pendingFullyLoaded = true;
+        chainFullyLoaded = true;
         
         // Delete disk files
         try { Files.deleteIfExists(Paths.get(CHAIN_FILE)); } catch (Exception e) {}
         try { Files.deleteIfExists(Paths.get(BLOCKS_FILE)); } catch (Exception e) {}
+        try { Files.deleteIfExists(Paths.get(PENDING_BLOCKS_FILE)); } catch (Exception e) {}
         try { Files.deleteIfExists(Paths.get(INDEX_FILE)); } catch (Exception e) {}
         try { Files.deleteIfExists(Paths.get(STATS_FILE)); } catch (Exception e) {}
         
@@ -399,14 +523,28 @@ public class AkashicRecord {
         public final String formattedTime;
         
         public KnowledgeBlock(String category, String content) {
+            this(category, content, System.currentTimeMillis());
+        }
+        private KnowledgeBlock(String category, String content, long timestamp) {
+            this(category,content,timestamp,LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(timestamp),java.time.ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        }
+        private KnowledgeBlock(String category,String content,long timestamp,String formattedTime) {
             this.category = category;
             this.content = content;
-            this.timestamp = System.currentTimeMillis();
-            this.formattedTime = LocalDateTime.now()
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            this.timestamp = timestamp;
+            this.formattedTime = formattedTime;
             
             // Compute hash
             this.hash = computeBlockHash(category, content, this.timestamp);
+        }
+        public static KnowledgeBlock restore(String category, String content, long timestamp, String expectedHash) {
+            KnowledgeBlock restored = new KnowledgeBlock(category, content, timestamp);
+            if (!restored.hash.equals(expectedHash)) throw new IllegalArgumentException("Knowledge hash differs from archived identity");
+            return restored;
+        }
+        public static KnowledgeBlock restore(String category,String content,long timestamp,String expectedHash,String formattedTime) {
+            KnowledgeBlock restored=new KnowledgeBlock(category,content,timestamp,formattedTime);
+            if(!restored.hash.equals(expectedHash))throw new IllegalArgumentException("Knowledge hash differs from archived identity");return restored;
         }
         
         private static String computeBlockHash(String category, String content, long timestamp) {

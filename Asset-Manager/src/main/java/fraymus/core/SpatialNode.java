@@ -108,9 +108,9 @@ public abstract class SpatialNode {
         double dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
         if (dist < 1) dist = 1;
         
-        this.x += (int)((dx / dist) * force);
-        this.y += (int)((dy / dist) * force);
-        this.z += (int)((dz / dist) * force);
+        this.x += (int) Math.round((dx / dist) * force);
+        this.y += (int) Math.round((dy / dist) * force);
+        this.z += (int) Math.round((dz / dist) * force);
     }
     
     /**

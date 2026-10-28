@@ -31,7 +31,7 @@ public class OllamaBridge {
      */
     public OllamaBridge(String model) {
         this.model = model;
-        this.ollamaUrl = "http://localhost:11434/api/generate";
+        this.ollamaUrl = fraymus.llm.LocalModelCatalog.endpointForModel(model, "http://127.0.0.1:11434") + "/api/generate";
         this.timeout = 120000; // 2 minutes for large models
     }
     
@@ -63,14 +63,18 @@ public class OllamaBridge {
             System.out.println("   Response received in " + elapsed + "ms");
             
             // Parse response
-            Map<String, Object> jsonResponse = (Map<String, Object>) FraymusJSON.parse(response);
-            
+            Object parsed = FraymusJSON.parse(response);
+            if (!(parsed instanceof Map<?, ?> parsedMap)) {
+                throw new RuntimeException("Invalid JSON response from Ollama");
+            }
+            Map<?, ?> jsonResponse = parsedMap;
+
             if (jsonResponse.containsKey("error")) {
                 throw new RuntimeException("Ollama error: " + jsonResponse.get("error"));
             }
             
-            String result = (String) jsonResponse.get("response");
-            
+            String result = jsonResponse.get("response") instanceof String s ? s : null;
+
             if (result == null || result.isEmpty()) {
                 throw new RuntimeException("Empty response from Ollama");
             }
@@ -94,7 +98,7 @@ public class OllamaBridge {
      */
     public boolean isAvailable() {
         try {
-            String healthUrl = "http://localhost:11434/api/tags";
+            String healthUrl = java.net.URI.create(ollamaUrl).resolve("/api/tags").toString();
             String response = FraymusHTTP.get(healthUrl, 5000);
             return response != null && !response.isEmpty();
         } catch (Exception e) {
@@ -108,29 +112,9 @@ public class OllamaBridge {
      * @return Array of model names
      */
     public String[] getAvailableModels() {
-        try {
-            String tagsUrl = "http://localhost:11434/api/tags";
-            String response = FraymusHTTP.get(tagsUrl, 5000);
-            
-            Map<String, Object> json = (Map<String, Object>) FraymusJSON.parse(response);
-            
-            if (json.containsKey("models")) {
-                java.util.List<Map<String, Object>> models = 
-                    (java.util.List<Map<String, Object>>) json.get("models");
-                
-                return models.stream()
-                    .map(m -> (String) m.get("name"))
-                    .toArray(String[]::new);
-            }
-            
-            return new String[0];
-            
-        } catch (Exception e) {
-            System.err.println("Could not fetch models: " + e.getMessage());
-            return new String[0];
-        }
+        return new fraymus.OllamaIntegration(false).listLocalModels().toArray(String[]::new);
     }
-    
+
     /**
      * Test the bridge
      */

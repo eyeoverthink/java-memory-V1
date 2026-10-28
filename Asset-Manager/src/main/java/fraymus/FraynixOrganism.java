@@ -49,6 +49,7 @@ public class FraynixOrganism {
     private boolean awake = true;
     private long birthTime;
     private int commandsProcessed = 0;
+    private Thread circadianThread;
     
     private static final double PHI = 1.618033988749895;
 
@@ -125,7 +126,7 @@ public class FraynixOrganism {
      */
     public void live() {
         // Start the circadian rhythm thread
-        new Thread(this::circadianRhythm, "CircadianRhythm").start();
+        startAutonomy();
 
         // Listen for User Voice (God)
         System.out.println("Listening for commands...");
@@ -148,7 +149,7 @@ public class FraynixOrganism {
     /**
      * Process user intent
      */
-    private void processIntent(String intent) {
+    public void processIntent(String intent) {
         commandsProcessed++;
         
         if (intent.equalsIgnoreCase("help")) {
@@ -211,7 +212,7 @@ public class FraynixOrganism {
             }
         }
         else if (intent.equalsIgnoreCase("shutdown")) {
-            shutdown();
+            shutdown(true);
         }
         else {
             System.out.println("Unknown command. Type 'help' for available commands.");
@@ -259,7 +260,7 @@ public class FraynixOrganism {
     /**
      * Show system status
      */
-    private void showStatus() {
+    public void showStatus() {
         System.out.println();
         System.out.println("╔═══════════════════════════════════════════════════════════════╗");
         System.out.println("║              ORGANISM STATUS                                  ║");
@@ -287,7 +288,7 @@ public class FraynixOrganism {
     /**
      * Show detailed statistics
      */
-    private void showDetailedStats() {
+    public void showDetailedStats() {
         System.out.println();
         System.out.println(brain.getStats());
         System.out.println();
@@ -350,10 +351,23 @@ public class FraynixOrganism {
         return 10.0;
     }
 
+    public void startAutonomy() {
+        if (circadianThread != null && circadianThread.isAlive()) {
+            return;
+        }
+        circadianThread = new Thread(this::circadianRhythm, "CircadianRhythm");
+        circadianThread.setDaemon(true);
+        circadianThread.start();
+    }
+
+    public boolean isAwake() {
+        return awake;
+    }
+
     /**
      * Graceful shutdown
      */
-    private void shutdown() {
+    public void shutdown(boolean exit) {
         System.out.println();
         System.out.println("╔═══════════════════════════════════════════════════════════════╗");
         System.out.println("║              INITIATING SHUTDOWN                              ║");
@@ -377,8 +391,9 @@ public class FraynixOrganism {
         System.out.println();
         System.out.println("💀 Organism terminated");
         System.out.println();
-        
-        System.exit(0);
+        if (exit) {
+            System.exit(0);
+        }
     }
 
     public static void main(String[] args) {

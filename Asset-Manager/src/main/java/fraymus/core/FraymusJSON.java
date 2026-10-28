@@ -25,6 +25,170 @@ import java.util.*;
  *   String json = FraymusJSON.stringify(data);
  */
 public class FraymusJSON {
+
+    /**
+     * Parse one complete JSON value from a machine protocol. Unlike the legacy
+     * permissive parse method, malformed or trailing input throws an exception.
+     * The legacy entry point is intentionally unchanged for existing callers.
+     */
+    public static Object parseStrict(String json) {
+        if (json == null) throw new IllegalArgumentException("JSON input is null");
+        StrictReader reader = new StrictReader(json);
+        Object value = reader.value(0);
+        reader.whitespace();
+        if (reader.position != json.length()) throw reader.error("Trailing input");
+        return value;
+    }
+
+    private static final class StrictReader {
+        private final String input;
+        private int position;
+
+        private StrictReader(String input) { this.input = input; }
+
+        private IllegalArgumentException error(String message) {
+            return new IllegalArgumentException(message + " at character " + position);
+        }
+
+        private void whitespace() {
+            while (position < input.length()) {
+                char c = input.charAt(position);
+                if (c != ' ' && c != '\t' && c != '\r' && c != '\n') break;
+                position++;
+            }
+        }
+
+        private boolean take(char expected) {
+            if (position < input.length() && input.charAt(position) == expected) {
+                position++;
+                return true;
+            }
+            return false;
+        }
+
+        private void require(char expected) {
+            if (!take(expected)) throw error("Expected '" + expected + "'");
+        }
+
+        private Object value(int depth) {
+            if (depth > 128) throw error("JSON nesting limit exceeded");
+            whitespace();
+            if (position == input.length()) throw error("Expected JSON value");
+            char c = input.charAt(position);
+            if (c == '"') return string();
+            if (c == '{') {
+                position++;
+                Map<String, Object> object = new LinkedHashMap<>();
+                whitespace();
+                if (take('}')) return object;
+                do {
+                    whitespace();
+                    String key = string();
+                    whitespace();
+                    require(':');
+                    if (object.containsKey(key)) throw error("Duplicate object key");
+                    object.put(key, value(depth + 1));
+                    whitespace();
+                    if (take('}')) return object;
+                    require(',');
+                } while (true);
+            }
+            if (c == '[') {
+                position++;
+                List<Object> array = new ArrayList<>();
+                whitespace();
+                if (take(']')) return array;
+                do {
+                    array.add(value(depth + 1));
+                    whitespace();
+                    if (take(']')) return array;
+                    require(',');
+                } while (true);
+            }
+            if (c == 't') return literal("true", Boolean.TRUE);
+            if (c == 'f') return literal("false", Boolean.FALSE);
+            if (c == 'n') return literal("null", null);
+            if (c == '-' || digit(c)) return number();
+            throw error("Expected JSON value");
+        }
+
+        private Object literal(String text, Object result) {
+            if (!input.startsWith(text, position)) throw error("Invalid literal");
+            position += text.length();
+            return result;
+        }
+
+        private String string() {
+            require('"');
+            StringBuilder result = new StringBuilder();
+            while (position < input.length()) {
+                char c = input.charAt(position++);
+                if (c == '"') return result.toString();
+                if (c < 0x20) throw error("Unescaped control character");
+                if (c != '\\') {
+                    result.append(c);
+                    continue;
+                }
+                if (position == input.length()) throw error("Unfinished escape");
+                char escaped = input.charAt(position++);
+                switch (escaped) {
+                    case '"', '\\', '/' -> result.append(escaped);
+                    case 'b' -> result.append('\b');
+                    case 'f' -> result.append('\f');
+                    case 'n' -> result.append('\n');
+                    case 'r' -> result.append('\r');
+                    case 't' -> result.append('\t');
+                    case 'u' -> {
+                        if (position + 4 > input.length()) throw error("Incomplete Unicode escape");
+                        int code = 0;
+                        for (int i = 0; i < 4; i++) {
+                            char hex = input.charAt(position++);
+                            int digit = hex >= '0' && hex <= '9' ? hex - '0'
+                                : hex >= 'a' && hex <= 'f' ? hex - 'a' + 10
+                                : hex >= 'A' && hex <= 'F' ? hex - 'A' + 10 : -1;
+                            if (digit < 0) throw error("Invalid Unicode escape");
+                            code = code * 16 + digit;
+                        }
+                        result.append((char) code);
+                    }
+                    default -> throw error("Invalid string escape");
+                }
+            }
+            throw error("Unterminated string");
+        }
+
+        private static boolean digit(char c) { return c >= '0' && c <= '9'; }
+
+        private void digits() {
+            int start = position;
+            while (position < input.length() && digit(input.charAt(position))) position++;
+            if (position == start) throw error("Expected digit");
+        }
+
+        private Number number() {
+            int start = position;
+            take('-');
+            if (!take('0')) digits();
+            boolean fractional = false;
+            if (take('.')) {
+                fractional = true;
+                digits();
+            }
+            if (take('e') || take('E')) {
+                fractional = true;
+                if (!take('+')) take('-');
+                digits();
+            }
+            String text = input.substring(start, position);
+            if (!fractional) {
+                try { return Long.valueOf(text); }
+                catch (NumberFormatException ignored) { /* Try finite double. */ }
+            }
+            double result = Double.parseDouble(text);
+            if (!Double.isFinite(result)) throw error("Non-finite number");
+            return result;
+        }
+    }
     
     /**
      * Parse JSON string into Java objects
@@ -323,8 +487,20 @@ public class FraymusJSON {
                 case '\t':
                     sb.append("\\t");
                     break;
+                case '\b':
+                    sb.append("\\b");
+                    break;
+                case '\f':
+                    sb.append("\\f");
+                    break;
                 default:
-                    sb.append(c);
+                    if (c < 0x20) {
+                        sb.append("\\u00");
+                        sb.append(Character.forDigit(c >>> 4, 16));
+                        sb.append(Character.forDigit(c & 15, 16));
+                    } else {
+                        sb.append(c);
+                    }
             }
         }
         

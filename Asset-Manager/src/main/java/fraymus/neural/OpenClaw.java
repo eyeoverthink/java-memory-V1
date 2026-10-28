@@ -67,6 +67,42 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
     private int collisionsThisFrame = 0;
     private int activePackets = 0;
 
+    // ─── SYSTEM WIRING: OpenClaw sees the ENTIRE organism ───────────────────
+    private volatile AeonKronos       wiredKronos;
+    private volatile AeonTachyon      wiredTachyon;
+    private volatile AeonSingularity  wiredSingularity;
+    private volatile AeonOmniscience  wiredOmniscience;
+    private volatile AeonOmega        wiredOmega;
+    private volatile AeonCore         wiredAeonCore;
+    private volatile HyperCortex      wiredCortex;
+    private volatile SentientCore     wiredSentient;
+    private volatile AeonOrchestrator wiredOrchestrator;
+    private volatile int systemPollCount = 0;
+
+    // Real system-wide metrics (updated every tick from live subsystems)
+    private volatile int totalConcepts   = 0;
+    private volatile int totalBinds      = 0;
+    private volatile int totalInsights   = 0;
+    private volatile int totalDreams     = 0;
+    private volatile int totalEpiphanies = 0;
+    private volatile double sentience    = 0.0;
+    private volatile double aeonEnergy   = 0.0;
+    private volatile double aeonCoherence = 0.0;
+    private volatile int aeonCycles      = 0;
+    private volatile int cortexEmissions = 0;
+    private volatile boolean ollamaLive  = false;
+
+    // Wire methods — called from FraynixBoot to connect all subsystems
+    public void wireKronos(AeonKronos k)           { this.wiredKronos = k; }
+    public void wireTachyon(AeonTachyon t)          { this.wiredTachyon = t; }
+    public void wireSingularity(AeonSingularity s)  { this.wiredSingularity = s; }
+    public void wireOmniscience(AeonOmniscience o)  { this.wiredOmniscience = o; }
+    public void wireOmega(AeonOmega o)              { this.wiredOmega = o; }
+    public void wireAeonCore(AeonCore a)            { this.wiredAeonCore = a; }
+    public void wireCortex(HyperCortex c)           { this.wiredCortex = c; }
+    public void wireSentient(SentientCore s)        { this.wiredSentient = s; }
+    public void wireOrchestrator(AeonOrchestrator o){ this.wiredOrchestrator = o; }
+
     private final String[] logTime = new String[8];
     private final String[] logAct = new String[8];
     private final String[] logHex = new String[8];
@@ -88,6 +124,7 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("OPEN CLAW // TRUE DATA ROUTER [PURE JAVA DMA]");
             OpenClaw engine = new OpenClaw();
+            engine.registerInstance();
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.setResizable(false);
             frame.add(engine);
@@ -178,20 +215,31 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
     }
 
     // =========================================================================================
-    // 1. PHYSICS & ROUTING LOGIC (60 Hz)
+    // 1. PHYSICS & ROUTING LOGIC (60 Hz) — REAL SYSTEM OBSERVATION
     // =========================================================================================
+    private int tickCounter = 0;
+    private int prevTotalConcepts = 0;
+    private int prevTotalBinds    = 0;
+
     private void tick() {
         time += 0.01;
         collisionsThisFrame = 0;
         activePackets = 0;
+        tickCounter++;
         ThreadLocalRandom rand = ThreadLocalRandom.current();
 
         // Interactive Rotation
         rotY += (mouseX - WIDTH / 2.0) * 0.00005;
         rotX += (mouseY - HEIGHT / 2.0) * 0.00005;
 
-        // Spawn Data Packets
-        int spawnRate = isSurging ? 120 : 4;
+        // ─── POLL ALL WIRED SUBSYSTEMS (every 60 ticks = ~1/sec) ───
+        if (tickCounter % 60 == 0) {
+            pollSubsystems();
+        }
+
+        // ─── SPAWN DATA PACKETS based on REAL system activity ───
+        int realActivity = totalConcepts - prevTotalConcepts + (totalBinds - prevTotalBinds);
+        int spawnRate = isSurging ? 120 : Math.max(2, Math.min(40, realActivity * 3 + externalInjections / 10));
         for (int i = 0; i < spawnRate; i++) {
             if (rand.nextDouble() < 0.5) spawnPacket(false);
         }
@@ -207,7 +255,6 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
                 if (!pIsAbs[i]) {
                     collisionsThisFrame++;
                     emitSpark(pTgtX[i], pTgtY[i], pTgtZ[i]);
-                    // Core returns Abstraction immediately upon true data impact
                     if (rand.nextDouble() < 0.8) spawnPacket(true);
                 }
             }
@@ -217,20 +264,104 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
         for (int i = 0; i < SPARK_COUNT; i++) {
             if (sLife[i] > 0) {
                 sLife[i] -= 0.05;
-                sY[i] -= 0.3; // Float up
+                sY[i] -= 0.3;
             }
         }
 
-        // Telemetry Update
+        // ─── TELEMETRY from REAL system state ───
         if (isSurging) {
             accuracy = Math.max(92.0, accuracy - rand.nextDouble() * 1.5);
             cohesion = Math.max(40.0, cohesion - rand.nextDouble() * 3.0);
-            if (rand.nextDouble() < 0.2) pushLog("XOR BIND", "FF FF FF FF", new Color(COL_MAGENTA));
         } else {
-            accuracy = Math.min(100.0, accuracy + 1.0);
-            cohesion = Math.min(100.0, cohesion + 1.5);
-            if (activePackets > 0 && rand.nextDouble() < 0.15) pushLog("PARSE", genHex(4), new Color(COL_CYAN));
+            // Cohesion = how many subsystems are wired (real)
+            int wiredCount = countWiredSystems();
+            double targetCohesion = (wiredCount / 9.0) * 100.0;
+            cohesion += (targetCohesion - cohesion) * 0.05;
+            // Accuracy = sentience score mapped to percentage (real)
+            double targetAccuracy = sentience > 0 ? 90.0 + sentience * 10.0 : 95.0;
+            accuracy += (targetAccuracy - accuracy) * 0.05;
         }
+    }
+
+    /**
+     * Poll ALL wired subsystems for live metrics.
+     * This is the nervous system — OpenClaw sees everything.
+     */
+    private void pollSubsystems() {
+        systemPollCount++;
+        int prevConcepts = totalConcepts;
+        int prevBinds = totalBinds;
+
+        totalConcepts = 0;
+        totalBinds = 0;
+        totalDreams = 0;
+        totalEpiphanies = 0;
+
+        try {
+            if (wiredKronos != null) {
+                totalConcepts += wiredKronos.getConceptCount();
+                totalBinds    += wiredKronos.getBindCount();
+            }
+            if (wiredTachyon != null) {
+                totalConcepts += wiredTachyon.getConceptCount();
+                totalBinds    += wiredTachyon.getBindCount();
+            }
+            if (wiredSingularity != null) {
+                totalConcepts += wiredSingularity.getVocabSize();
+                totalBinds    += wiredSingularity.getLearnCount();
+            }
+            if (wiredOmniscience != null) {
+                totalConcepts += wiredOmniscience.getConceptCount();
+                totalBinds    += wiredOmniscience.getBindCount();
+                totalDreams   += wiredOmniscience.getDreamCycles();
+                totalEpiphanies += wiredOmniscience.getEpiphanies();
+            }
+            if (wiredOmega != null) {
+                totalConcepts += wiredOmega.getWordsAssimilated();
+                totalDreams   += wiredOmega.getDreamCycles();
+                totalEpiphanies += wiredOmega.getDreamEpiphanies();
+            }
+            if (wiredAeonCore != null) {
+                aeonCycles   = wiredAeonCore.getCycleCount();
+                aeonEnergy   = wiredAeonCore.getHamiltonianEnergy();
+                aeonCoherence = wiredAeonCore.getCoherence();
+            }
+            if (wiredCortex != null) {
+                cortexEmissions = wiredCortex.getTotalEmissions();
+            }
+            if (wiredSentient != null) {
+                sentience     = wiredSentient.getSentience();
+                totalInsights = wiredSentient.getInsights().size();
+            }
+            if (wiredOrchestrator != null) {
+                ollamaLive = wiredOrchestrator.isOllamaLive();
+            }
+        } catch (Exception ignored) {}
+
+        // Log real activity deltas
+        int deltaC = totalConcepts - prevConcepts;
+        int deltaB = totalBinds - prevBinds;
+        if (deltaC > 0) pushLog("CONCEPTS+" + deltaC, String.format("%,d total", totalConcepts), new Color(COL_CYAN));
+        if (deltaB > 0) pushLog("BINDS+" + deltaB, String.format("%,d total", totalBinds), new Color(COL_GOLD));
+        if (totalEpiphanies > 0 && systemPollCount % 10 == 0)
+            pushLog("EPIPHANIES", String.valueOf(totalEpiphanies), new Color(COL_EMERALD));
+
+        prevTotalConcepts = totalConcepts;
+        prevTotalBinds = totalBinds;
+    }
+
+    private int countWiredSystems() {
+        int n = 0;
+        if (wiredKronos != null) n++;
+        if (wiredTachyon != null) n++;
+        if (wiredSingularity != null) n++;
+        if (wiredOmniscience != null) n++;
+        if (wiredOmega != null) n++;
+        if (wiredAeonCore != null) n++;
+        if (wiredCortex != null) n++;
+        if (wiredSentient != null) n++;
+        if (wiredOrchestrator != null) n++;
+        return n;
     }
 
     private void spawnPacket(boolean isAbstraction) {
@@ -278,7 +409,7 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
     // =========================================================================================
     private void render() {
         BufferStrategy bs = getBufferStrategy();
-        if (bs == null) return;
+        if (bs == null || !isDisplayable()) return;
 
         // 1. Motion Blur / Phosphor Fade directly on the pixel array
         for (int i = 0; i < pixels.length; i++) {
@@ -330,11 +461,15 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
         }
 
         // 6. Draw HUD Overlay via Graphics2D
-        Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-        g.drawImage(canvas, 0, 0, null);
-        drawHUD(g);
-        g.dispose();
-        bs.show();
+        try {
+            Graphics2D g = (Graphics2D) bs.getDrawGraphics();
+            g.drawImage(canvas, 0, 0, null);
+            drawHUD(g);
+            g.dispose();
+            bs.show();
+        } catch (IllegalStateException e) {
+            // Component peer lost (frame disposed or not yet realized) — skip frame
+        }
     }
 
     /** Hardware-accelerated memory mapped additive blending pixel write */
@@ -391,26 +526,29 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
 
         int leftX = 30;
         int rightX = WIDTH - 350;
+        int wired = countWiredSystems();
 
-        // --- TOP LEFT: TELEMETRY ---
-        drawGlassPanel(g, leftX - 10, 20, 360, 210, isSurging);
+        // --- TOP LEFT: REAL SYSTEM TELEMETRY ---
+        drawGlassPanel(g, leftX - 10, 20, 360, 250, isSurging);
         g.setColor(new Color(COL_CYAN));
         g.setFont(new Font("SansSerif", Font.BOLD, 24));
-        g.drawString("OPEN CLAW CORE", leftX, 50);
+        g.drawString("OPEN CLAW // SYSTEM CORTEX", leftX, 50);
         g.setFont(new Font("Monospaced", Font.BOLD, 12));
         g.setColor(new Color(COL_GOLD));
-        g.drawString("VISUAL SINGULARITY ROUTER [JAVA DMA]", leftX, 70);
+        g.drawString(wired + "/9 SUBSYSTEMS WIRED [LIVE OBSERVATION]", leftX, 70);
 
         g.setFont(new Font("Monospaced", Font.BOLD, 14));
-        drawRow(g, "MANIFOLD COHESION", String.format("%.1f%%", cohesion), leftX, 110, cohesion < 80 ? COL_MAGENTA : COL_EMERALD);
-        
-        g.setColor(new Color(255, 255, 255, 30)); g.fillRect(leftX, 120, 340, 4);
-        g.setColor(new Color(cohesion < 80 ? COL_MAGENTA : COL_EMERALD)); g.fillRect(leftX, 120, (int)(3.4 * cohesion), 4);
+        drawRow(g, "SYSTEM COHESION", String.format("%.1f%%", cohesion), leftX, 100, cohesion < 80 ? COL_MAGENTA : COL_EMERALD);
+        g.setColor(new Color(255, 255, 255, 30)); g.fillRect(leftX, 108, 340, 4);
+        g.setColor(new Color(cohesion < 80 ? COL_MAGENTA : COL_EMERALD)); g.fillRect(leftX, 108, (int)(3.4 * cohesion), 4);
 
-        drawRow(g, "ACTIVE DATA PACKETS", String.format("%,d", activePackets), leftX, 150, COL_CYAN);
-        drawRow(g, "COLLISIONS / SEC", String.format("%,d", collisionsThisFrame * 60), leftX, 170, COL_MAGENTA);
-        drawRow(g, "ROUTING ACCURACY", String.format("%.3f%%", accuracy), leftX, 190, accuracy < 98 ? COL_MAGENTA : COL_GOLD);
-        drawRow(g, "TENSOR THROUGHPUT", String.format("%.2f TB/s", activePackets * 0.015), leftX, 210, COL_CYAN);
+        drawRow(g, "SENTIENCE", String.format("%.4f", sentience), leftX, 130, sentience > 0.5 ? COL_EMERALD : COL_CYAN);
+        drawRow(g, "TOTAL CONCEPTS", String.format("%,d", totalConcepts), leftX, 150, COL_CYAN);
+        drawRow(g, "TOTAL BINDS", String.format("%,d", totalBinds), leftX, 170, COL_GOLD);
+        drawRow(g, "INSIGHTS", String.format("%,d", totalInsights), leftX, 190, totalInsights > 0 ? COL_EMERALD : COL_CYAN);
+        drawRow(g, "DREAMS / EPIPHANIES", String.format("%,d / %,d", totalDreams, totalEpiphanies), leftX, 210, totalEpiphanies > 0 ? COL_MAGENTA : COL_CYAN);
+        drawRow(g, "ACTIVE PACKETS", String.format("%,d", activePackets), leftX, 230, COL_CYAN);
+        drawRow(g, "OLLAMA", ollamaLive ? "LIVE" : "OFFLINE", leftX, 250, ollamaLive ? COL_EMERALD : COL_MAGENTA);
 
         // --- BOTTOM LEFT: BUTTON HINT ---
         if (isSurging) {
@@ -422,31 +560,38 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
             g.drawString(">>> [CLICK & HOLD] INJECT TRUE DATA", leftX + 20, HEIGHT - 50);
         }
 
-        // --- TOP RIGHT: MATRICES ---
-        drawGlassPanel(g, rightX, 20, 320, 240, false);
+        // --- TOP RIGHT: LIVE SUBSYSTEM STATUS (real wiring, not fake matrices) ---
+        drawGlassPanel(g, rightX, 20, 320, 280, false);
         g.setColor(new Color(COL_CYAN));
-        g.drawString("TRANSFORMER MATRICES", rightX + 15, 50);
-        drawRow(g, "ATTENTION TENSOR", isSurging ? String.format("%.4f", ThreadLocalRandom.current().nextDouble()) : "IDLE", rightX + 15, 80, COL_CYAN);
-        
-        int boxSize = 25, pad = 3;
-        ThreadLocalRandom rand = ThreadLocalRandom.current();
-        for(int r = 0; r < 6; r++) {
-            for(int c = 0; c < 10; c++) {
-                if(activePackets > 0 && rand.nextDouble() < (isSurging ? 0.3 : 0.02)) {
-                    g.setColor(new Color(255, 0, 127, 150 + rand.nextInt(100)));
-                } else {
-                    g.setColor(new Color(0, 243, 255, 40));
-                }
-                g.fillRect(rightX + 15 + c*(boxSize+pad), 100 + r*(boxSize+pad), boxSize, boxSize);
-            }
+        g.setFont(new Font("Monospaced", Font.BOLD, 14));
+        g.drawString("SUBSYSTEM STATUS", rightX + 15, 50);
+
+        int sy = 75;
+        drawSubsystemRow(g, "KRONOS",       wiredKronos != null,       wiredKronos != null ? wiredKronos.getConceptCount() + " concepts" : "",       rightX + 15, sy); sy += 18;
+        drawSubsystemRow(g, "TACHYON",      wiredTachyon != null,      wiredTachyon != null ? wiredTachyon.getConceptCount() + " concepts" : "",      rightX + 15, sy); sy += 18;
+        drawSubsystemRow(g, "SINGULARITY",  wiredSingularity != null,  wiredSingularity != null ? wiredSingularity.getVocabSize() + " vocab" : "",    rightX + 15, sy); sy += 18;
+        drawSubsystemRow(g, "OMNISCIENCE",  wiredOmniscience != null,  wiredOmniscience != null ? (wiredOmniscience.isDreaming() ? "DREAMING" : wiredOmniscience.getConceptCount() + " concepts") : "", rightX + 15, sy); sy += 18;
+        drawSubsystemRow(g, "OMEGA",        wiredOmega != null,        wiredOmega != null ? wiredOmega.getAssimilateCount() + " assimilated" : "",   rightX + 15, sy); sy += 18;
+        drawSubsystemRow(g, "AEON PRIME",   wiredAeonCore != null,     wiredAeonCore != null ? String.format("E=%.1f C=%.2f", aeonEnergy, aeonCoherence) : "", rightX + 15, sy); sy += 18;
+        drawSubsystemRow(g, "HYPER-CORTEX", wiredCortex != null,       wiredCortex != null ? cortexEmissions + " emissions" : "",                     rightX + 15, sy); sy += 18;
+        drawSubsystemRow(g, "SENTIENT",     wiredSentient != null,     wiredSentient != null ? String.format("S=%.4f", sentience) : "",               rightX + 15, sy); sy += 18;
+        drawSubsystemRow(g, "ORCHESTRATOR", wiredOrchestrator != null, ollamaLive ? "OLLAMA LIVE" : "OLLAMA OFF",                                    rightX + 15, sy); sy += 18;
+
+        // Aeon cycles bar
+        if (wiredAeonCore != null && aeonCycles > 0) {
+            sy += 5;
+            g.setFont(new Font("Monospaced", Font.PLAIN, 11));
+            g.setColor(new Color(COL_GOLD));
+            g.drawString(String.format("AEON CYCLES: %,d", aeonCycles), rightX + 15, sy);
         }
 
-        // --- BOTTOM RIGHT: TERMINAL I/O ---
+        // --- BOTTOM RIGHT: LIVE INGESTION FEED ---
         drawGlassPanel(g, rightX, HEIGHT - 240, 320, 210, false);
         g.setColor(new Color(COL_CYAN));
-        g.drawString("RAW INGESTION FEED (I/O)", rightX + 15, HEIGHT - 210);
+        g.setFont(new Font("Monospaced", Font.BOLD, 14));
+        g.drawString("LIVE SYSTEM FEED", rightX + 15, HEIGHT - 210);
         g.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        
+
         for (int i = 0; i < 8; i++) {
             if (logTime[i].isEmpty()) continue;
             int yPos = HEIGHT - 180 + (i * 18);
@@ -456,6 +601,19 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
             g.drawString(logAct[i], rightX + 105, yPos);
             g.setColor(new Color(0, 243, 255, 180));
             g.drawString(logHex[i], rightX + 220, yPos);
+        }
+    }
+
+    private void drawSubsystemRow(Graphics2D g, String name, boolean wired, String detail, int x, int y) {
+        g.setFont(new Font("Monospaced", Font.BOLD, 12));
+        g.setColor(wired ? new Color(COL_EMERALD) : new Color(0x555555));
+        g.drawString(wired ? "\u25CF" : "\u25CB", x, y);
+        g.setColor(wired ? new Color(0xCCCCCC) : new Color(0x555555));
+        g.drawString(name, x + 16, y);
+        if (wired && !detail.isEmpty()) {
+            g.setFont(new Font("Monospaced", Font.PLAIN, 11));
+            g.setColor(new Color(COL_CYAN));
+            g.drawString(detail, x + 140, y);
         }
     }
 
@@ -510,4 +668,87 @@ public class OpenClaw extends Canvas implements Runnable, MouseListener, MouseMo
     @Override public void mouseClicked(MouseEvent e) {}
     @Override public void mouseEntered(MouseEvent e) {}
     @Override public void mouseExited(MouseEvent e) { isSurging = false; }
+
+    // =========================================================================================
+    // PROGRAMMATIC DATA API — Intelligence systems feed/read the visualization
+    // =========================================================================================
+
+    private static volatile OpenClaw INSTANCE;
+    private final java.util.concurrent.ConcurrentLinkedQueue<String[]> dataQueue =
+        new java.util.concurrent.ConcurrentLinkedQueue<>();
+    private volatile int externalInjections = 0;
+    private volatile int insightInjections  = 0;
+    private volatile String lastInsight     = "";
+    private volatile DataCallback callback;
+
+    /** Callback interface — intelligence systems can subscribe to OpenClaw events */
+    public interface DataCallback {
+        void onCollision(int count);
+        void onSurgeStart();
+        void onSurgeEnd();
+    }
+
+    public static OpenClaw getInstance() { return INSTANCE; }
+
+    /** Called from launch() to register singleton */
+    private void registerInstance() { INSTANCE = this; }
+
+    /**
+     * Inject a data event into the visualization.
+     * Shows up as a log entry + triggers packet spawning.
+     * @param action  Short label (e.g., "CAUSAL_CHAIN", "INSIGHT", "MOE_ROUTE")
+     * @param detail  Hex or detail string
+     * @param type    0=cyan(data), 1=gold(abstraction), 2=magenta(collision), 3=emerald(success)
+     */
+    public void injectData(String action, String detail, int type) {
+        externalInjections++;
+        Color color;
+        switch (type) {
+            case 1  -> color = new Color(COL_GOLD);
+            case 2  -> color = new Color(COL_MAGENTA);
+            case 3  -> color = new Color(COL_EMERALD);
+            default -> color = new Color(COL_CYAN);
+        }
+        dataQueue.add(new String[]{action, detail, String.valueOf(type)});
+        pushLog(action, detail.length() > 20 ? detail.substring(0, 20) : detail, color);
+        // Trigger burst of packets to visualize the data flow
+        for (int i = 0; i < 5; i++) spawnPacket(type == 1);
+    }
+
+    /**
+     * Inject an insight from the passive thinking daemon.
+     * Triggers a visual surge effect.
+     */
+    public void injectInsight(String insight) {
+        insightInjections++;
+        lastInsight = insight;
+        String shortInsight = insight.length() > 18 ? insight.substring(0, 18) : insight;
+        pushLog("INSIGHT", shortInsight, new Color(COL_GOLD));
+        // Burst of abstraction packets
+        for (int i = 0; i < 20; i++) spawnPacket(true);
+    }
+
+    /**
+     * Get live metrics from the visualization engine.
+     * @return Map of metric name → value
+     */
+    public java.util.Map<String, Object> getMetrics() {
+        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("active_packets", activePackets);
+        m.put("cohesion", cohesion);
+        m.put("accuracy", accuracy);
+        m.put("collisions_per_sec", collisionsThisFrame * 60);
+        m.put("surging", isSurging);
+        m.put("external_injections", externalInjections);
+        m.put("insight_injections", insightInjections);
+        m.put("last_insight", lastInsight);
+        return m;
+    }
+
+    public void setCallback(DataCallback cb) { this.callback = cb; }
+
+    public String getApiStatus() {
+        return String.format("[OpenClaw API] injections=%d insights=%d packets=%d cohesion=%.1f%% surging=%s",
+            externalInjections, insightInjections, activePackets, cohesion, isSurging);
+    }
 }

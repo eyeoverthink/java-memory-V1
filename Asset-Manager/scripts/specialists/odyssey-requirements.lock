@@ -1,0 +1,26 @@
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.5
+aioice==0.10.2
+aiortc==1.15.0
+aiosignal==1.4.0
+attrs==26.1.0
+av==17.1.0
+cffi==2.1.1
+cryptography==50.0.2
+dnspython==2.9.0
+frozenlist==1.8.0
+google-crc32c==1.9.0
+idna==3.20
+ifaddr==0.2.0
+multidict==7.2.1
+numpy==2.5.4
+odyssey @ https://github.com/odysseyml/odyssey-python/archive/6d5f4e902251ddd15bac33319800e6a5321eaa5a.zip#sha256=90d7716c9b9de25c307f2d516f4cc5a27ad110d478e50c1174704f6d87e74b3a
+pillow==13.0.0
+propcache==0.5.4
+pycparser==3.12
+pyee==16.0.0
+pylibsrtp==1.0.0
+pyOpenSSL==26.4.0
+typing_extensions==4.16.0
+websockets==17.3
+yarl==1.25.1

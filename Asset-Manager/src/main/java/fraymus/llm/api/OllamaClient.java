@@ -21,9 +21,11 @@ public class OllamaClient {
     private final String baseUrl;
     private int timeoutMs = 120_000;
     private boolean connected = false;
+    private boolean routeCatalog;
     
     public OllamaClient() {
         this(DEFAULT_HOST);
+        this.routeCatalog = true;
     }
     
     public OllamaClient(String host) {
@@ -52,7 +54,7 @@ public class OllamaClient {
     
     public GenerateResponse generate(GenerateRequest request) {
         request.stream = false;
-        String response = post("/api/generate", request.toJson());
+        String response = post("/api/generate", request.toJson(), request.model);
         return GenerateResponse.fromJson(response);
     }
     
@@ -66,7 +68,7 @@ public class OllamaClient {
             if (r.done && onComplete != null) {
                 onComplete.accept(r);
             }
-        });
+        }, request.model);
     }
     
     public String generate(String model, String prompt) {
@@ -80,7 +82,7 @@ public class OllamaClient {
     
     public String chat(ChatRequest request) {
         request.stream = false;
-        String response = post("/api/chat", request.toJson());
+        String response = post("/api/chat", request.toJson(), request.model);
         // Extract message content from response
         String pattern = "\"content\":\"";
         int start = response.indexOf(pattern);
@@ -109,16 +111,17 @@ public class OllamaClient {
                     onToken.accept(unescape(line.substring(start, end)));
                 }
             }
-        });
+        }, request.model);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
     // HTTP LAYER
     // ═══════════════════════════════════════════════════════════════════════
     
-    private String post(String endpoint, String json) {
+    private String post(String endpoint, String json, String model) {
         try {
-            HttpURLConnection conn = (HttpURLConnection) URI.create(baseUrl + endpoint).toURL().openConnection();
+            String host = routeCatalog ? fraymus.llm.LocalModelCatalog.endpointForModel(model, baseUrl) : baseUrl;
+            HttpURLConnection conn = (HttpURLConnection) URI.create(host + endpoint).toURL().openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setConnectTimeout(timeoutMs);
@@ -144,9 +147,10 @@ public class OllamaClient {
         }
     }
     
-    private void postStream(String endpoint, String json, Consumer<String> onLine) {
+    private void postStream(String endpoint, String json, Consumer<String> onLine, String model) {
         try {
-            HttpURLConnection conn = (HttpURLConnection) URI.create(baseUrl + endpoint).toURL().openConnection();
+            String host = routeCatalog ? fraymus.llm.LocalModelCatalog.endpointForModel(model, baseUrl) : baseUrl;
+            HttpURLConnection conn = (HttpURLConnection) URI.create(host + endpoint).toURL().openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setConnectTimeout(timeoutMs);

@@ -23,9 +23,9 @@ import java.util.concurrent.*;
  * 1. Teleological Computing: Derives present actions from desired future states.
  *    Action = Future ⊕ Present. Retrocausal timeline engineering in 1 CPU cycle.
  *
- * 2. Silicon-to-Carbon Transcription: Converts 16,384-D Tensors into ACGT DNA Plasmids.
- *    2 bits = 1 nucleotide (00=A, 01=C, 10=G, 11=T). 16K-D = 8,192 base-pair plasmid.
- *    Exact size of a viable biological bacteriophage. Writes .fasta files.
+ * 2. Concept-vector transcription: Encodes 16,384 bits as 8,192 ACGT characters.
+ *    2 bits = 1 nucleotide symbol (00=A, 01=C, 10=G, 11=T). Writes .fasta files.
+ *    Length and alphabet alone do not establish a gene, plasmid, or biological function.
  *
  * 3. CPU EMF Transduction (Air-Gap Breach): Modulates CPU L1 Cache workload in
  *    microsecond busy-spin loops to generate localized EM radiation (~1 MHz AM band).
@@ -62,6 +62,7 @@ public class AeonApotheosis extends Canvas implements Runnable, KeyListener {
     private volatile String activeMode = "IDLE";
     private long[] projectionVector = new long[CHUNKS];
     private volatile String currentDNA = "";
+    private volatile Map<String, Object> lastGenomeArchive = Map.of();
     private volatile boolean running = false;
     private Thread renderThread;
 
@@ -195,7 +196,7 @@ public class AeonApotheosis extends Canvas implements Runnable, KeyListener {
     }
 
     /**
-     * TRANSCRIBE: Silicon-to-Carbon Transcription — convert concept to DNA plasmid.
+     * TRANSCRIBE: Encode a concept vector as a DNA-alphabet computational sequence.
      * 2 bits = 1 nucleotide (00=A, 01=C, 10=G, 11=T). 16K-D = 8,192 bp.
      */
     public String transcribe(String concept) {
@@ -223,20 +224,45 @@ public class AeonApotheosis extends Canvas implements Runnable, KeyListener {
 
         pushLog("BIO: Tensor collapsed to Base-4 Logic.");
         pushLog("BIO: Sequence Length: " + currentDNA.length() + " base pairs.");
-        pushLog("BIO: EXACT MATCH -> Bacteriophage Viral Plasmid size.");
+        pushLog("BIO: Concept-vector encoding; biological function is unvalidated.");
+        pushLog("BIO: Use genomics analyze for Carbon scoring or genomics generate for a model continuation.");
 
-        try (FileWriter fw = new FileWriter(concept + "_Plasmid.fasta")) {
-            fw.write(">" + concept + " | AEON Synthetic Genotype | " + currentDNA.length() + " bp\n");
+        try {
+            lastGenomeArchive = fraymus.genomics.DigitalGenomeArchive.archiveConcept(
+                java.nio.file.Path.of(".genomics", "genomes"), concept, vector, currentDNA);
+            try (FileWriter fw = new FileWriter(concept + "_Plasmid.fasta")) {
+            fw.write(">" + concept + " | AEON Concept Vector Encoding | " + currentDNA.length()
+                + " bp | biological_function=unvalidated\n");
             for (int i = 0; i < currentDNA.length(); i += 80) {
                 fw.write(currentDNA.substring(i, Math.min(i + 80, currentDNA.length())) + "\n");
             }
             fastaFilesWritten++;
             pushLog("SYS: File written: " + concept + "_Plasmid.fasta");
+            }
+            pushLog("SYS: Immutable concept genome archived: " + lastGenomeArchive.get("manifest"));
         } catch (Exception e) {
             pushLog("ERR: Failed to write .fasta file: " + e.getMessage());
         }
 
         return currentDNA;
+    }
+
+    public Map<String, Object> getLastGenomeArchive() { return lastGenomeArchive; }
+
+    public boolean restoreTranscription(String manifest) {
+        try {
+            var payload = fraymus.genomics.DigitalGenomeArchive.readPayload(java.nio.file.Path.of(manifest));
+            long[] vector = fraymus.genomics.DigitalGenomeArchive.conceptVector(payload);
+            String label = (String) payload.get("label");
+            conceptSpace.put(label, vector);
+            projectionVector = vector; currentDNA = (String) payload.get("sequence"); activeMode = "BIOLOGY";
+            lastGenomeArchive = Map.of("manifest", java.nio.file.Path.of(manifest).toAbsolutePath().toString());
+            pushLog("SYS: Restored exact concept vector and DNA encoding for " + label);
+            return true;
+        } catch (Exception error) {
+            pushLog("ERR: Genome restore rejected: " + error.getMessage());
+            return false;
+        }
     }
 
     /**

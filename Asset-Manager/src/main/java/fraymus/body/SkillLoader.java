@@ -121,7 +121,7 @@ public class SkillLoader {
         }
         
         // Extract Usage section
-        Pattern usagePattern = Pattern.compile("##\\s+Usage\\s*\\n([\\s\\S]*?)(?=##|$)", Pattern.MULTILINE);
+        Pattern usagePattern = Pattern.compile("^##[ \\t]+Usage[ \\t]*\\r?\\n([\\s\\S]*?)(?=^##[ \\t]+|\\z)", Pattern.MULTILINE);
         Matcher usageMatcher = usagePattern.matcher(content);
         if (usageMatcher.find()) {
             usage = usageMatcher.group(1).trim();

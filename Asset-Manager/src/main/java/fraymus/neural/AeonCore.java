@@ -732,14 +732,17 @@ public class AeonCore {
     }
 
     private SymbolicEquation rebuildAxiom(String formula) {
+        // Strip any accumulated [rebuilt→tanh] tags from previous restorations
+        String clean = formula.replaceAll(" \\[rebuilt.tanh\\]", "").trim();
         // Reconstruct known base axioms; evolved composites default to tanh
-        if (formula.equals("tanh(x)")) return new SymbolicEquation("tanh(x)", Math::tanh);
-        if (formula.equals("sin(x)")) return new SymbolicEquation("sin(x)", Math::sin);
-        if (formula.equals("cos(x)")) return new SymbolicEquation("cos(x)", Math::cos);
-        if (formula.equals("x")) return new SymbolicEquation("x", v -> v);
-        if (formula.equals("exp(-|x|)")) return new SymbolicEquation("exp(-|x|)", v -> Math.exp(-Math.abs(v)));
-        // Complex evolved formula — default to tanh but preserve the name
-        return new SymbolicEquation(formula + " [rebuilt→tanh]", Math::tanh);
+        if (clean.equals("tanh(x)")) return new SymbolicEquation("tanh(x)", Math::tanh);
+        if (clean.equals("sin(x)")) return new SymbolicEquation("sin(x)", Math::sin);
+        if (clean.equals("cos(x)")) return new SymbolicEquation("cos(x)", Math::cos);
+        if (clean.equals("x")) return new SymbolicEquation("x", v -> v);
+        if (clean.equals("exp(-|x|)")) return new SymbolicEquation("exp(-|x|)", v -> Math.exp(-Math.abs(v)));
+        if (clean.equals("sin(exp(-|x|))")) return new SymbolicEquation("sin(exp(-|x|))", v -> Math.sin(Math.exp(-Math.abs(v))));
+        // Complex evolved formula — default to tanh but preserve the clean name
+        return new SymbolicEquation(clean + " [rebuilt→tanh]", Math::tanh);
     }
 
     // ==========================================

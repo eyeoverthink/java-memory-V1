@@ -1,1 +1,9 @@
 rootProject.name = 'fraymus-engine'
+
+include 'factory-runtime', 'factory-kernel', 'factory-models'
+
+include 'sandbox'
+project(':sandbox').projectDir = file('sandbox')
+
+include 'brain_architecture'
+project(':brain_architecture').projectDir = file('brain_architecture')
